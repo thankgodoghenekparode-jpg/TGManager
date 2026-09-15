@@ -1,0 +1,37 @@
+﻿# Dependencies
+node_modules/
+# Build output
+dist/
+build/
+/tmp
+# Environment
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+# Prisma generated client
+src/generated/
+# Logs
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+# OS
+.DS_Store
+Thumbs.db
+# Coverage
+coverage/
+# Local file storage (S3-compatible bucket in production)
+/storage/
+# IDE
+.vscode/
+.idea/
+# Temp
+.temp
+.tmp
+# Generated build output
+zarox-connect-api/

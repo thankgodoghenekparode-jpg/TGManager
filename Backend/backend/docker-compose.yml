@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: zarox-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: zarox
+      POSTGRES_PASSWORD: zarox
+      POSTGRES_DB: zarox_connect
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zarox -d zarox_connect"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  pgdata:

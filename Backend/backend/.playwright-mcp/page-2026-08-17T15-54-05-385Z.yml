@@ -1,0 +1,1345 @@
+- generic [ref=e3]:
+  - button [ref=e44] [cursor=pointer]
+  - generic [ref=e48]:
+    - generic [ref=e52]:
+      - heading "Zarox Connect API 1.0 OAS 3.0" [level=1] [ref=e54]:
+        - text: Zarox Connect API
+        - generic [ref=e55]:
+          - generic [ref=e56]: "1.0"
+          - generic [ref=e58]: OAS 3.0
+      - paragraph [ref=e62]:
+        - text: Multi-tenant company management system covering attendance, staff, schedules, chat, documents, forms, inventory, memos, workflows, roles, and platform administration. All tenant-scoped endpoints require authentication via the
+        - code [ref=e63]: zarox_access
+        - text: cookie obtained through /auth/login or /auth/register.
+    - generic [ref=e65]:
+      - generic [ref=e67]:
+        - text: Servers
+        - combobox [ref=e70]:
+          - option "/api/v1" [selected]
+      - button "Authorize" [ref=e72] [cursor=pointer]
+    - generic [ref=e78]:
+      - generic [ref=e80]:
+        - heading [level=3] [ref=e81] [cursor=pointer]:
+          - link "Health" [ref=e82]:
+            - /url: "#/Health"
+          - button "Collapse operation" [expanded] [ref=e83]
+        - generic [ref=e90] [cursor=pointer]:
+          - button "GET /api/v1/health Health check" [ref=e91]:
+            - generic [ref=e92]: GET
+            - generic [ref=e93]:
+              - link "/api/v1/health" [ref=e95]:
+                - /url: "#/Health/AppController_health"
+              - generic [ref=e97]: Health check
+          - generic "Copy to clipboard"
+          - button "get /api/v1/health" [ref=e100]
+      - generic [ref=e104]:
+        - heading [level=3] [ref=e105] [cursor=pointer]:
+          - link "Plans" [ref=e106]:
+            - /url: "#/Plans"
+          - button "Collapse operation" [expanded] [ref=e107]
+        - generic [ref=e114] [cursor=pointer]:
+          - button "GET /api/v1/plans List active plans" [ref=e115]:
+            - generic [ref=e116]: GET
+            - generic [ref=e117]:
+              - link "/api/v1/plans" [ref=e119]:
+                - /url: "#/Plans/PlansController_listPlans"
+              - generic [ref=e121]: List active plans
+          - generic "Copy to clipboard"
+          - button "get /api/v1/plans" [ref=e124]
+      - generic [ref=e128]:
+        - heading [level=3] [ref=e129] [cursor=pointer]:
+          - link "Tenants" [ref=e130]:
+            - /url: "#/Tenants"
+          - button "Collapse operation" [expanded] [ref=e131]
+        - generic [ref=e135]:
+          - generic [ref=e138] [cursor=pointer]:
+            - button "GET /api/v1/tenants Get my tenants" [ref=e139]:
+              - generic [ref=e140]: GET
+              - generic [ref=e141]:
+                - link "/api/v1/tenants" [ref=e143]:
+                  - /url: "#/Tenants/TenantsController_myTenants"
+                - generic [ref=e145]: Get my tenants
+            - generic "Copy to clipboard"
+            - button "get /api/v1/tenants" [ref=e148]
+          - generic [ref=e153] [cursor=pointer]:
+            - button "GET /api/v1/tenants/current Get the current tenant" [ref=e154]:
+              - generic [ref=e155]: GET
+              - generic [ref=e156]:
+                - link "/api/v1/tenants/current" [ref=e158]:
+                  - /url: "#/Tenants/TenantsController_currentTenant"
+                - generic [ref=e160]: Get the current tenant
+            - generic "Copy to clipboard"
+            - button "get /api/v1/tenants/current" [ref=e163]
+      - generic [ref=e167]:
+        - heading [level=3] [ref=e168] [cursor=pointer]:
+          - link "Auth" [ref=e169]:
+            - /url: "#/Auth"
+          - button "Collapse operation" [expanded] [ref=e170]
+        - generic [ref=e174]:
+          - generic [ref=e177] [cursor=pointer]:
+            - button "POST /api/v1/auth/register Register a new tenant and user" [ref=e178]:
+              - generic [ref=e179]: POST
+              - generic [ref=e180]:
+                - link "/api/v1/auth/register" [ref=e182]:
+                  - /url: "#/Auth/AuthController_register"
+                - generic [ref=e184]: Register a new tenant and user
+            - generic "Copy to clipboard"
+            - button "post /api/v1/auth/register" [ref=e187]
+          - generic [ref=e191]:
+            - generic [ref=e192] [cursor=pointer]:
+              - button "POST /api/v1/auth/login Log in" [expanded] [ref=e193]:
+                - generic [ref=e194]: POST
+                - generic [ref=e195]:
+                  - link "/api/v1/auth/login" [ref=e197]:
+                    - /url: "#/Auth/AuthController_login"
+                  - generic [ref=e199]: Log in
+              - generic "Copy to clipboard"
+              - button "post /api/v1/auth/login" [expanded] [ref=e202]
+            - generic [ref=e2356]:
+              - paragraph [ref=e2360]: Authenticates with email and password and sets the auth cookies. Returns the logged-in user.
+              - generic [ref=e2361]:
+                - generic [ref=e2362]:
+                  - heading "Parameters" [level=4] [ref=e2365] [cursor=pointer]
+                  - button "Try it out" [ref=e2367] [cursor=pointer]
+                - paragraph [ref=e2370]: No parameters
+                - generic [ref=e2371]:
+                  - generic [ref=e2372]:
+                    - heading "Request bodyrequired" [level=4] [ref=e2373]
+                    - combobox "Request content type" [ref=e2376]:
+                      - option "application/json" [selected]
+                  - generic [ref=e2379]:
+                    - tablist [ref=e2380]:
+                      - tab "Example Value" [ref=e2381] [cursor=pointer]
+                      - tab "Schema" [selected] [ref=e2382] [cursor=pointer]
+                    - tabpanel "Schema" [ref=e2406]:
+                      - generic [ref=e2409]:
+                        - button "LoginDto" [expanded] [ref=e2410] [cursor=pointer]
+                        - text: "{"
+                        - table [ref=e2415]:
+                          - rowgroup [ref=e2416]:
+                            - row [ref=e2417]:
+                              - cell "email*" [ref=e2418]
+                              - cell [ref=e2419]:
+                                - button "[...]" [ref=e2422] [cursor=pointer]
+                            - row [ref=e2424]:
+                              - cell "password*" [ref=e2425]
+                              - cell [ref=e2426]:
+                                - button "[...]" [ref=e2429] [cursor=pointer]
+                        - text: "}"
+              - generic [ref=e2388]:
+                - heading "Responses" [level=4] [ref=e2390]
+                - region [ref=e2392]:
+                  - rowgroup [ref=e2393]:
+                    - row [ref=e2394]:
+                      - cell "Code" [ref=e2395]
+                      - cell "Description" [ref=e2396]
+                      - cell "Links" [ref=e2397]
+                  - rowgroup [ref=e2398]:
+                    - row [ref=e2399]:
+                      - cell "200" [ref=e2400]
+                      - cell [ref=e2401]:
+                        - paragraph [ref=e2404]: Logged in; auth cookies set.
+                      - cell "No links" [ref=e2405]
+          - generic [ref=e207] [cursor=pointer]:
+            - button "POST /api/v1/auth/refresh Refresh the session" [ref=e208]:
+              - generic [ref=e209]: POST
+              - generic [ref=e210]:
+                - link "/api/v1/auth/refresh" [ref=e212]:
+                  - /url: "#/Auth/AuthController_refresh"
+                - generic [ref=e214]: Refresh the session
+            - generic "Copy to clipboard"
+            - button "post /api/v1/auth/refresh" [ref=e217]
+          - generic [ref=e222] [cursor=pointer]:
+            - button "POST /api/v1/auth/logout Log out" [ref=e223]:
+              - generic [ref=e224]: POST
+              - generic [ref=e225]:
+                - link "/api/v1/auth/logout" [ref=e227]:
+                  - /url: "#/Auth/AuthController_logout"
+                - generic [ref=e229]: Log out
+            - generic "Copy to clipboard"
+            - button "post /api/v1/auth/logout" [ref=e232]
+          - generic [ref=e237] [cursor=pointer]:
+            - button "GET /api/v1/auth/me Get the current user" [ref=e238]:
+              - generic [ref=e239]: GET
+              - generic [ref=e240]:
+                - link "/api/v1/auth/me" [ref=e242]:
+                  - /url: "#/Auth/AuthController_me"
+                - generic [ref=e244]: Get the current user
+            - generic "Copy to clipboard"
+            - button "get /api/v1/auth/me" [ref=e247]
+      - generic [ref=e251]:
+        - heading [level=3] [ref=e252] [cursor=pointer]:
+          - link "Branches" [ref=e253]:
+            - /url: "#/Branches"
+          - button "Collapse operation" [expanded] [ref=e254]
+        - generic [ref=e258]:
+          - generic [ref=e261] [cursor=pointer]:
+            - button "POST /api/v1/branches Create a branch" [ref=e262]:
+              - generic [ref=e263]: POST
+              - generic [ref=e264]:
+                - link "/api/v1/branches" [ref=e266]:
+                  - /url: "#/Branches/BranchesController_create"
+                - generic [ref=e268]: Create a branch
+            - generic "Copy to clipboard"
+            - button "post /api/v1/branches" [ref=e271]
+          - generic [ref=e276] [cursor=pointer]:
+            - button "GET /api/v1/branches List branches" [ref=e277]:
+              - generic [ref=e278]: GET
+              - generic [ref=e279]:
+                - link "/api/v1/branches" [ref=e281]:
+                  - /url: "#/Branches/BranchesController_list"
+                - generic [ref=e283]: List branches
+            - generic "Copy to clipboard"
+            - button "get /api/v1/branches" [ref=e286]
+          - generic [ref=e291] [cursor=pointer]:
+            - 'button "GET /api/v1/branches/{id} Get a branch" [ref=e292]':
+              - generic [ref=e293]: GET
+              - generic [ref=e294]:
+                - 'link "/api/v1/branches/{id}" [ref=e296]':
+                  - /url: "#/Branches/BranchesController_getOne"
+                - generic [ref=e298]: Get a branch
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/branches/{id}" [ref=e301]'
+          - generic [ref=e306] [cursor=pointer]:
+            - 'button "PATCH /api/v1/branches/{id} Update a branch" [ref=e307]':
+              - generic [ref=e308]: PATCH
+              - generic [ref=e309]:
+                - 'link "/api/v1/branches/{id}" [ref=e311]':
+                  - /url: "#/Branches/BranchesController_update"
+                - generic [ref=e313]: Update a branch
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/branches/{id}" [ref=e316]'
+          - generic [ref=e321] [cursor=pointer]:
+            - 'button "DELETE /api/v1/branches/{id} Delete a branch" [ref=e322]':
+              - generic [ref=e323]: DELETE
+              - generic [ref=e324]:
+                - 'link "/api/v1/branches/{id}" [ref=e326]':
+                  - /url: "#/Branches/BranchesController_remove"
+                - generic [ref=e328]: Delete a branch
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/branches/{id}" [ref=e331]'
+      - generic [ref=e335]:
+        - heading [level=3] [ref=e336] [cursor=pointer]:
+          - link "Departments" [ref=e337]:
+            - /url: "#/Departments"
+          - button "Collapse operation" [expanded] [ref=e338]
+        - generic [ref=e342]:
+          - generic [ref=e345] [cursor=pointer]:
+            - button "POST /api/v1/departments Create a department" [ref=e346]:
+              - generic [ref=e347]: POST
+              - generic [ref=e348]:
+                - link "/api/v1/departments" [ref=e350]:
+                  - /url: "#/Departments/DepartmentsController_create"
+                - generic [ref=e352]: Create a department
+            - generic "Copy to clipboard"
+            - button "post /api/v1/departments" [ref=e355]
+          - generic [ref=e360] [cursor=pointer]:
+            - button "GET /api/v1/departments List departments" [ref=e361]:
+              - generic [ref=e362]: GET
+              - generic [ref=e363]:
+                - link "/api/v1/departments" [ref=e365]:
+                  - /url: "#/Departments/DepartmentsController_list"
+                - generic [ref=e367]: List departments
+            - generic "Copy to clipboard"
+            - button "get /api/v1/departments" [ref=e370]
+          - generic [ref=e375] [cursor=pointer]:
+            - 'button "GET /api/v1/departments/{id} Get a department" [ref=e376]':
+              - generic [ref=e377]: GET
+              - generic [ref=e378]:
+                - 'link "/api/v1/departments/{id}" [ref=e380]':
+                  - /url: "#/Departments/DepartmentsController_getOne"
+                - generic [ref=e382]: Get a department
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/departments/{id}" [ref=e385]'
+          - generic [ref=e390] [cursor=pointer]:
+            - 'button "PATCH /api/v1/departments/{id} Update a department" [ref=e391]':
+              - generic [ref=e392]: PATCH
+              - generic [ref=e393]:
+                - 'link "/api/v1/departments/{id}" [ref=e395]':
+                  - /url: "#/Departments/DepartmentsController_update"
+                - generic [ref=e397]: Update a department
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/departments/{id}" [ref=e400]'
+          - generic [ref=e405] [cursor=pointer]:
+            - 'button "DELETE /api/v1/departments/{id} Delete a department" [ref=e406]':
+              - generic [ref=e407]: DELETE
+              - generic [ref=e408]:
+                - 'link "/api/v1/departments/{id}" [ref=e410]':
+                  - /url: "#/Departments/DepartmentsController_remove"
+                - generic [ref=e412]: Delete a department
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/departments/{id}" [ref=e415]'
+      - generic [ref=e419]:
+        - heading [level=3] [ref=e420] [cursor=pointer]:
+          - link "Groups" [ref=e421]:
+            - /url: "#/Groups"
+          - button "Collapse operation" [expanded] [ref=e422]
+        - generic [ref=e426]:
+          - generic [ref=e429] [cursor=pointer]:
+            - button "POST /api/v1/groups Create a group" [ref=e430]:
+              - generic [ref=e431]: POST
+              - generic [ref=e432]:
+                - link "/api/v1/groups" [ref=e434]:
+                  - /url: "#/Groups/GroupsController_create"
+                - generic [ref=e436]: Create a group
+            - generic "Copy to clipboard"
+            - button "post /api/v1/groups" [ref=e439]
+          - generic [ref=e444] [cursor=pointer]:
+            - button "GET /api/v1/groups List groups" [ref=e445]:
+              - generic [ref=e446]: GET
+              - generic [ref=e447]:
+                - link "/api/v1/groups" [ref=e449]:
+                  - /url: "#/Groups/GroupsController_list"
+                - generic [ref=e451]: List groups
+            - generic "Copy to clipboard"
+            - button "get /api/v1/groups" [ref=e454]
+          - generic [ref=e459] [cursor=pointer]:
+            - 'button "GET /api/v1/groups/{id} Get a group" [ref=e460]':
+              - generic [ref=e461]: GET
+              - generic [ref=e462]:
+                - 'link "/api/v1/groups/{id}" [ref=e464]':
+                  - /url: "#/Groups/GroupsController_getOne"
+                - generic [ref=e466]: Get a group
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/groups/{id}" [ref=e469]'
+          - generic [ref=e474] [cursor=pointer]:
+            - 'button "PATCH /api/v1/groups/{id} Update a group" [ref=e475]':
+              - generic [ref=e476]: PATCH
+              - generic [ref=e477]:
+                - 'link "/api/v1/groups/{id}" [ref=e479]':
+                  - /url: "#/Groups/GroupsController_update"
+                - generic [ref=e481]: Update a group
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/groups/{id}" [ref=e484]'
+          - generic [ref=e489] [cursor=pointer]:
+            - 'button "DELETE /api/v1/groups/{id} Delete a group" [ref=e490]':
+              - generic [ref=e491]: DELETE
+              - generic [ref=e492]:
+                - 'link "/api/v1/groups/{id}" [ref=e494]':
+                  - /url: "#/Groups/GroupsController_remove"
+                - generic [ref=e496]: Delete a group
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/groups/{id}" [ref=e499]'
+          - generic [ref=e504] [cursor=pointer]:
+            - 'button "POST /api/v1/groups/{id}/members Add group members" [ref=e505]':
+              - generic [ref=e506]: POST
+              - generic [ref=e507]:
+                - 'link "/api/v1/groups/{id}/members" [ref=e509]':
+                  - /url: "#/Groups/GroupsController_addMembers"
+                - generic [ref=e511]: Add group members
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/groups/{id}/members" [ref=e514]'
+          - generic [ref=e519] [cursor=pointer]:
+            - 'button "DELETE /api/v1/groups/{id}/members/{staffRecordId} Remove a group member" [ref=e520]':
+              - generic [ref=e521]: DELETE
+              - generic [ref=e522]:
+                - 'link "/api/v1/groups/{id}/members/{staffRecordId}" [ref=e524]':
+                  - /url: "#/Groups/GroupsController_removeMember"
+                - generic [ref=e526]: Remove a group member
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/groups/{id}/members/{staffRecordId}" [ref=e529]'
+      - generic [ref=e533]:
+        - heading [level=3] [ref=e534] [cursor=pointer]:
+          - link "Staff" [ref=e535]:
+            - /url: "#/Staff"
+          - button "Collapse operation" [expanded] [ref=e536]
+        - generic [ref=e540]:
+          - generic [ref=e543] [cursor=pointer]:
+            - button "POST /api/v1/staff Create a staff record" [ref=e544]:
+              - generic [ref=e545]: POST
+              - generic [ref=e546]:
+                - link "/api/v1/staff" [ref=e548]:
+                  - /url: "#/Staff/StaffController_create"
+                - generic [ref=e550]: Create a staff record
+            - generic "Copy to clipboard"
+            - button "post /api/v1/staff" [ref=e553]
+          - generic [ref=e558] [cursor=pointer]:
+            - button "GET /api/v1/staff List staff" [ref=e559]:
+              - generic [ref=e560]: GET
+              - generic [ref=e561]:
+                - link "/api/v1/staff" [ref=e563]:
+                  - /url: "#/Staff/StaffController_list"
+                - generic [ref=e565]: List staff
+            - generic "Copy to clipboard"
+            - button "get /api/v1/staff" [ref=e568]
+          - generic [ref=e573] [cursor=pointer]:
+            - 'button "GET /api/v1/staff/{id} Get a staff record" [ref=e574]':
+              - generic [ref=e575]: GET
+              - generic [ref=e576]:
+                - 'link "/api/v1/staff/{id}" [ref=e578]':
+                  - /url: "#/Staff/StaffController_getOne"
+                - generic [ref=e580]: Get a staff record
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/staff/{id}" [ref=e583]'
+          - generic [ref=e588] [cursor=pointer]:
+            - 'button "PATCH /api/v1/staff/{id} Update a staff record" [ref=e589]':
+              - generic [ref=e590]: PATCH
+              - generic [ref=e591]:
+                - 'link "/api/v1/staff/{id}" [ref=e593]':
+                  - /url: "#/Staff/StaffController_update"
+                - generic [ref=e595]: Update a staff record
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/staff/{id}" [ref=e598]'
+          - generic [ref=e603] [cursor=pointer]:
+            - 'button "DELETE /api/v1/staff/{id} Delete a staff record" [ref=e604]':
+              - generic [ref=e605]: DELETE
+              - generic [ref=e606]:
+                - 'link "/api/v1/staff/{id}" [ref=e608]':
+                  - /url: "#/Staff/StaffController_remove"
+                - generic [ref=e610]: Delete a staff record
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/staff/{id}" [ref=e613]'
+          - generic [ref=e618] [cursor=pointer]:
+            - 'button "POST /api/v1/staff/{id}/roles Assign roles to a staff member" [ref=e619]':
+              - generic [ref=e620]: POST
+              - generic [ref=e621]:
+                - 'link "/api/v1/staff/{id}/roles" [ref=e623]':
+                  - /url: "#/Staff/StaffController_assignRoles"
+                - generic [ref=e625]: Assign roles to a staff member
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/staff/{id}/roles" [ref=e628]'
+          - generic [ref=e633] [cursor=pointer]:
+            - 'button "DELETE /api/v1/staff/{id}/roles/{assignmentId} Remove a role assignment" [ref=e634]':
+              - generic [ref=e635]: DELETE
+              - generic [ref=e636]:
+                - 'link "/api/v1/staff/{id}/roles/{assignmentId}" [ref=e638]':
+                  - /url: "#/Staff/StaffController_removeRole"
+                - generic [ref=e640]: Remove a role assignment
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/staff/{id}/roles/{assignmentId}" [ref=e643]'
+      - generic [ref=e647]:
+        - heading [level=3] [ref=e648] [cursor=pointer]:
+          - link "Audit" [ref=e649]:
+            - /url: "#/Audit"
+          - button "Collapse operation" [expanded] [ref=e650]
+        - generic [ref=e657] [cursor=pointer]:
+          - button "GET /api/v1/audit List audit logs" [ref=e658]:
+            - generic [ref=e659]: GET
+            - generic [ref=e660]:
+              - link "/api/v1/audit" [ref=e662]:
+                - /url: "#/Audit/AuditController_list"
+              - generic [ref=e664]: List audit logs
+          - generic "Copy to clipboard"
+          - button "get /api/v1/audit" [ref=e667]
+      - generic [ref=e671]:
+        - heading [level=3] [ref=e672] [cursor=pointer]:
+          - link "Company Roles" [ref=e673]:
+            - /url: "#/Company%20Roles"
+          - button "Collapse operation" [expanded] [ref=e674]
+        - generic [ref=e678]:
+          - generic [ref=e681] [cursor=pointer]:
+            - button "GET /api/v1/company-roles List company roles" [ref=e682]:
+              - generic [ref=e683]: GET
+              - generic [ref=e684]:
+                - link "/api/v1/company-roles" [ref=e686]:
+                  - /url: "#/Company%20Roles/CompanyRolesController_list"
+                - generic [ref=e688]: List company roles
+            - generic "Copy to clipboard"
+            - button "get /api/v1/company-roles" [ref=e691]
+          - generic [ref=e696] [cursor=pointer]:
+            - button "POST /api/v1/company-roles Create a company role" [ref=e697]:
+              - generic [ref=e698]: POST
+              - generic [ref=e699]:
+                - link "/api/v1/company-roles" [ref=e701]:
+                  - /url: "#/Company%20Roles/CompanyRolesController_create"
+                - generic [ref=e703]: Create a company role
+            - generic "Copy to clipboard"
+            - button "post /api/v1/company-roles" [ref=e706]
+          - generic [ref=e711] [cursor=pointer]:
+            - 'button "GET /api/v1/company-roles/{id} Get a company role" [ref=e712]':
+              - generic [ref=e713]: GET
+              - generic [ref=e714]:
+                - 'link "/api/v1/company-roles/{id}" [ref=e716]':
+                  - /url: "#/Company%20Roles/CompanyRolesController_getOne"
+                - generic [ref=e718]: Get a company role
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/company-roles/{id}" [ref=e721]'
+          - generic [ref=e726] [cursor=pointer]:
+            - 'button "PATCH /api/v1/company-roles/{id} Update a company role" [ref=e727]':
+              - generic [ref=e728]: PATCH
+              - generic [ref=e729]:
+                - 'link "/api/v1/company-roles/{id}" [ref=e731]':
+                  - /url: "#/Company%20Roles/CompanyRolesController_update"
+                - generic [ref=e733]: Update a company role
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/company-roles/{id}" [ref=e736]'
+          - generic [ref=e741] [cursor=pointer]:
+            - 'button "DELETE /api/v1/company-roles/{id} Delete a company role" [ref=e742]':
+              - generic [ref=e743]: DELETE
+              - generic [ref=e744]:
+                - 'link "/api/v1/company-roles/{id}" [ref=e746]':
+                  - /url: "#/Company%20Roles/CompanyRolesController_remove"
+                - generic [ref=e748]: Delete a company role
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/company-roles/{id}" [ref=e751]'
+          - generic [ref=e756] [cursor=pointer]:
+            - 'button "POST /api/v1/company-roles/{id}/assign Assign a role" [ref=e757]':
+              - generic [ref=e758]: POST
+              - generic [ref=e759]:
+                - 'link "/api/v1/company-roles/{id}/assign" [ref=e761]':
+                  - /url: "#/Company%20Roles/CompanyRolesController_assign"
+                - generic [ref=e763]: Assign a role
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/company-roles/{id}/assign" [ref=e766]'
+          - generic [ref=e771] [cursor=pointer]:
+            - 'button "DELETE /api/v1/company-roles/{id}/assignments/{assignmentId} Unassign a role" [ref=e772]':
+              - generic [ref=e773]: DELETE
+              - generic [ref=e774]:
+                - 'link "/api/v1/company-roles/{id}/assignments/{assignmentId}" [ref=e776]':
+                  - /url: "#/Company%20Roles/CompanyRolesController_unassign"
+                - generic [ref=e778]: Unassign a role
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/company-roles/{id}/assignments/{assignmentId}" [ref=e781]'
+      - generic [ref=e785]:
+        - heading [level=3] [ref=e786] [cursor=pointer]:
+          - link "Schedules" [ref=e787]:
+            - /url: "#/Schedules"
+          - button "Collapse operation" [expanded] [ref=e788]
+        - generic [ref=e792]:
+          - generic [ref=e795] [cursor=pointer]:
+            - button "POST /api/v1/schedules Create a schedule" [ref=e796]:
+              - generic [ref=e797]: POST
+              - generic [ref=e798]:
+                - link "/api/v1/schedules" [ref=e800]:
+                  - /url: "#/Schedules/SchedulesController_create"
+                - generic [ref=e802]: Create a schedule
+            - generic "Copy to clipboard"
+            - button "post /api/v1/schedules" [ref=e805]
+          - generic [ref=e810] [cursor=pointer]:
+            - button "GET /api/v1/schedules List schedules" [ref=e811]:
+              - generic [ref=e812]: GET
+              - generic [ref=e813]:
+                - link "/api/v1/schedules" [ref=e815]:
+                  - /url: "#/Schedules/SchedulesController_list"
+                - generic [ref=e817]: List schedules
+            - generic "Copy to clipboard"
+            - button "get /api/v1/schedules" [ref=e820]
+          - generic [ref=e825] [cursor=pointer]:
+            - 'button "GET /api/v1/schedules/{id} Get a schedule" [ref=e826]':
+              - generic [ref=e827]: GET
+              - generic [ref=e828]:
+                - 'link "/api/v1/schedules/{id}" [ref=e830]':
+                  - /url: "#/Schedules/SchedulesController_getOne"
+                - generic [ref=e832]: Get a schedule
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/schedules/{id}" [ref=e835]'
+          - generic [ref=e840] [cursor=pointer]:
+            - 'button "PATCH /api/v1/schedules/{id} Update a schedule" [ref=e841]':
+              - generic [ref=e842]: PATCH
+              - generic [ref=e843]:
+                - 'link "/api/v1/schedules/{id}" [ref=e845]':
+                  - /url: "#/Schedules/SchedulesController_update"
+                - generic [ref=e847]: Update a schedule
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/schedules/{id}" [ref=e850]'
+          - generic [ref=e855] [cursor=pointer]:
+            - 'button "DELETE /api/v1/schedules/{id} Delete a schedule" [ref=e856]':
+              - generic [ref=e857]: DELETE
+              - generic [ref=e858]:
+                - 'link "/api/v1/schedules/{id}" [ref=e860]':
+                  - /url: "#/Schedules/SchedulesController_remove"
+                - generic [ref=e862]: Delete a schedule
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/schedules/{id}" [ref=e865]'
+      - generic [ref=e869]:
+        - heading [level=3] [ref=e870] [cursor=pointer]:
+          - link "Attendance" [ref=e871]:
+            - /url: "#/Attendance"
+          - button "Collapse operation" [expanded] [ref=e872]
+        - generic [ref=e876]:
+          - generic [ref=e879] [cursor=pointer]:
+            - button "POST /api/v1/attendance/clock-in Clock in" [ref=e880]:
+              - generic [ref=e881]: POST
+              - generic [ref=e882]:
+                - link "/api/v1/attendance/clock-in" [ref=e884]:
+                  - /url: "#/Attendance/AttendanceController_clockIn"
+                - generic [ref=e886]: Clock in
+            - generic "Copy to clipboard"
+            - button "post /api/v1/attendance/clock-in" [ref=e889]
+          - generic [ref=e894] [cursor=pointer]:
+            - button "POST /api/v1/attendance/clock-out Clock out" [ref=e895]:
+              - generic [ref=e896]: POST
+              - generic [ref=e897]:
+                - link "/api/v1/attendance/clock-out" [ref=e899]:
+                  - /url: "#/Attendance/AttendanceController_clockOut"
+                - generic [ref=e901]: Clock out
+            - generic "Copy to clipboard"
+            - button "post /api/v1/attendance/clock-out" [ref=e904]
+          - generic [ref=e909] [cursor=pointer]:
+            - button "GET /api/v1/attendance List attendance" [ref=e910]:
+              - generic [ref=e911]: GET
+              - generic [ref=e912]:
+                - link "/api/v1/attendance" [ref=e914]:
+                  - /url: "#/Attendance/AttendanceController_list"
+                - generic [ref=e916]: List attendance
+            - generic "Copy to clipboard"
+            - button "get /api/v1/attendance" [ref=e919]
+          - generic [ref=e924] [cursor=pointer]:
+            - button "GET /api/v1/attendance/summary Attendance summary" [ref=e925]:
+              - generic [ref=e926]: GET
+              - generic [ref=e927]:
+                - link "/api/v1/attendance/summary" [ref=e929]:
+                  - /url: "#/Attendance/AttendanceController_summary"
+                - generic [ref=e931]: Attendance summary
+            - generic "Copy to clipboard"
+            - button "get /api/v1/attendance/summary" [ref=e934]
+          - generic [ref=e939] [cursor=pointer]:
+            - 'button "GET /api/v1/attendance/{id} Get an attendance record" [ref=e940]':
+              - generic [ref=e941]: GET
+              - generic [ref=e942]:
+                - 'link "/api/v1/attendance/{id}" [ref=e944]':
+                  - /url: "#/Attendance/AttendanceController_getOne"
+                - generic [ref=e946]: Get an attendance record
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/attendance/{id}" [ref=e949]'
+          - generic [ref=e954] [cursor=pointer]:
+            - 'button "PATCH /api/v1/attendance/{id} Update an attendance record" [ref=e955]':
+              - generic [ref=e956]: PATCH
+              - generic [ref=e957]:
+                - 'link "/api/v1/attendance/{id}" [ref=e959]':
+                  - /url: "#/Attendance/AttendanceController_update"
+                - generic [ref=e961]: Update an attendance record
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/attendance/{id}" [ref=e964]'
+      - generic [ref=e968]:
+        - heading [level=3] [ref=e969] [cursor=pointer]:
+          - link "Memos" [ref=e970]:
+            - /url: "#/Memos"
+          - button "Collapse operation" [expanded] [ref=e971]
+        - generic [ref=e975]:
+          - generic [ref=e978] [cursor=pointer]:
+            - button "POST /api/v1/memos Create a memo" [ref=e979]:
+              - generic [ref=e980]: POST
+              - generic [ref=e981]:
+                - link "/api/v1/memos" [ref=e983]:
+                  - /url: "#/Memos/MemosController_create"
+                - generic [ref=e985]: Create a memo
+            - generic "Copy to clipboard"
+            - button "post /api/v1/memos" [ref=e988]
+          - generic [ref=e993] [cursor=pointer]:
+            - button "GET /api/v1/memos List memos" [ref=e994]:
+              - generic [ref=e995]: GET
+              - generic [ref=e996]:
+                - link "/api/v1/memos" [ref=e998]:
+                  - /url: "#/Memos/MemosController_list"
+                - generic [ref=e1000]: List memos
+            - generic "Copy to clipboard"
+            - button "get /api/v1/memos" [ref=e1003]
+          - generic [ref=e1008] [cursor=pointer]:
+            - 'button "GET /api/v1/memos/{id} Get a memo" [ref=e1009]':
+              - generic [ref=e1010]: GET
+              - generic [ref=e1011]:
+                - 'link "/api/v1/memos/{id}" [ref=e1013]':
+                  - /url: "#/Memos/MemosController_getOne"
+                - generic [ref=e1015]: Get a memo
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/memos/{id}" [ref=e1018]'
+          - generic [ref=e1023] [cursor=pointer]:
+            - 'button "PATCH /api/v1/memos/{id} Update a memo" [ref=e1024]':
+              - generic [ref=e1025]: PATCH
+              - generic [ref=e1026]:
+                - 'link "/api/v1/memos/{id}" [ref=e1028]':
+                  - /url: "#/Memos/MemosController_update"
+                - generic [ref=e1030]: Update a memo
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/memos/{id}" [ref=e1033]'
+          - generic [ref=e1038] [cursor=pointer]:
+            - 'button "DELETE /api/v1/memos/{id} Delete a memo" [ref=e1039]':
+              - generic [ref=e1040]: DELETE
+              - generic [ref=e1041]:
+                - 'link "/api/v1/memos/{id}" [ref=e1043]':
+                  - /url: "#/Memos/MemosController_remove"
+                - generic [ref=e1045]: Delete a memo
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/memos/{id}" [ref=e1048]'
+          - generic [ref=e1053] [cursor=pointer]:
+            - 'button "POST /api/v1/memos/{id}/read Mark a memo as read" [ref=e1054]':
+              - generic [ref=e1055]: POST
+              - generic [ref=e1056]:
+                - 'link "/api/v1/memos/{id}/read" [ref=e1058]':
+                  - /url: "#/Memos/MemosController_markRead"
+                - generic [ref=e1060]: Mark a memo as read
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/memos/{id}/read" [ref=e1063]'
+          - generic [ref=e1068] [cursor=pointer]:
+            - 'button "POST /api/v1/memos/{id}/publish Publish a memo" [ref=e1069]':
+              - generic [ref=e1070]: POST
+              - generic [ref=e1071]:
+                - 'link "/api/v1/memos/{id}/publish" [ref=e1073]':
+                  - /url: "#/Memos/MemosController_publish"
+                - generic [ref=e1075]: Publish a memo
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/memos/{id}/publish" [ref=e1078]'
+      - generic [ref=e1082]:
+        - heading [level=3] [ref=e1083] [cursor=pointer]:
+          - link "Notifications" [ref=e1084]:
+            - /url: "#/Notifications"
+          - button "Collapse operation" [expanded] [ref=e1085]
+        - generic [ref=e1089]:
+          - generic [ref=e1092] [cursor=pointer]:
+            - button "GET /api/v1/notifications List notifications" [ref=e1093]:
+              - generic [ref=e1094]: GET
+              - generic [ref=e1095]:
+                - link "/api/v1/notifications" [ref=e1097]:
+                  - /url: "#/Notifications/NotificationsController_list"
+                - generic [ref=e1099]: List notifications
+            - generic "Copy to clipboard"
+            - button "get /api/v1/notifications" [ref=e1102]
+          - generic [ref=e1107] [cursor=pointer]:
+            - button "GET /api/v1/notifications/unread-count Get unread notification count" [ref=e1108]:
+              - generic [ref=e1109]: GET
+              - generic [ref=e1110]:
+                - link "/api/v1/notifications/unread-count" [ref=e1112]:
+                  - /url: "#/Notifications/NotificationsController_unreadCount"
+                - generic [ref=e1114]: Get unread notification count
+            - generic "Copy to clipboard"
+            - button "get /api/v1/notifications/unread-count" [ref=e1117]
+          - generic [ref=e1122] [cursor=pointer]:
+            - button "POST /api/v1/notifications/read-all Mark all as read" [ref=e1123]:
+              - generic [ref=e1124]: POST
+              - generic [ref=e1125]:
+                - link "/api/v1/notifications/read-all" [ref=e1127]:
+                  - /url: "#/Notifications/NotificationsController_markAllRead"
+                - generic [ref=e1129]: Mark all as read
+            - generic "Copy to clipboard"
+            - button "post /api/v1/notifications/read-all" [ref=e1132]
+          - generic [ref=e1137] [cursor=pointer]:
+            - 'button "POST /api/v1/notifications/{id}/read Mark a notification as read" [ref=e1138]':
+              - generic [ref=e1139]: POST
+              - generic [ref=e1140]:
+                - 'link "/api/v1/notifications/{id}/read" [ref=e1142]':
+                  - /url: "#/Notifications/NotificationsController_markRead"
+                - generic [ref=e1144]: Mark a notification as read
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/notifications/{id}/read" [ref=e1147]'
+      - generic [ref=e1151]:
+        - heading [level=3] [ref=e1152] [cursor=pointer]:
+          - link "Chat" [ref=e1153]:
+            - /url: "#/Chat"
+          - button "Collapse operation" [expanded] [ref=e1154]
+        - generic [ref=e1158]:
+          - generic [ref=e1161] [cursor=pointer]:
+            - button "POST /api/v1/chat/conversations Create a conversation" [ref=e1162]:
+              - generic [ref=e1163]: POST
+              - generic [ref=e1164]:
+                - link "/api/v1/chat/conversations" [ref=e1166]:
+                  - /url: "#/Chat/ChatController_createConversation"
+                - generic [ref=e1168]: Create a conversation
+            - generic "Copy to clipboard"
+            - button "post /api/v1/chat/conversations" [ref=e1171]
+          - generic [ref=e1176] [cursor=pointer]:
+            - button "GET /api/v1/chat/conversations List conversations" [ref=e1177]:
+              - generic [ref=e1178]: GET
+              - generic [ref=e1179]:
+                - link "/api/v1/chat/conversations" [ref=e1181]:
+                  - /url: "#/Chat/ChatController_listConversations"
+                - generic [ref=e1183]: List conversations
+            - generic "Copy to clipboard"
+            - button "get /api/v1/chat/conversations" [ref=e1186]
+          - generic [ref=e1191] [cursor=pointer]:
+            - 'button "GET /api/v1/chat/conversations/{id} Get a conversation" [ref=e1192]':
+              - generic [ref=e1193]: GET
+              - generic [ref=e1194]:
+                - 'link "/api/v1/chat/conversations/{id}" [ref=e1196]':
+                  - /url: "#/Chat/ChatController_getConversation"
+                - generic [ref=e1198]: Get a conversation
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/chat/conversations/{id}" [ref=e1201]'
+          - generic [ref=e1206] [cursor=pointer]:
+            - button "GET /api/v1/chat/unread-count Get unread message count" [ref=e1207]:
+              - generic [ref=e1208]: GET
+              - generic [ref=e1209]:
+                - link "/api/v1/chat/unread-count" [ref=e1211]:
+                  - /url: "#/Chat/ChatController_unreadCount"
+                - generic [ref=e1213]: Get unread message count
+            - generic "Copy to clipboard"
+            - button "get /api/v1/chat/unread-count" [ref=e1216]
+          - generic [ref=e1221] [cursor=pointer]:
+            - 'button "GET /api/v1/chat/conversations/{id}/messages Get message history" [ref=e1222]':
+              - generic [ref=e1223]: GET
+              - generic [ref=e1224]:
+                - 'link "/api/v1/chat/conversations/{id}/messages" [ref=e1226]':
+                  - /url: "#/Chat/ChatController_messageHistory"
+                - generic [ref=e1228]: Get message history
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/chat/conversations/{id}/messages" [ref=e1231]'
+          - generic [ref=e1236] [cursor=pointer]:
+            - 'button "POST /api/v1/chat/conversations/{id}/messages Send a message" [ref=e1237]':
+              - generic [ref=e1238]: POST
+              - generic [ref=e1239]:
+                - 'link "/api/v1/chat/conversations/{id}/messages" [ref=e1241]':
+                  - /url: "#/Chat/ChatController_sendMessage"
+                - generic [ref=e1243]: Send a message
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/chat/conversations/{id}/messages" [ref=e1246]'
+          - generic [ref=e1251] [cursor=pointer]:
+            - 'button "POST /api/v1/chat/conversations/{id}/read Mark conversation as read" [ref=e1252]':
+              - generic [ref=e1253]: POST
+              - generic [ref=e1254]:
+                - 'link "/api/v1/chat/conversations/{id}/read" [ref=e1256]':
+                  - /url: "#/Chat/ChatController_markRead"
+                - generic [ref=e1258]: Mark conversation as read
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/chat/conversations/{id}/read" [ref=e1261]'
+      - generic [ref=e1265]:
+        - heading [level=3] [ref=e1266] [cursor=pointer]:
+          - link "Forms" [ref=e1267]:
+            - /url: "#/Forms"
+          - button "Collapse operation" [expanded] [ref=e1268]
+        - generic [ref=e1272]:
+          - generic [ref=e1275] [cursor=pointer]:
+            - button "POST /api/v1/forms Create a form" [ref=e1276]:
+              - generic [ref=e1277]: POST
+              - generic [ref=e1278]:
+                - link "/api/v1/forms" [ref=e1280]:
+                  - /url: "#/Forms/FormsController_create"
+                - generic [ref=e1282]: Create a form
+            - generic "Copy to clipboard"
+            - button "post /api/v1/forms" [ref=e1285]
+          - generic [ref=e1290] [cursor=pointer]:
+            - button "GET /api/v1/forms List forms" [ref=e1291]:
+              - generic [ref=e1292]: GET
+              - generic [ref=e1293]:
+                - link "/api/v1/forms" [ref=e1295]:
+                  - /url: "#/Forms/FormsController_list"
+                - generic [ref=e1297]: List forms
+            - generic "Copy to clipboard"
+            - button "get /api/v1/forms" [ref=e1300]
+          - generic [ref=e1305] [cursor=pointer]:
+            - 'button "GET /api/v1/forms/{id} Get a form" [ref=e1306]':
+              - generic [ref=e1307]: GET
+              - generic [ref=e1308]:
+                - 'link "/api/v1/forms/{id}" [ref=e1310]':
+                  - /url: "#/Forms/FormsController_getOne"
+                - generic [ref=e1312]: Get a form
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/forms/{id}" [ref=e1315]'
+          - generic [ref=e1320] [cursor=pointer]:
+            - 'button "PATCH /api/v1/forms/{id} Update a form" [ref=e1321]':
+              - generic [ref=e1322]: PATCH
+              - generic [ref=e1323]:
+                - 'link "/api/v1/forms/{id}" [ref=e1325]':
+                  - /url: "#/Forms/FormsController_update"
+                - generic [ref=e1327]: Update a form
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/forms/{id}" [ref=e1330]'
+          - generic [ref=e1335] [cursor=pointer]:
+            - 'button "DELETE /api/v1/forms/{id} Delete a form" [ref=e1336]':
+              - generic [ref=e1337]: DELETE
+              - generic [ref=e1338]:
+                - 'link "/api/v1/forms/{id}" [ref=e1340]':
+                  - /url: "#/Forms/FormsController_remove"
+                - generic [ref=e1342]: Delete a form
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/forms/{id}" [ref=e1345]'
+          - generic [ref=e1350] [cursor=pointer]:
+            - 'button "POST /api/v1/forms/{id}/publish Publish a form" [ref=e1351]':
+              - generic [ref=e1352]: POST
+              - generic [ref=e1353]:
+                - 'link "/api/v1/forms/{id}/publish" [ref=e1355]':
+                  - /url: "#/Forms/FormsController_publish"
+                - generic [ref=e1357]: Publish a form
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/forms/{id}/publish" [ref=e1360]'
+          - generic [ref=e1365] [cursor=pointer]:
+            - 'button "POST /api/v1/forms/{id}/submissions Submit a form" [ref=e1366]':
+              - generic [ref=e1367]: POST
+              - generic [ref=e1368]:
+                - 'link "/api/v1/forms/{id}/submissions" [ref=e1370]':
+                  - /url: "#/Forms/FormsController_submit"
+                - generic [ref=e1372]: Submit a form
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/forms/{id}/submissions" [ref=e1375]'
+          - generic [ref=e1380] [cursor=pointer]:
+            - 'button "GET /api/v1/forms/{id}/submissions List form submissions" [ref=e1381]':
+              - generic [ref=e1382]: GET
+              - generic [ref=e1383]:
+                - 'link "/api/v1/forms/{id}/submissions" [ref=e1385]':
+                  - /url: "#/Forms/FormsController_listSubmissions"
+                - generic [ref=e1387]: List form submissions
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/forms/{id}/submissions" [ref=e1390]'
+          - generic [ref=e1395] [cursor=pointer]:
+            - 'button "GET /api/v1/forms/{id}/submissions/{submissionId} Get a form submission" [ref=e1396]':
+              - generic [ref=e1397]: GET
+              - generic [ref=e1398]:
+                - 'link "/api/v1/forms/{id}/submissions/{submissionId}" [ref=e1400]':
+                  - /url: "#/Forms/FormsController_getSubmission"
+                - generic [ref=e1402]: Get a form submission
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/forms/{id}/submissions/{submissionId}" [ref=e1405]'
+      - generic [ref=e1409]:
+        - heading [level=3] [ref=e1410] [cursor=pointer]:
+          - link "Documents" [ref=e1411]:
+            - /url: "#/Documents"
+          - button "Collapse operation" [expanded] [ref=e1412]
+        - generic [ref=e1416]:
+          - generic [ref=e1419] [cursor=pointer]:
+            - button "POST /api/v1/documents Create a document" [ref=e1420]:
+              - generic [ref=e1421]: POST
+              - generic [ref=e1422]:
+                - link "/api/v1/documents" [ref=e1424]:
+                  - /url: "#/Documents/DocumentsController_create"
+                - generic [ref=e1426]: Create a document
+            - generic "Copy to clipboard"
+            - button "post /api/v1/documents" [ref=e1429]
+          - generic [ref=e1434] [cursor=pointer]:
+            - button "GET /api/v1/documents List documents" [ref=e1435]:
+              - generic [ref=e1436]: GET
+              - generic [ref=e1437]:
+                - link "/api/v1/documents" [ref=e1439]:
+                  - /url: "#/Documents/DocumentsController_list"
+                - generic [ref=e1441]: List documents
+            - generic "Copy to clipboard"
+            - button "get /api/v1/documents" [ref=e1444]
+          - generic [ref=e1449] [cursor=pointer]:
+            - 'button "GET /api/v1/documents/{id}/presign Get a download URL" [ref=e1450]':
+              - generic [ref=e1451]: GET
+              - generic [ref=e1452]:
+                - 'link "/api/v1/documents/{id}/presign" [ref=e1454]':
+                  - /url: "#/Documents/DocumentsController_presign"
+                - generic [ref=e1456]: Get a download URL
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/documents/{id}/presign" [ref=e1459]'
+          - generic [ref=e1464] [cursor=pointer]:
+            - 'button "GET /api/v1/documents/{id} Get a document" [ref=e1465]':
+              - generic [ref=e1466]: GET
+              - generic [ref=e1467]:
+                - 'link "/api/v1/documents/{id}" [ref=e1469]':
+                  - /url: "#/Documents/DocumentsController_getOne"
+                - generic [ref=e1471]: Get a document
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/documents/{id}" [ref=e1474]'
+          - generic [ref=e1479] [cursor=pointer]:
+            - 'button "PATCH /api/v1/documents/{id} Update a document" [ref=e1480]':
+              - generic [ref=e1481]: PATCH
+              - generic [ref=e1482]:
+                - 'link "/api/v1/documents/{id}" [ref=e1484]':
+                  - /url: "#/Documents/DocumentsController_update"
+                - generic [ref=e1486]: Update a document
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/documents/{id}" [ref=e1489]'
+          - generic [ref=e1494] [cursor=pointer]:
+            - 'button "DELETE /api/v1/documents/{id} Delete a document" [ref=e1495]':
+              - generic [ref=e1496]: DELETE
+              - generic [ref=e1497]:
+                - 'link "/api/v1/documents/{id}" [ref=e1499]':
+                  - /url: "#/Documents/DocumentsController_remove"
+                - generic [ref=e1501]: Delete a document
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/documents/{id}" [ref=e1504]'
+          - generic [ref=e1509] [cursor=pointer]:
+            - 'button "GET /api/v1/documents/{id}/download Download a document" [ref=e1510]':
+              - generic [ref=e1511]: GET
+              - generic [ref=e1512]:
+                - 'link "/api/v1/documents/{id}/download" [ref=e1514]':
+                  - /url: "#/Documents/DocumentsController_download"
+                - generic [ref=e1516]: Download a document
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/documents/{id}/download" [ref=e1519]'
+          - generic [ref=e1524] [cursor=pointer]:
+            - 'button "POST /api/v1/documents/{id}/versions Upload a document version" [ref=e1525]':
+              - generic [ref=e1526]: POST
+              - generic [ref=e1527]:
+                - 'link "/api/v1/documents/{id}/versions" [ref=e1529]':
+                  - /url: "#/Documents/DocumentsController_uploadVersion"
+                - generic [ref=e1531]: Upload a document version
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/documents/{id}/versions" [ref=e1534]'
+      - generic [ref=e1538]:
+        - heading [level=3] [ref=e1539] [cursor=pointer]:
+          - link "Inventory" [ref=e1540]:
+            - /url: "#/Inventory"
+          - button "Collapse operation" [expanded] [ref=e1541]
+        - generic [ref=e1545]:
+          - generic [ref=e1548] [cursor=pointer]:
+            - button "POST /api/v1/inventory Create an inventory item" [ref=e1549]:
+              - generic [ref=e1550]: POST
+              - generic [ref=e1551]:
+                - link "/api/v1/inventory" [ref=e1553]:
+                  - /url: "#/Inventory/InventoryController_create"
+                - generic [ref=e1555]: Create an inventory item
+            - generic "Copy to clipboard"
+            - button "post /api/v1/inventory" [ref=e1558]
+          - generic [ref=e1563] [cursor=pointer]:
+            - button "GET /api/v1/inventory List inventory" [ref=e1564]:
+              - generic [ref=e1565]: GET
+              - generic [ref=e1566]:
+                - link "/api/v1/inventory" [ref=e1568]:
+                  - /url: "#/Inventory/InventoryController_list"
+                - generic [ref=e1570]: List inventory
+            - generic "Copy to clipboard"
+            - button "get /api/v1/inventory" [ref=e1573]
+          - generic [ref=e1578] [cursor=pointer]:
+            - 'button "GET /api/v1/inventory/{id} Get an inventory item" [ref=e1579]':
+              - generic [ref=e1580]: GET
+              - generic [ref=e1581]:
+                - 'link "/api/v1/inventory/{id}" [ref=e1583]':
+                  - /url: "#/Inventory/InventoryController_getOne"
+                - generic [ref=e1585]: Get an inventory item
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/inventory/{id}" [ref=e1588]'
+          - generic [ref=e1593] [cursor=pointer]:
+            - 'button "PATCH /api/v1/inventory/{id} Update an inventory item" [ref=e1594]':
+              - generic [ref=e1595]: PATCH
+              - generic [ref=e1596]:
+                - 'link "/api/v1/inventory/{id}" [ref=e1598]':
+                  - /url: "#/Inventory/InventoryController_update"
+                - generic [ref=e1600]: Update an inventory item
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/inventory/{id}" [ref=e1603]'
+          - generic [ref=e1608] [cursor=pointer]:
+            - 'button "DELETE /api/v1/inventory/{id} Delete an inventory item" [ref=e1609]':
+              - generic [ref=e1610]: DELETE
+              - generic [ref=e1611]:
+                - 'link "/api/v1/inventory/{id}" [ref=e1613]':
+                  - /url: "#/Inventory/InventoryController_remove"
+                - generic [ref=e1615]: Delete an inventory item
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/inventory/{id}" [ref=e1618]'
+          - generic [ref=e1623] [cursor=pointer]:
+            - 'button "POST /api/v1/inventory/{id}/adjust Adjust inventory quantity" [ref=e1624]':
+              - generic [ref=e1625]: POST
+              - generic [ref=e1626]:
+                - 'link "/api/v1/inventory/{id}/adjust" [ref=e1628]':
+                  - /url: "#/Inventory/InventoryController_adjust"
+                - generic [ref=e1630]: Adjust inventory quantity
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/inventory/{id}/adjust" [ref=e1633]'
+      - generic [ref=e1637]:
+        - heading [level=3] [ref=e1638] [cursor=pointer]:
+          - link "Reports" [ref=e1639]:
+            - /url: "#/Reports"
+          - button "Collapse operation" [expanded] [ref=e1640]
+        - generic [ref=e1644]:
+          - generic [ref=e1647] [cursor=pointer]:
+            - button "GET /api/v1/reports/attendance Attendance report" [ref=e1648]:
+              - generic [ref=e1649]: GET
+              - generic [ref=e1650]:
+                - link "/api/v1/reports/attendance" [ref=e1652]:
+                  - /url: "#/Reports/ReportsController_attendance"
+                - generic [ref=e1654]: Attendance report
+            - generic "Copy to clipboard"
+            - button "get /api/v1/reports/attendance" [ref=e1657]
+          - generic [ref=e1662] [cursor=pointer]:
+            - button "GET /api/v1/reports/attendance/export Export attendance report" [ref=e1663]:
+              - generic [ref=e1664]: GET
+              - generic [ref=e1665]:
+                - link "/api/v1/reports/attendance/export" [ref=e1667]:
+                  - /url: "#/Reports/ReportsController_attendanceCsv"
+                - generic [ref=e1669]: Export attendance report
+            - generic "Copy to clipboard"
+            - button "get /api/v1/reports/attendance/export" [ref=e1672]
+          - generic [ref=e1677] [cursor=pointer]:
+            - button "GET /api/v1/reports/staff Staff report" [ref=e1678]:
+              - generic [ref=e1679]: GET
+              - generic [ref=e1680]:
+                - link "/api/v1/reports/staff" [ref=e1682]:
+                  - /url: "#/Reports/ReportsController_staff"
+                - generic [ref=e1684]: Staff report
+            - generic "Copy to clipboard"
+            - button "get /api/v1/reports/staff" [ref=e1687]
+          - generic [ref=e1692] [cursor=pointer]:
+            - button "GET /api/v1/reports/staff/export Export staff report" [ref=e1693]:
+              - generic [ref=e1694]: GET
+              - generic [ref=e1695]:
+                - link "/api/v1/reports/staff/export" [ref=e1697]:
+                  - /url: "#/Reports/ReportsController_staffCsv"
+                - generic [ref=e1699]: Export staff report
+            - generic "Copy to clipboard"
+            - button "get /api/v1/reports/staff/export" [ref=e1702]
+          - generic [ref=e1707] [cursor=pointer]:
+            - button "GET /api/v1/reports/inventory Inventory report" [ref=e1708]:
+              - generic [ref=e1709]: GET
+              - generic [ref=e1710]:
+                - link "/api/v1/reports/inventory" [ref=e1712]:
+                  - /url: "#/Reports/ReportsController_inventory"
+                - generic [ref=e1714]: Inventory report
+            - generic "Copy to clipboard"
+            - button "get /api/v1/reports/inventory" [ref=e1717]
+          - generic [ref=e1722] [cursor=pointer]:
+            - button "GET /api/v1/reports/inventory/export Export inventory report" [ref=e1723]:
+              - generic [ref=e1724]: GET
+              - generic [ref=e1725]:
+                - link "/api/v1/reports/inventory/export" [ref=e1727]:
+                  - /url: "#/Reports/ReportsController_inventoryCsv"
+                - generic [ref=e1729]: Export inventory report
+            - generic "Copy to clipboard"
+            - button "get /api/v1/reports/inventory/export" [ref=e1732]
+      - generic [ref=e1736]:
+        - heading [level=3] [ref=e1737] [cursor=pointer]:
+          - link "Workflows" [ref=e1738]:
+            - /url: "#/Workflows"
+          - button "Collapse operation" [expanded] [ref=e1739]
+        - generic [ref=e1743]:
+          - generic [ref=e1746] [cursor=pointer]:
+            - button "POST /api/v1/workflows/templates Create a workflow template" [ref=e1747]:
+              - generic [ref=e1748]: POST
+              - generic [ref=e1749]:
+                - link "/api/v1/workflows/templates" [ref=e1751]:
+                  - /url: "#/Workflows/WorkflowsController_createTemplate"
+                - generic [ref=e1753]: Create a workflow template
+            - generic "Copy to clipboard"
+            - button "post /api/v1/workflows/templates" [ref=e1756]
+          - generic [ref=e1761] [cursor=pointer]:
+            - button "GET /api/v1/workflows/templates List workflow templates" [ref=e1762]:
+              - generic [ref=e1763]: GET
+              - generic [ref=e1764]:
+                - link "/api/v1/workflows/templates" [ref=e1766]:
+                  - /url: "#/Workflows/WorkflowsController_listTemplates"
+                - generic [ref=e1768]: List workflow templates
+            - generic "Copy to clipboard"
+            - button "get /api/v1/workflows/templates" [ref=e1771]
+          - generic [ref=e1776] [cursor=pointer]:
+            - 'button "GET /api/v1/workflows/templates/{id} Get a workflow template" [ref=e1777]':
+              - generic [ref=e1778]: GET
+              - generic [ref=e1779]:
+                - 'link "/api/v1/workflows/templates/{id}" [ref=e1781]':
+                  - /url: "#/Workflows/WorkflowsController_getTemplate"
+                - generic [ref=e1783]: Get a workflow template
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/workflows/templates/{id}" [ref=e1786]'
+          - generic [ref=e1791] [cursor=pointer]:
+            - 'button "PATCH /api/v1/workflows/templates/{id} Update a workflow template" [ref=e1792]':
+              - generic [ref=e1793]: PATCH
+              - generic [ref=e1794]:
+                - 'link "/api/v1/workflows/templates/{id}" [ref=e1796]':
+                  - /url: "#/Workflows/WorkflowsController_updateTemplate"
+                - generic [ref=e1798]: Update a workflow template
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/workflows/templates/{id}" [ref=e1801]'
+          - generic [ref=e1806] [cursor=pointer]:
+            - 'button "DELETE /api/v1/workflows/templates/{id} Delete a workflow template" [ref=e1807]':
+              - generic [ref=e1808]: DELETE
+              - generic [ref=e1809]:
+                - 'link "/api/v1/workflows/templates/{id}" [ref=e1811]':
+                  - /url: "#/Workflows/WorkflowsController_removeTemplate"
+                - generic [ref=e1813]: Delete a workflow template
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/workflows/templates/{id}" [ref=e1816]'
+          - generic [ref=e1821] [cursor=pointer]:
+            - button "GET /api/v1/workflows/approvals List my approvals" [ref=e1822]:
+              - generic [ref=e1823]: GET
+              - generic [ref=e1824]:
+                - link "/api/v1/workflows/approvals" [ref=e1826]:
+                  - /url: "#/Workflows/WorkflowsController_myApprovals"
+                - generic [ref=e1828]: List my approvals
+            - generic "Copy to clipboard"
+            - button "get /api/v1/workflows/approvals" [ref=e1831]
+          - generic [ref=e1836] [cursor=pointer]:
+            - button "POST /api/v1/workflows/instances Start a workflow instance" [ref=e1837]:
+              - generic [ref=e1838]: POST
+              - generic [ref=e1839]:
+                - link "/api/v1/workflows/instances" [ref=e1841]:
+                  - /url: "#/Workflows/WorkflowsController_startInstance"
+                - generic [ref=e1843]: Start a workflow instance
+            - generic "Copy to clipboard"
+            - button "post /api/v1/workflows/instances" [ref=e1846]
+          - generic [ref=e1851] [cursor=pointer]:
+            - button "GET /api/v1/workflows/instances List workflow instances" [ref=e1852]:
+              - generic [ref=e1853]: GET
+              - generic [ref=e1854]:
+                - link "/api/v1/workflows/instances" [ref=e1856]:
+                  - /url: "#/Workflows/WorkflowsController_listInstances"
+                - generic [ref=e1858]: List workflow instances
+            - generic "Copy to clipboard"
+            - button "get /api/v1/workflows/instances" [ref=e1861]
+          - generic [ref=e1866] [cursor=pointer]:
+            - 'button "GET /api/v1/workflows/instances/{id} Get a workflow instance" [ref=e1867]':
+              - generic [ref=e1868]: GET
+              - generic [ref=e1869]:
+                - 'link "/api/v1/workflows/instances/{id}" [ref=e1871]':
+                  - /url: "#/Workflows/WorkflowsController_getInstance"
+                - generic [ref=e1873]: Get a workflow instance
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/workflows/instances/{id}" [ref=e1876]'
+          - generic [ref=e1881] [cursor=pointer]:
+            - 'button "POST /api/v1/workflows/instances/{id}/approve Approve a workflow instance" [ref=e1882]':
+              - generic [ref=e1883]: POST
+              - generic [ref=e1884]:
+                - 'link "/api/v1/workflows/instances/{id}/approve" [ref=e1886]':
+                  - /url: "#/Workflows/WorkflowsController_approve"
+                - generic [ref=e1888]: Approve a workflow instance
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/workflows/instances/{id}/approve" [ref=e1891]'
+          - generic [ref=e1896] [cursor=pointer]:
+            - 'button "POST /api/v1/workflows/instances/{id}/reject Reject a workflow instance" [ref=e1897]':
+              - generic [ref=e1898]: POST
+              - generic [ref=e1899]:
+                - 'link "/api/v1/workflows/instances/{id}/reject" [ref=e1901]':
+                  - /url: "#/Workflows/WorkflowsController_reject"
+                - generic [ref=e1903]: Reject a workflow instance
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/workflows/instances/{id}/reject" [ref=e1906]'
+          - generic [ref=e1911] [cursor=pointer]:
+            - 'button "POST /api/v1/workflows/instances/{id}/cancel Cancel a workflow instance" [ref=e1912]':
+              - generic [ref=e1913]: POST
+              - generic [ref=e1914]:
+                - 'link "/api/v1/workflows/instances/{id}/cancel" [ref=e1916]':
+                  - /url: "#/Workflows/WorkflowsController_cancel"
+                - generic [ref=e1918]: Cancel a workflow instance
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/workflows/instances/{id}/cancel" [ref=e1921]'
+      - generic [ref=e1925]:
+        - heading [level=3] [ref=e1926] [cursor=pointer]:
+          - link "Platform" [ref=e1927]:
+            - /url: "#/Platform"
+          - button "Collapse operation" [expanded] [ref=e1928]
+        - generic [ref=e1932]:
+          - generic [ref=e1935] [cursor=pointer]:
+            - button "GET /api/v1/platform/plans List all plans" [ref=e1936]:
+              - generic [ref=e1937]: GET
+              - generic [ref=e1938]:
+                - link "/api/v1/platform/plans" [ref=e1940]:
+                  - /url: "#/Platform/PlatformController_listPlans"
+                - generic [ref=e1942]: List all plans
+            - generic "Copy to clipboard"
+            - button "get /api/v1/platform/plans" [ref=e1945]
+          - generic [ref=e1950] [cursor=pointer]:
+            - button "POST /api/v1/platform/plans Create a plan" [ref=e1951]:
+              - generic [ref=e1952]: POST
+              - generic [ref=e1953]:
+                - link "/api/v1/platform/plans" [ref=e1955]:
+                  - /url: "#/Platform/PlatformController_createPlan"
+                - generic [ref=e1957]: Create a plan
+            - generic "Copy to clipboard"
+            - button "post /api/v1/platform/plans" [ref=e1960]
+          - generic [ref=e1965] [cursor=pointer]:
+            - 'button "PATCH /api/v1/platform/plans/{id} Update a plan" [ref=e1966]':
+              - generic [ref=e1967]: PATCH
+              - generic [ref=e1968]:
+                - 'link "/api/v1/platform/plans/{id}" [ref=e1970]':
+                  - /url: "#/Platform/PlatformController_updatePlan"
+                - generic [ref=e1972]: Update a plan
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/platform/plans/{id}" [ref=e1975]'
+          - generic [ref=e1980] [cursor=pointer]:
+            - 'button "DELETE /api/v1/platform/plans/{id} Deactivate a plan" [ref=e1981]':
+              - generic [ref=e1982]: DELETE
+              - generic [ref=e1983]:
+                - 'link "/api/v1/platform/plans/{id}" [ref=e1985]':
+                  - /url: "#/Platform/PlatformController_deactivatePlan"
+                - generic [ref=e1987]: Deactivate a plan
+            - generic "Copy to clipboard"
+            - 'button "delete /api/v1/platform/plans/{id}" [ref=e1990]'
+          - generic [ref=e1995] [cursor=pointer]:
+            - button "GET /api/v1/platform/tenants List tenants" [ref=e1996]:
+              - generic [ref=e1997]: GET
+              - generic [ref=e1998]:
+                - link "/api/v1/platform/tenants" [ref=e2000]:
+                  - /url: "#/Platform/PlatformController_listTenants"
+                - generic [ref=e2002]: List tenants
+            - generic "Copy to clipboard"
+            - button "get /api/v1/platform/tenants" [ref=e2005]
+          - generic [ref=e2010] [cursor=pointer]:
+            - 'button "GET /api/v1/platform/tenants/{id} Get a tenant" [ref=e2011]':
+              - generic [ref=e2012]: GET
+              - generic [ref=e2013]:
+                - 'link "/api/v1/platform/tenants/{id}" [ref=e2015]':
+                  - /url: "#/Platform/PlatformController_getTenant"
+                - generic [ref=e2017]: Get a tenant
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/platform/tenants/{id}" [ref=e2020]'
+          - generic [ref=e2025] [cursor=pointer]:
+            - 'button "PATCH /api/v1/platform/tenants/{id} Update a tenant" [ref=e2026]':
+              - generic [ref=e2027]: PATCH
+              - generic [ref=e2028]:
+                - 'link "/api/v1/platform/tenants/{id}" [ref=e2030]':
+                  - /url: "#/Platform/PlatformController_updateTenant"
+                - generic [ref=e2032]: Update a tenant
+            - generic "Copy to clipboard"
+            - 'button "patch /api/v1/platform/tenants/{id}" [ref=e2035]'
+          - generic [ref=e2040] [cursor=pointer]:
+            - 'button "GET /api/v1/platform/tenants/{id}/usage Get tenant usage" [ref=e2041]':
+              - generic [ref=e2042]: GET
+              - generic [ref=e2043]:
+                - 'link "/api/v1/platform/tenants/{id}/usage" [ref=e2045]':
+                  - /url: "#/Platform/PlatformController_getTenantUsage"
+                - generic [ref=e2047]: Get tenant usage
+            - generic "Copy to clipboard"
+            - 'button "get /api/v1/platform/tenants/{id}/usage" [ref=e2050]'
+          - generic [ref=e2055] [cursor=pointer]:
+            - 'button "POST /api/v1/platform/tenants/{id}/suspend Suspend a tenant" [ref=e2056]':
+              - generic [ref=e2057]: POST
+              - generic [ref=e2058]:
+                - 'link "/api/v1/platform/tenants/{id}/suspend" [ref=e2060]':
+                  - /url: "#/Platform/PlatformController_suspendTenant"
+                - generic [ref=e2062]: Suspend a tenant
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/platform/tenants/{id}/suspend" [ref=e2065]'
+          - generic [ref=e2070] [cursor=pointer]:
+            - 'button "POST /api/v1/platform/tenants/{id}/activate Activate a tenant" [ref=e2071]':
+              - generic [ref=e2072]: POST
+              - generic [ref=e2073]:
+                - 'link "/api/v1/platform/tenants/{id}/activate" [ref=e2075]':
+                  - /url: "#/Platform/PlatformController_activateTenant"
+                - generic [ref=e2077]: Activate a tenant
+            - generic "Copy to clipboard"
+            - 'button "post /api/v1/platform/tenants/{id}/activate" [ref=e2080]'
+          - generic [ref=e2085] [cursor=pointer]:
+            - button "POST /api/v1/platform/users Create a platform user" [ref=e2086]:
+              - generic [ref=e2087]: POST
+              - generic [ref=e2088]:
+                - link "/api/v1/platform/users" [ref=e2090]:
+                  - /url: "#/Platform/PlatformController_createPlatformUser"
+                - generic [ref=e2092]: Create a platform user
+            - generic "Copy to clipboard"
+            - button "post /api/v1/platform/users" [ref=e2095]
+    - generic [ref=e2100]:
+      - heading [level=4] [ref=e2101] [cursor=pointer]:
+        - button "Schemas" [expanded] [ref=e2102]
+      - generic [ref=e2106]:
+        - generic [ref=e2433]:
+          - button "LoginDto" [expanded] [ref=e2434] [cursor=pointer]
+          - text: "{"
+          - table [ref=e2439]:
+            - rowgroup [ref=e2440]:
+              - row [ref=e2441]:
+                - cell "email*" [ref=e2442]
+                - cell [ref=e2443]:
+                  - button "[...]" [ref=e2446] [cursor=pointer]
+              - row [ref=e2448]:
+                - cell "password*" [ref=e2449]
+                - cell [ref=e2450]:
+                  - button "[...]" [ref=e2453] [cursor=pointer]
+          - text: "}"
+        - button "RegisterDto" [ref=e2115] [cursor=pointer]
+        - button "CreateBranchDto" [ref=e2121] [cursor=pointer]
+        - button "UpdateBranchDto" [ref=e2127] [cursor=pointer]
+        - button "CreateStaffDto" [ref=e2133] [cursor=pointer]
+        - button "UpdateStaffDto" [ref=e2139] [cursor=pointer]
+        - button "AssignRolesDto" [ref=e2145] [cursor=pointer]
+        - button "CreateScheduleDto" [ref=e2151] [cursor=pointer]
+        - button "UpdateScheduleDto" [ref=e2157] [cursor=pointer]
+        - button "CreateDepartmentDto" [ref=e2163] [cursor=pointer]
+        - button "UpdateDepartmentDto" [ref=e2169] [cursor=pointer]
+        - button "ClockInDto" [ref=e2175] [cursor=pointer]
+        - button "ClockOutDto" [ref=e2181] [cursor=pointer]
+        - button "UpdateAttendanceDto" [ref=e2187] [cursor=pointer]
+        - button "CreateConversationDto" [ref=e2193] [cursor=pointer]
+        - button "SendMessageDto" [ref=e2199] [cursor=pointer]
+        - button "CreateCompanyRoleDto" [ref=e2205] [cursor=pointer]
+        - button "UpdateCompanyRoleDto" [ref=e2211] [cursor=pointer]
+        - button "AssignCompanyRoleDto" [ref=e2217] [cursor=pointer]
+        - button "CreateFormDto" [ref=e2223] [cursor=pointer]
+        - button "UpdateFormDto" [ref=e2229] [cursor=pointer]
+        - button "SubmitFormDto" [ref=e2235] [cursor=pointer]
+        - button "CreateGroupDto" [ref=e2241] [cursor=pointer]
+        - button "UpdateGroupDto" [ref=e2247] [cursor=pointer]
+        - button "GroupMembersDto" [ref=e2253] [cursor=pointer]
+        - button "CreateInventoryItemDto" [ref=e2259] [cursor=pointer]
+        - button "UpdateInventoryItemDto" [ref=e2265] [cursor=pointer]
+        - button "AdjustInventoryDto" [ref=e2271] [cursor=pointer]
+        - button "CreateMemoDto" [ref=e2277] [cursor=pointer]
+        - button "UpdateMemoDto" [ref=e2283] [cursor=pointer]
+        - button "CreateDocumentDto" [ref=e2289] [cursor=pointer]
+        - button "UpdateDocumentDto" [ref=e2295] [cursor=pointer]
+        - button "CreatePlanDto" [ref=e2301] [cursor=pointer]
+        - button "UpdatePlanDto" [ref=e2307] [cursor=pointer]
+        - button "CreatePlatformUserDto" [ref=e2313] [cursor=pointer]
+        - button "UpdateTenantDto" [ref=e2319] [cursor=pointer]
+        - button "CreateWorkflowTemplateDto" [ref=e2325] [cursor=pointer]
+        - button "UpdateWorkflowTemplateDto" [ref=e2331] [cursor=pointer]
+        - button "StartWorkflowInstanceDto" [ref=e2337] [cursor=pointer]
+        - button "WorkflowActionBodyDto" [ref=e2343] [cursor=pointer]
+        - button "UploadDocumentVersionDto" [ref=e2349] [cursor=pointer]
