@@ -16,6 +16,10 @@ Backend/dist/
 Frontend/dist/
 Frontend/build/
 
+# Flutter generated files
+.dart_tool/
+.flutter-plugins-dependencies
+
 # Logs
 *.log
 npm-debug.log*

@@ -266,16 +266,16 @@ class ApiClient {
 
   Future<void> hydrate() async {
     final prefs = await SharedPreferences.getInstance();
-    tenantId = prefs.getString('zarox:tenantId');
+    tenantId = prefs.getString('tgmanager:tenantId');
   }
 
   Future<void> setTenantId(String? id) async {
     tenantId = id;
     final prefs = await SharedPreferences.getInstance();
     if (id == null) {
-      await prefs.remove('zarox:tenantId');
+      await prefs.remove('tgmanager:tenantId');
     } else {
-      await prefs.setString('zarox:tenantId', id);
+      await prefs.setString('tgmanager:tenantId', id);
     }
   }
 
@@ -503,7 +503,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xfff6f8fb),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: Colors.white,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -554,7 +554,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final state = AppScope.of(context);
     return AuthScaffold(
       title: 'Welcome back',
-      subtitle: 'Sign in to Zarox Connect',
+      subtitle: 'Sign in to TGManager',
       child: Form(
         key: formKey,
         child: Column(
@@ -919,7 +919,7 @@ class PlatformShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShellScaffold(
-      title: 'Zarox Connect',
+      title: 'TGManager',
       subtitle: 'Platform',
       navItems: platformNav,
       selectedRoute: route,
@@ -1461,7 +1461,7 @@ class MetricCard extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: color.withOpacity(.12),
+              backgroundColor: color.withValues(alpha: .12),
               foregroundColor: color,
               child: Icon(icon),
             ),
@@ -1695,6 +1695,7 @@ class _EditableListScreenState extends State<EditableListScreen> {
       ),
     );
     if (confirmed != true) return;
+    if (!mounted) return;
     final state = AppScope.of(context);
     try {
       await state.api.deleteJson('${widget.endpoint}/$id');
@@ -2299,7 +2300,7 @@ class SummaryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       label: Text('$label: $value'),
-      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(.08),
+      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: .08),
     );
   }
 }
@@ -2526,7 +2527,7 @@ class PageHeader extends StatelessWidget {
 }
 
 class LogoRow extends StatelessWidget {
-  const LogoRow({this.title = 'TGManager', this.subtitle = 'Zarox Connect', super.key});
+  const LogoRow({this.title = 'TGManager', this.subtitle = 'Workforce operations', super.key});
 
   final String title;
   final String subtitle;
@@ -2643,9 +2644,9 @@ class BannerBox extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(.08),
+        color: color.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(.2)),
+        border: Border.all(color: color.withValues(alpha: .2)),
       ),
       child: Row(
         children: [
