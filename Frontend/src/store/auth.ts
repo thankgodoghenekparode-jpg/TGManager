@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { authApi } from '../api/auth'
-import { setAccessToken } from '../api/client'
+import { getTenantId, setAccessToken, setTenantId } from '../api/client'
 import type { AuthUser, TenantMembership } from '../api/client'
 
 interface AuthState {
@@ -33,7 +33,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await authApi.login(email, password)
       setAccessToken(null)
-      set({ user: res.user })
+      const storedTenantId = getTenantId()
+      if (storedTenantId && !res.memberships.some((m) => m.id === storedTenantId)) {
+        const { useTenantStore } = await import('./tenant')
+        useTenantStore.getState().clear()
+      }
+      set({ user: res.user, memberships: res.memberships, initialized: true })
     } finally {
       set({ loading: false })
     }
@@ -56,6 +61,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       await authApi.logout()
     } finally {
       setAccessToken(null)
+      setTenantId(null)
+      const { useTenantStore } = await import('./tenant')
+      useTenantStore.getState().clear()
       set({ user: null, memberships: [] })
     }
   },

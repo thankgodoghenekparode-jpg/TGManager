@@ -1,0 +1,12 @@
+{
+  "name": "tgmanager",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:backend": "npm --prefix Backend run dev",
+    "dev:frontend": "node scripts/flutter-dev.mjs",
+    "dev:flutter": "node scripts/flutter-dev.mjs",
+    "dev:react": "npm --prefix Frontend run dev",
+    "build": "npm --prefix Backend run build && npm --prefix Frontend run build"
+  }
+}

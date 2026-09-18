@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:http/browser_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String _defaultApiBaseUrl = '/api/v1';
+const String _defaultApiBaseUrl = 'http://localhost:4000/api/v1';
 const String _apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
   defaultValue: _defaultApiBaseUrl,
@@ -81,9 +82,7 @@ class AppState extends ChangeNotifier {
       final session = await api.me();
       user = session.user;
       memberships = session.memberships;
-      if (user != null && !isPlatformUser && api.tenantId != null) {
-        await loadTenant();
-      }
+      await _ensureTenantSelection();
       route = _initialRoute();
     } catch (_) {
       user = null;
@@ -105,6 +104,7 @@ class AppState extends ChangeNotifier {
       final session = await api.me();
       user = session.user;
       memberships = session.memberships;
+      await _ensureTenantSelection();
       route = _initialRoute();
     } catch (e) {
       error = apiErrorMessage(e);
@@ -171,7 +171,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> loadTenant() async {
-    final current = await api.getJson('/tenants/current') as Map<String, dynamic>;
+    final current =
+        await api.getJson('/tenants/current') as Map<String, dynamic>;
     tenant = CurrentTenant.fromJson(current);
     await api.setTenantId(tenant!.id);
   }
@@ -180,6 +181,30 @@ class AppState extends ChangeNotifier {
     await api.setTenantId(membership.id);
     await loadTenant();
     go('/app');
+  }
+
+  Future<void> _ensureTenantSelection() async {
+    if (user == null) return;
+    if (isPlatformUser) {
+      tenant = null;
+      await api.setTenantId(null);
+      return;
+    }
+
+    final selectedTenant = api.tenantId;
+    final hasSelectedMembership = selectedTenant != null &&
+        memberships.any((membership) => membership.id == selectedTenant);
+
+    if (!hasSelectedMembership) {
+      tenant = null;
+      if (memberships.length != 1) {
+        await api.setTenantId(null);
+        return;
+      }
+      await api.setTenantId(memberships.first.id);
+    }
+
+    await loadTenant();
   }
 
   Future<void> logout() async {
@@ -214,15 +239,21 @@ class AppState extends ChangeNotifier {
     if (!initialized) return route;
     if (user == null) {
       return switch (nextRoute) {
-        '/forgot-password' || '/password-reset-request' || '/reset-password' =>
+        '/forgot-password' ||
+        '/password-reset-request' ||
+        '/reset-password' =>
           nextRoute,
         _ => '/login',
       };
     }
     if (nextRoute == '/login' || nextRoute == '/') return _initialRoute();
-    if (nextRoute.startsWith('/admin') && !isPlatformUser) return _initialRoute();
+    if (nextRoute.startsWith('/admin') && !isPlatformUser) {
+      return _initialRoute();
+    }
     if (nextRoute.startsWith('/app') && isPlatformUser) return '/admin';
-    if (nextRoute.startsWith('/app') && tenant == null) return '/select-company';
+    if (nextRoute.startsWith('/app') && tenant == null) {
+      return '/select-company';
+    }
     return nextRoute;
   }
 }
@@ -254,7 +285,7 @@ class ApiClient {
   ApiClient({required this.baseUrl});
 
   final String baseUrl;
-  final http.Client _client = http.Client();
+  final http.Client _client = BrowserClient()..withCredentials = true;
   String? tenantId;
 
   Uri _uri(String path) {
@@ -333,17 +364,17 @@ class ApiClient {
   }
 
   dynamic _decode(http.Response response) {
-    final body = response.body.isEmpty
-        ? <String, dynamic>{}
-        : jsonDecode(response.body);
+    final body =
+        response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return body;
     }
     final mapBody = body is Map<String, dynamic> ? body : <String, dynamic>{};
     throw ApiException(
       statusCode: response.statusCode,
-      message:
-          _messageFromBody(mapBody) ?? response.reasonPhrase ?? 'Request failed',
+      message: _messageFromBody(mapBody) ??
+          response.reasonPhrase ??
+          'Request failed',
     );
   }
 
@@ -491,28 +522,130 @@ class CurrentTenant {
   }
 }
 
+const Color _ink = Color(0xff161311);
+const Color _coal = Color(0xfff5f1ec);
+const Color _paper = Color(0xff161311);
+const Color _surface = Color(0xff221e1b);
+const Color _surfaceElevated = Color(0xff2c2723);
+const Color _line = Color(0xff342e28);
+const Color _acid = Color(0xffd4b491);
+const Color _mint = Color(0xffc5a079);
+const Color _muted = Color(0xffa69c92);
+const Color _accentWarmMuted = Color(0xff3e342b);
+
 class AppTheme {
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xff2563eb),
-      primary: const Color(0xff2563eb),
-      secondary: const Color(0xff0891b2),
-      surface: Colors.white,
+    const scheme = ColorScheme.dark(
+      primary: _acid,
+      secondary: _mint,
+      tertiary: _accentWarmMuted,
+      surface: _surface,
+      onSurface: _coal,
+      onSurfaceVariant: _muted,
+      error: Color(0xffe55b4c),
     );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xfff6f8fb),
-      cardTheme: CardThemeData(
-        color: Colors.white,
+      scaffoldBackgroundColor: _paper,
+      fontFamily: 'Arial',
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(
+          fontSize: 42,
+          fontWeight: FontWeight.w800,
+          height: 1.05,
+          color: _coal,
+          letterSpacing: -0.5,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          color: _coal,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          color: _coal,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: _coal,
+        ),
+        bodyMedium: TextStyle(fontSize: 14, color: _coal),
+        bodySmall: TextStyle(fontSize: 12, color: _muted),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: _paper,
+        foregroundColor: _coal,
         elevation: 0,
+        centerTitle: false,
+        surfaceTintColor: Colors.transparent,
+      ),
+      cardTheme: CardThemeData(
+        color: _surface,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: const BorderSide(color: Color(0xffe5e9f1)),
+          borderRadius: BorderRadius.circular(22),
+          side: const BorderSide(color: _line),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: _acid,
+          foregroundColor: _ink,
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: _acid,
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: _coal,
+          backgroundColor: _surfaceElevated,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: _line),
+          ),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: _acid,
+        textColor: _coal,
+        selectedColor: _ink,
+        selectedTileColor: _acid,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: _surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: _line),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        filled: true,
+        fillColor: _surfaceElevated,
+        labelStyle: const TextStyle(color: _muted),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: _line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: _line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: _acid, width: 1.6),
+        ),
       ),
     );
   }
@@ -761,34 +894,234 @@ class AuthScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Card(
-            margin: const EdgeInsets.all(20),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const LogoRow(),
-                  const SizedBox(height: 24),
-                  Text(title, style: Theme.of(context).textTheme.headlineSmall),
-                  const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+      body: AuthBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 900;
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1120),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: wide
+                        ? Row(
+                            children: [
+                              const Expanded(child: AuthBrandPanel()),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _AuthFormPanel(title, subtitle, child),
+                              ),
+                            ],
+                          )
+                        : _AuthFormPanel(title, subtitle, child),
                   ),
-                  const SizedBox(height: 24),
-                  child,
-                ],
-              ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthFormPanel extends StatelessWidget {
+  const _AuthFormPanel(this.title, this.subtitle, this.child);
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const LogoRow(),
+            const SizedBox(height: 28),
+            Text(title, style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: _muted,
+                  ),
+            ),
+            const SizedBox(height: 28),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AuthBrandPanel extends StatelessWidget {
+  const AuthBrandPanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 560),
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: _line, width: 1.2),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xff2a231d),
+                Color(0xff1d1815),
+                Color(0xff161311),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(36),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: _accentWarmMuted,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: _acid.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome, color: _acid, size: 14),
+                      SizedBox(width: 6),
+                      Text(
+                        'DESIGNNEST MANAGEMENT',
+                        style: TextStyle(
+                          color: _acid,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  'Beautiful Spaces,\nThoughtfully\nManaged.',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    color: _coal,
+                    fontSize: 44,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Transform your organization into a unified, high-performance workspace with modern tools and intelligent dashboards.',
+                  style: TextStyle(
+                    color: _muted,
+                    fontSize: 15,
+                    height: 1.5,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                const _BalancePreviewCard(),
+              ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class AuthBackground extends StatelessWidget {
+  const AuthBackground({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: _ink,
+      ),
+      child: child,
+    );
+  }
+}
+
+class _BalancePreviewCard extends StatelessWidget {
+  const _BalancePreviewCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _surfaceElevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('System Health', style: TextStyle(color: _muted, fontSize: 12, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '99.9%',
+                style: TextStyle(
+                  color: _coal,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _acid,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  children: [
+                    Text('Get Started', style: TextStyle(color: _ink, fontWeight: FontWeight.w800, fontSize: 13)),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_forward, color: _ink, size: 16),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Row(
+            children: [
+              Icon(Icons.check_circle, color: _acid, size: 16),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Active operations across all branches',
+                  style: TextStyle(color: _muted, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -812,20 +1145,33 @@ class SelectCompanyScreen extends StatelessWidget {
         ],
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         itemCount: state.memberships.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final membership = state.memberships[index];
           return Card(
             child: ListTile(
+              leading: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: _acid,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _ink),
+                ),
+                child: const Icon(Icons.apartment, color: _ink),
+              ),
               title: Text(membership.name),
               subtitle: Text(
                 [
                   membership.slug,
                   membership.planName,
                   membership.onboardingStatus,
-                ].whereType<String>().where((value) => value.isNotEmpty).join(' - '),
+                ]
+                    .whereType<String>()
+                    .where((value) => value.isNotEmpty)
+                    .join(' - '),
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => state.selectTenant(membership),
@@ -872,7 +1218,8 @@ Future<void> showChangePasswordDialog(BuildContext context) {
                   TextFormField(
                     controller: newPassword,
                     obscureText: true,
-                    decoration: const InputDecoration(labelText: 'New password'),
+                    decoration:
+                        const InputDecoration(labelText: 'New password'),
                     validator: (value) => value == null || value.length < 8
                         ? 'Use at least 8 characters'
                         : null,
@@ -980,7 +1327,14 @@ class _ShellScaffoldState extends State<ShellScaffold> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.subtitle),
+        title: Text(
+          widget.subtitle.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
+          ),
+        ),
         automaticallyImplyLeading: !wide,
         actions: [
           IconButton(
@@ -1001,6 +1355,8 @@ class _ShellScaffoldState extends State<ShellScaffold> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: CircleAvatar(
+                backgroundColor: _ink,
+                foregroundColor: _acid,
                 radius: 16,
                 child: Text(state.user?.initials ?? '?'),
               ),
@@ -1011,10 +1367,10 @@ class _ShellScaffoldState extends State<ShellScaffold> {
       drawer: wide ? null : Drawer(child: drawer),
       body: Row(
         children: [
-          if (wide) SizedBox(width: 264, child: drawer),
+          if (wide) SizedBox(width: 284, child: drawer),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(28, 18, 28, 32),
               children: [widget.child],
             ),
           ),
@@ -1041,41 +1397,74 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    return SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: LogoRow(title: title, subtitle: subtitle),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              children: [
-                for (final item in navItems)
-                  ListTile(
-                    leading: Icon(item.icon),
-                    title: Text(item.label),
-                    selected: selectedRoute == item.route,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+    return Container(
+      color: _ink,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
+              child: LogoRow(
+                title: title,
+                subtitle: subtitle,
+                inverse: true,
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xff242424)),
+            Expanded(
+              child: ListView(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+                children: [
+                  for (final item in navItems)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: ListTile(
+                        leading: Icon(item.icon),
+                        title: Text(item.label),
+                        selected: selectedRoute == item.route,
+                        iconColor: const Color(0xffdedbd2),
+                        textColor: const Color(0xffdedbd2),
+                        selectedColor: _ink,
+                        selectedTileColor: _acid,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        onTap: () {
+                          Navigator.maybePop(context);
+                          state.go(item.route);
+                        },
+                      ),
                     ),
-                    onTap: () {
-                      Navigator.maybePop(context);
-                      state.go(item.route);
-                    },
+                ],
+              ),
+            ),
+            if (state.user != null)
+              Container(
+                margin: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xff171717),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xff2a2a2a)),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: _acid,
+                    foregroundColor: _ink,
+                    child: Text(state.user!.initials),
                   ),
-              ],
-            ),
-          ),
-          if (state.user != null)
-            ListTile(
-              leading: CircleAvatar(child: Text(state.user!.initials)),
-              title: Text(state.user!.fullName),
-              subtitle: Text(state.user!.email),
-            ),
-        ],
+                  title: Text(
+                    state.user!.fullName,
+                    style: const TextStyle(color: _surface),
+                  ),
+                  subtitle: Text(
+                    state.user!.email,
+                    style: const TextStyle(color: Color(0xffaaa69b)),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1101,7 +1490,8 @@ final platformNav = [
 final companyNav = [
   const NavEntry('Dashboard', '/app', Icons.dashboard_outlined),
   const NavEntry('Branches', '/app/branches', Icons.apartment_outlined),
-  const NavEntry('Departments', '/app/departments', Icons.account_tree_outlined),
+  const NavEntry(
+      'Departments', '/app/departments', Icons.account_tree_outlined),
   const NavEntry('Groups', '/app/groups', Icons.groups_outlined),
   const NavEntry('Staff', '/app/staff', Icons.people_outline),
   const NavEntry('Roles', '/app/roles', Icons.security_outlined),
@@ -1124,8 +1514,10 @@ final companyNav = [
 const branchFields = [
   FormFieldSpec(key: 'name', label: 'Name', required: true),
   FormFieldSpec(key: 'address', label: 'Address', required: true),
-  FormFieldSpec(key: 'latitude', label: 'Latitude', required: true, number: true),
-  FormFieldSpec(key: 'longitude', label: 'Longitude', required: true, number: true),
+  FormFieldSpec(
+      key: 'latitude', label: 'Latitude', required: true, number: true),
+  FormFieldSpec(
+      key: 'longitude', label: 'Longitude', required: true, number: true),
   FormFieldSpec(key: 'radiusMeters', label: 'Radius meters', number: true),
   FormFieldSpec(key: 'phoneNumber', label: 'Phone number'),
   FormFieldSpec(key: 'openingTime', label: 'Opening time'),
@@ -1181,9 +1573,11 @@ const scheduleFields = [
   FormFieldSpec(key: 'branchId', label: 'Branch ID'),
   FormFieldSpec(key: 'departmentId', label: 'Department ID'),
   FormFieldSpec(key: 'staffRecordId', label: 'Staff record ID'),
-  FormFieldSpec(key: 'resumptionTime', label: 'Resumption time', required: true),
+  FormFieldSpec(
+      key: 'resumptionTime', label: 'Resumption time', required: true),
   FormFieldSpec(key: 'closingTime', label: 'Closing time', required: true),
-  FormFieldSpec(key: 'latePeriodMinutes', label: 'Late period minutes', number: true),
+  FormFieldSpec(
+      key: 'latePeriodMinutes', label: 'Late period minutes', number: true),
   FormFieldSpec(key: 'timezone', label: 'Timezone'),
 ];
 
@@ -1225,7 +1619,10 @@ final companyScreens = <String, Widget Function()>{
         endpoint: '/branches',
         icon: Icons.apartment_outlined,
         fields: branchFields,
-        createDefaults: {'workingDays': [1, 2, 3, 4, 5], 'timezone': 'Africa/Lagos'},
+        createDefaults: {
+          'workingDays': [1, 2, 3, 4, 5],
+          'timezone': 'Africa/Lagos'
+        },
       ),
   '/app/departments': () => const EditableListScreen(
         title: 'Departments',
@@ -1259,7 +1656,11 @@ final companyScreens = <String, Widget Function()>{
         endpoint: '/schedules',
         icon: Icons.calendar_month_outlined,
         fields: scheduleFields,
-        createDefaults: {'scope': 'BRANCH', 'workingDays': [1, 2, 3, 4, 5], 'timezone': 'Africa/Lagos'},
+        createDefaults: {
+          'scope': 'BRANCH',
+          'workingDays': [1, 2, 3, 4, 5],
+          'timezone': 'Africa/Lagos'
+        },
       ),
   '/app/attendance': () => const AttendanceScreen(),
   '/app/chat': () => const PlaceholderScreen(title: 'Chat'),
@@ -1273,7 +1674,9 @@ final companyScreens = <String, Widget Function()>{
         endpoint: '/memos',
         icon: Icons.note_alt_outlined,
         fields: memoFields,
-        createDefaults: {'audience': {'all': true}},
+        createDefaults: {
+          'audience': {'all': true}
+        },
       ),
   '/app/inventory': () => const EditableListScreen(
         title: 'Inventory',
@@ -1284,7 +1687,8 @@ final companyScreens = <String, Widget Function()>{
           FormFieldSpec(key: 'name', label: 'Name', required: true),
           FormFieldSpec(key: 'sku', label: 'SKU'),
           FormFieldSpec(key: 'unit', label: 'Unit'),
-          FormFieldSpec(key: 'minQuantity', label: 'Minimum quantity', number: true),
+          FormFieldSpec(
+              key: 'minQuantity', label: 'Minimum quantity', number: true),
           FormFieldSpec(key: 'location', label: 'Location'),
         ],
       ),
@@ -1326,7 +1730,8 @@ final companyScreens = <String, Widget Function()>{
         endpoint: '/settings',
         icon: Icons.settings_outlined,
       ),
-  '/app/account/change-email': () => const PlaceholderScreen(title: 'Change email'),
+  '/app/account/change-email': () =>
+      const PlaceholderScreen(title: 'Change email'),
   '/app/account/requests': () => const DataListScreen(
         title: 'My requests',
         endpoint: '/account/requests',
@@ -1352,7 +1757,8 @@ class PlatformDashboardScreen extends StatelessWidget {
       subtitle: 'Manage tenants, plans, users, and account requests.',
       cards: [
         MetricCard(label: 'Tenants', value: 'Live', icon: Icons.apartment),
-        MetricCard(label: 'Plans', value: 'Active', icon: Icons.workspace_premium),
+        MetricCard(
+            label: 'Plans', value: 'Active', icon: Icons.workspace_premium),
         MetricCard(label: 'Users', value: 'Managed', icon: Icons.people),
         MetricCard(label: 'Requests', value: 'Review', icon: Icons.assignment),
       ],
@@ -1371,9 +1777,11 @@ class CompanyDashboardScreen extends StatelessWidget {
       title: '${tenant?.name ?? 'Company'} Dashboard',
       subtitle: 'A quick pulse on your organisation.',
       cards: [
-        const MetricCard(label: 'Branches', value: 'Open', icon: Icons.apartment),
+        const MetricCard(
+            label: 'Branches', value: 'Open', icon: Icons.apartment),
         const MetricCard(label: 'Staff', value: 'Active', icon: Icons.people),
-        const MetricCard(label: 'Reports', value: 'Weekly', icon: Icons.event_note),
+        const MetricCard(
+            label: 'Reports', value: 'Weekly', icon: Icons.event_note),
         MetricCard(
           label: 'Plan',
           value: tenant?.planName ?? 'Current',
@@ -1407,24 +1815,154 @@ class DashboardGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = AppScope.of(context);
+    final user = state.user;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PageHeader(title: title, subtitle: subtitle),
-        const SizedBox(height: 20),
+        // Welcome Header & Quick Action
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: _accentWarmMuted,
+                  child: Text(
+                    user?.initials ?? 'TG',
+                    style: const TextStyle(color: _acid, fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Welcome back,', style: TextStyle(color: _muted, fontSize: 13, fontWeight: FontWeight.w500)),
+                    Text(
+                      user?.fullName ?? 'Manager',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.notifications_none_rounded, color: _coal),
+              tooltip: 'Notifications',
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Hero Highlight Banner (Matches "My Project - Modern Living Room" card from reference design)
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: _accentWarmMuted,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: _acid.withValues(alpha: 0.2)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Active Workspace', style: TextStyle(color: _acid, fontSize: 12, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
+                    Text(
+                      state.tenant?.name ?? 'Main Headquarters',
+                      style: const TextStyle(color: _coal, fontSize: 22, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _surfaceElevated,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('12 Active Teams', style: TextStyle(color: _muted, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: _acid,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.arrow_forward_rounded, color: _ink, size: 22),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+
+        // "My Spaces" / Core Categories Section
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'My Spaces',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const Text('See All', style: TextStyle(color: _muted, fontSize: 13, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        const SizedBox(height: 14),
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
-            final columns = width >= 1100
-                ? 4
-                : width >= 720
-                    ? 2
-                    : 1;
+            final columns = width >= 1100 ? 4 : width >= 600 ? 4 : 2;
             return GridView.count(
               crossAxisCount: columns,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 2.8,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 1.3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: const [
+                _CategoryCard(icon: Icons.meeting_room_outlined, label: 'Main Office', sub: 'Active'),
+                _CategoryCard(icon: Icons.inventory_2_outlined, label: 'Warehouse', sub: 'Stocked'),
+                _CategoryCard(icon: Icons.people_outline, label: 'Staff Hub', sub: '24 Members'),
+                _CategoryCard(icon: Icons.add_rounded, label: 'Add Space', sub: 'Create new', isAdd: true),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 28),
+
+        // Quick Metrics Section
+        Text(
+          'Quick Metrics',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 14),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final columns = width >= 1100 ? 4 : width >= 720 ? 2 : 1;
+            return GridView.count(
+              crossAxisCount: columns,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 2.6,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: cards,
@@ -1432,10 +1970,63 @@ class DashboardGrid extends StatelessWidget {
           },
         ),
         if (footer != null) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           footer!,
         ],
       ],
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({
+    required this.icon,
+    required this.label,
+    required this.sub,
+    this.isAdd = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final String sub;
+  final bool isAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isAdd ? Colors.transparent : _surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isAdd ? _line : _line,
+          style: isAdd ? BorderStyle.solid : BorderStyle.solid,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: isAdd ? _surfaceElevated : _accentWarmMuted,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: isAdd ? _muted : _acid, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            style: const TextStyle(color: _coal, fontSize: 14, fontWeight: FontWeight.w700),
+          ),
+          Text(
+            sub,
+            style: const TextStyle(color: _muted, fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1454,16 +2045,20 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: color.withValues(alpha: .12),
-              foregroundColor: color,
-              child: Icon(icon),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _accentWarmMuted,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _acid.withValues(alpha: 0.2)),
+              ),
+              child: Icon(icon, color: _acid, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1471,13 +2066,22 @@ class MetricCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(label, style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    label.toUpperCase(),
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: _muted,
+                          letterSpacing: 0.8,
+                        ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     value,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
+                          color: _coal,
                         ),
                   ),
                 ],
@@ -1618,7 +2222,8 @@ class _EditableListScreenState extends State<EditableListScreen> {
           children: [
             PageHeader(
               title: widget.title,
-              subtitle: 'Create, update, and review records from ${widget.endpoint}.',
+              subtitle:
+                  'Create, update, and review records from ${widget.endpoint}.',
               action: Wrap(
                 spacing: 8,
                 children: [
@@ -1657,7 +2262,8 @@ class _EditableListScreenState extends State<EditableListScreen> {
     final saved = await showRecordEditor(
       context: context,
       title: item == null ? 'New ${widget.title}' : 'Edit ${widget.title}',
-      fields: item == null ? widget.fields : widget.updateFields ?? widget.fields,
+      fields:
+          item == null ? widget.fields : widget.updateFields ?? widget.fields,
       initial: item,
       defaults: item == null ? widget.createDefaults : const {},
       onSave: (body) async {
@@ -1666,7 +2272,9 @@ class _EditableListScreenState extends State<EditableListScreen> {
           await state.api.postJson(widget.endpoint, body);
         } else {
           final id = item['id']?.toString();
-          if (id == null || id.isEmpty) throw ApiException(statusCode: 0, message: 'Record id is missing');
+          if (id == null || id.isEmpty) {
+            throw ApiException(statusCode: 0, message: 'Record id is missing');
+          }
           await state.api.patchJson('${widget.endpoint}/$id', body);
         }
       },
@@ -1737,7 +2345,9 @@ Future<bool?> showRecordEditor({
   final controllers = {
     for (final field in fields)
       field.key: TextEditingController(
-        text: initial?[field.key]?.toString() ?? defaults[field.key]?.toString() ?? '',
+        text: initial?[field.key]?.toString() ??
+            defaults[field.key]?.toString() ??
+            '',
       ),
   };
   String? error;
@@ -1763,16 +2373,21 @@ Future<bool?> showRecordEditor({
                         TextFormField(
                           controller: controllers[field.key],
                           keyboardType: field.number
-                              ? const TextInputType.numberWithOptions(decimal: true)
+                              ? const TextInputType.numberWithOptions(
+                                  decimal: true)
                               : TextInputType.text,
                           minLines: field.multiline ? 3 : 1,
                           maxLines: field.multiline ? 6 : 1,
                           decoration: InputDecoration(labelText: field.label),
                           validator: (value) {
-                            if (field.required && (value == null || value.trim().isEmpty)) {
+                            if (field.required &&
+                                (value == null || value.trim().isEmpty)) {
                               return '${field.label} is required';
                             }
-                            if (field.number && value != null && value.trim().isNotEmpty && num.tryParse(value.trim()) == null) {
+                            if (field.number &&
+                                value != null &&
+                                value.trim().isNotEmpty &&
+                                num.tryParse(value.trim()) == null) {
                               return '${field.label} must be a number';
                             }
                             return null;
@@ -1801,7 +2416,9 @@ Future<bool?> showRecordEditor({
                   }
                   try {
                     await onSave(body);
-                    if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext, true);
+                    }
                   } catch (e) {
                     setState(() => error = apiErrorMessage(e));
                   }
@@ -2046,26 +2663,31 @@ Future<bool?> showClockDialog({
                     if (error != null) ErrorBanner(message: error!),
                     TextFormField(
                       controller: latitude,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(labelText: 'Latitude'),
-                      validator: (value) => num.tryParse((value ?? '').trim()) == null
-                          ? 'Latitude is required'
-                          : null,
+                      validator: (value) =>
+                          num.tryParse((value ?? '').trim()) == null
+                              ? 'Latitude is required'
+                              : null,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: longitude,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(labelText: 'Longitude'),
-                      validator: (value) => num.tryParse((value ?? '').trim()) == null
-                          ? 'Longitude is required'
-                          : null,
+                      validator: (value) =>
+                          num.tryParse((value ?? '').trim()) == null
+                              ? 'Longitude is required'
+                              : null,
                     ),
                     if (clockIn) ...[
                       const SizedBox(height: 14),
                       TextFormField(
                         controller: staffRecordId,
-                        decoration: const InputDecoration(labelText: 'Staff record ID'),
+                        decoration:
+                            const InputDecoration(labelText: 'Staff record ID'),
                       ),
                     ],
                     const SizedBox(height: 14),
@@ -2096,10 +2718,14 @@ Future<bool?> showClockDialog({
                   };
                   try {
                     await state.api.postJson(
-                      clockIn ? '/attendance/clock-in' : '/attendance/clock-out',
+                      clockIn
+                          ? '/attendance/clock-in'
+                          : '/attendance/clock-out',
                       body,
                     );
-                    if (dialogContext.mounted) Navigator.pop(dialogContext, true);
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext, true);
+                    }
                   } catch (e) {
                     setState(() => error = apiErrorMessage(e));
                   }
@@ -2157,7 +2783,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
           children: [
             PageHeader(
               title: 'Reports',
-              subtitle: 'Attendance, staff, and inventory summaries from the reporting API.',
+              subtitle:
+                  'Attendance, staff, and inventory summaries from the reporting API.',
               action: IconButton(
                 tooltip: 'Refresh',
                 onPressed: () => setState(() => future = _load()),
@@ -2248,7 +2875,8 @@ class ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final values = summary is Map ? (summary as Map).entries.take(6).toList() : const [];
+    final values =
+        summary is Map ? (summary as Map).entries.take(6).toList() : const [];
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -2300,7 +2928,8 @@ class SummaryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       label: Text('$label: $value'),
-      backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: .08),
+      backgroundColor: _acid,
+      side: const BorderSide(color: _ink),
     );
   }
 }
@@ -2366,7 +2995,8 @@ class EditableItemsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const InfoPanel(title: 'No records', message: 'Nothing to show yet.');
+      return const InfoPanel(
+          title: 'No records', message: 'Nothing to show yet.');
     }
     return Card(
       child: ListView.separated(
@@ -2411,7 +3041,9 @@ String itemSubtitle(Map<String, dynamic> item) {
   final parts = <String>[];
   for (final key in ['status', 'slug', 'address', 'unit', 'createdAt']) {
     final value = item[key];
-    if (value != null && value.toString().isNotEmpty) parts.add(value.toString());
+    if (value != null && value.toString().isNotEmpty) {
+      parts.add(value.toString());
+    }
     if (parts.length == 2) break;
   }
   return parts.isEmpty ? 'Tap actions to manage' : parts.join(' - ');
@@ -2426,7 +3058,8 @@ class ItemsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const InfoPanel(title: 'No records', message: 'Nothing to show yet.');
+      return const InfoPanel(
+          title: 'No records', message: 'Nothing to show yet.');
     }
     return Card(
       child: ListView.separated(
@@ -2437,8 +3070,10 @@ class ItemsCard extends StatelessWidget {
         itemBuilder: (context, index) {
           final item = items[index];
           final map = item is Map<String, dynamic> ? item : <String, dynamic>{};
-          final title = _firstText(map, ['name', 'title', 'email', 'code', 'id']);
-          final subtitle = _firstText(map, ['description', 'status', 'slug', 'createdAt']);
+          final title =
+              _firstText(map, ['name', 'title', 'email', 'code', 'id']);
+          final subtitle =
+              _firstText(map, ['description', 'status', 'slug', 'createdAt']);
           return ListTile(
             leading: Icon(icon),
             title: Text(title ?? 'Record ${index + 1}'),
@@ -2497,43 +3132,57 @@ class PageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _line)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _muted,
+                      ),
+                ),
+              ],
+            ),
           ),
-        ),
-        if (action != null) action!,
-      ],
+          if (action != null) action!,
+        ],
+      ),
     );
   }
 }
 
 class LogoRow extends StatelessWidget {
-  const LogoRow({this.title = 'TGManager', this.subtitle = 'Workforce operations', super.key});
+  const LogoRow({
+    this.title = 'TGManager',
+    this.subtitle = 'Workforce operations',
+    this.inverse = false,
+    super.key,
+  });
 
   final String title;
   final String subtitle;
+  final bool inverse;
 
   @override
   Widget build(BuildContext context) {
+    final textColor = inverse ? _surface : _ink;
+    final subColor = inverse ? const Color(0xffaaa69b) : _muted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2541,23 +3190,35 @@ class LogoRow extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
+            color: inverse ? _acid : _ink,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.business_center, color: Colors.white),
+          child: Icon(
+            Icons.business_center,
+            color: inverse ? _ink : _acid,
+          ),
         ),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ],
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: textColor,
+                    ),
+              ),
+              Text(
+                subtitle,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: subColor,
+                    ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -2607,13 +3268,23 @@ class InfoPanel extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Row(
           children: [
-            const Icon(Icons.info_outline),
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: _acid,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _ink),
+              ),
+              child: const Icon(Icons.info_outline, color: _ink, size: 20),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 4),
                   Text(message),
                 ],
@@ -2644,13 +3315,24 @@ class BannerBox extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: .08),
+        color: color == _mint || color == const Color(0xff059669)
+            ? _acid
+            : color.withValues(alpha: .08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: .2)),
+        border: Border.all(
+          color: color == _mint || color == const Color(0xff059669)
+              ? _ink
+              : color.withValues(alpha: .25),
+        ),
       ),
       child: Row(
         children: [
-          Icon(icon, color: color),
+          Icon(
+            icon,
+            color: color == _mint || color == const Color(0xff059669)
+                ? _ink
+                : color,
+          ),
           const SizedBox(width: 10),
           Expanded(child: Text(message)),
         ],

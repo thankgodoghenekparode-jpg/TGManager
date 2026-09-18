@@ -80,7 +80,7 @@ export class AuthController {
   ) {
     const result = await this.authService.login(dto, this.context(req));
     this.setAuthCookies(res, result);
-    return { user: result.user };
+    return { user: result.user, memberships: result.memberships };
   }
 
   @Public()

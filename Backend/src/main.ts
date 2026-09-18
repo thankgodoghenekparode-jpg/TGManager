@@ -52,8 +52,25 @@ async function bootstrap(): Promise<void> {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+  const isLocalDevelopment =
+    config.get<string>('NODE_ENV') !== 'production' &&
+    config.get<string>('NODE_ENV') !== 'prod';
   app.enableCors({
-    origin: origins,
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      const localOrigin =
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      if (origins.includes(origin) || (isLocalDevelopment && localOrigin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS origin not allowed: ${origin}`), false);
+    },
     credentials: true,
   });
 

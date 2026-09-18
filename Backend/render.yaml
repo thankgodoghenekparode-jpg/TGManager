@@ -1,0 +1,35 @@
+services:
+  # TGManager NestJS Backend API Service
+  - type: web
+    name: tgmanager-backend
+    runtime: docker
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tgmanager-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "https://tgmanager-react.vercel.app,https://tgmanager-flutter.vercel.app"
+      - key: SEED_DEMO
+        value: "true"
+      - key: DB_SEED_ON_START
+        value: "true"
+
+databases:
+  # Managed PostgreSQL Database
+  - name: tgmanager-db
+    databaseName: tgmanager
+    user: tgmanager
+    plan: free
+    region: oregon

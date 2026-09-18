@@ -208,6 +208,75 @@ async function seedPlans(prisma: PrismaClient) {
   console.log('  ✓ Plans');
 }
 
+async function repairExistingDemoLogins(
+  prisma: PrismaClient,
+  demoTenantId: string,
+  sunshineSlug: string,
+) {
+  const demoUsers = [...PLATFORM_USERS, ...DEMO_USERS];
+  const allUsers = [...demoUsers, SUNSHINE_USER];
+  const userMap: Record<string, string> = {};
+
+  for (const user of allUsers) {
+    const upserted = await prisma.user.upsert({
+      where: { email: user.email },
+      update: {
+        passwordHash: BCRYPT_HASH,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.platformRole,
+        isActive: true,
+      },
+      create: {
+        email: user.email,
+        passwordHash: BCRYPT_HASH,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.platformRole,
+        isActive: true,
+      },
+    });
+    userMap[user.email] = upserted.id;
+  }
+
+  for (const user of demoUsers) {
+    await prisma.tenantUser.upsert({
+      where: {
+        tenantId_userId: {
+          tenantId: demoTenantId,
+          userId: userMap[user.email],
+        },
+      },
+      update: {},
+      create: {
+        tenantId: demoTenantId,
+        userId: userMap[user.email],
+      },
+    });
+  }
+
+  const sunshineTenant = await prisma.tenant.findUnique({
+    where: { slug: sunshineSlug },
+  });
+  if (sunshineTenant) {
+    await prisma.tenantUser.upsert({
+      where: {
+        tenantId_userId: {
+          tenantId: sunshineTenant.id,
+          userId: userMap[SUNSHINE_USER.email],
+        },
+      },
+      update: {},
+      create: {
+        tenantId: sunshineTenant.id,
+        userId: userMap[SUNSHINE_USER.email],
+      },
+    });
+  }
+
+  console.log('  Demo login accounts repaired (password: demo1234).');
+}
+
 // ---------------------------------------------------------------------------
 // Main demo-org seed
 // ---------------------------------------------------------------------------
@@ -231,6 +300,7 @@ async function seedDemoOrg(prisma: PrismaClient) {
     where: { slug: demoSlug },
   });
   if (existingTenant) {
+    await repairExistingDemoLogins(prisma, existingTenant.id, sunshineSlug);
     console.log('⏭  Demo tenant already exists — skipping.');
     return false;
   }
@@ -972,7 +1042,8 @@ async function seedDemoOrg(prisma: PrismaClient) {
         groupId: seniorTeam.id,
       },
       {
-        staffRecordId: staffByEmail[userMap['james.balogun@tgmanager-demo.com']],
+        staffRecordId:
+          staffByEmail[userMap['james.balogun@tgmanager-demo.com']],
         groupId: seniorTeam.id,
       },
       {
@@ -980,7 +1051,8 @@ async function seedDemoOrg(prisma: PrismaClient) {
         groupId: newIntake.id,
       },
       {
-        staffRecordId: staffByEmail[userMap['bola.ogundimu@tgmanager-demo.com']],
+        staffRecordId:
+          staffByEmail[userMap['bola.ogundimu@tgmanager-demo.com']],
         groupId: newIntake.id,
       },
       {
@@ -988,11 +1060,13 @@ async function seedDemoOrg(prisma: PrismaClient) {
         groupId: abujaCore.id,
       },
       {
-        staffRecordId: staffByEmail[userMap['amara.okonkwo@tgmanager-demo.com']],
+        staffRecordId:
+          staffByEmail[userMap['amara.okonkwo@tgmanager-demo.com']],
         groupId: abujaCore.id,
       },
       {
-        staffRecordId: staffByEmail[userMap['tunde.ibrahim@tgmanager-demo.com']],
+        staffRecordId:
+          staffByEmail[userMap['tunde.ibrahim@tgmanager-demo.com']],
         groupId: abujaCore.id,
       },
       {

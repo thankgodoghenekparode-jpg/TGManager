@@ -48,8 +48,11 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
+    const memberships = await this.tenantsService.getMyTenants(user.id);
+
     return {
       user: this.sanitizeUser(user),
+      memberships,
       accessToken,
       refreshToken,
     };

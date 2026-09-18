@@ -1,7 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
+  "buildCommand": "flutter build web --release",
+  "outputDirectory": "build/web",
   "rewrites": [
     {
       "source": "/(.*)",

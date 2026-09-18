@@ -7,6 +7,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { Prisma } from '../../generated/prisma/client';
+import { UserRole } from '../../generated/prisma/enums';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SYSTEM_ROLE_NAMES } from '../rbac/system-roles/system-roles.constants';
@@ -108,15 +109,15 @@ export class StaffService {
           );
         }
 
-        let userRole: string = 'USER';
+        let userRole: UserRole = UserRole.USER;
         if (roles.some((r) => r.name === SYSTEM_ROLE_NAMES.BRANCH_ADMIN)) {
-          userRole = 'BRANCH_ADMIN';
+          userRole = UserRole.BRANCH_ADMIN;
         }
 
         if (createdUser) {
           await tx.user.update({
             where: { id: user.id },
-            data: { role: userRole as any },
+            data: { role: userRole },
           });
         }
 
@@ -388,14 +389,14 @@ export class StaffService {
       throw new BadRequestException('BRANCH_ADMIN role requires a branchId.');
     }
 
-    let userRole: string = 'USER';
+    let userRole: UserRole = UserRole.USER;
     if (roles.some((r) => r.name === SYSTEM_ROLE_NAMES.BRANCH_ADMIN)) {
-      userRole = 'BRANCH_ADMIN';
+      userRole = UserRole.BRANCH_ADMIN;
     }
 
     await this.prisma.user.update({
       where: { id: record.userId },
-      data: { role: userRole as any },
+      data: { role: userRole },
     });
 
     for (const role of roles) {

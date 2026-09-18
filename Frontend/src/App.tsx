@@ -83,7 +83,7 @@ const router = createBrowserRouter([
           {
             element: <CompanyLayout />,
             children: [
-              { index: true, path: '/app', element: <CompanyDashboardPage /> },
+              { path: '/app', element: <CompanyDashboardPage /> },
               { path: '/app/branches', element: <BranchesPage /> },
               { path: '/app/departments', element: <DepartmentsPage /> },
               { path: '/app/groups', element: <GroupsPage /> },

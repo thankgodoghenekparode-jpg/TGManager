@@ -2,6 +2,7 @@ import { api, type AuthUser, type TenantMembership } from './client'
 
 export interface LoginResponse {
   user: AuthUser
+  memberships: TenantMembership[]
 }
 
 export interface MeResponse {
