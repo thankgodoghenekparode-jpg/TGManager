@@ -26,7 +26,7 @@ export function PlatformLayout() {
   return (
     <AppShell
       title="TGManager"
-      subtitle="Platform Admin"
+      subtitle="Platform Super Admin"
       nav={NAV}
       onNavigateHome={() => navigate('/admin')}
       onLogout={async () => {
