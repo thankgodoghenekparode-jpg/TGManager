@@ -1,11 +1,12 @@
+import * as bcrypt from 'bcrypt';
 import { PrismaClient } from '../generated/prisma/client';
 import {
   PERMISSIONS,
   ALL_PERMISSIONS,
 } from '../modules/rbac/permissions/permissions.constants';
 
-const BCRYPT_HASH =
-  '$2b$10$0OryoVgl0FB4DxhN5nPGiOuN3VdeenVvyahAzSrvMopwrZa.eBGGe';
+const DEFAULT_PASSWORD = 'password123';
+const BCRYPT_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
 
 // ---------------------------------------------------------------------------
 // Plans
@@ -274,7 +275,7 @@ async function repairExistingDemoLogins(
     });
   }
 
-  console.log('  Demo login accounts repaired (password: demo1234).');
+  console.log('  Demo login accounts repaired (password: password123).');
 }
 
 // ---------------------------------------------------------------------------

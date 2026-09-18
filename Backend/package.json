@@ -23,6 +23,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
+    "seed": "tsx src/seed/seed.cli.ts",
     "db:up": "docker compose up -d"
   },
   "dependencies": {
