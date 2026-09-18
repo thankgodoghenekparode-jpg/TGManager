@@ -43,8 +43,14 @@ export function CompanyGuard({ children }: { children?: ReactNode }) {
 /** Redirects authenticated users away from guest-only pages. */
 export function GuestGuard({ children }: { children?: ReactNode }) {
   const user = useAuthStore((s) => s.user)
+  const tenantId = useTenantStore((s) => s.current?.id)
   const initialized = useAuthStore((s) => s.initialized)
   if (!initialized) return null
-  if (user) return <Navigate to="/" replace />
+  if (user) {
+    if (isPlatformAdmin(user.role)) {
+      return <Navigate to="/admin" replace />
+    }
+    return <Navigate to={tenantId ? '/app' : '/select-company'} replace />
+  }
   return <>{children ?? <Outlet />}</>
 }

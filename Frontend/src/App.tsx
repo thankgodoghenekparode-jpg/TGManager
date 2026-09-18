@@ -12,6 +12,7 @@ import { getTenantId, setTenantId } from './api/client'
 import { AuthGuard, GuestGuard, PlatformGuard, CompanyGuard } from './router/guards'
 import { PlatformLayout } from './components/layout/PlatformLayout'
 import { CompanyLayout } from './components/layout/CompanyLayout'
+import { PortfolioPage } from './pages/Portfolio'
 import { LoginPage } from './pages/auth/Login'
 import { ForgotPasswordPage } from './pages/auth/ForgotPassword'
 import { ResetPasswordPage } from './pages/auth/ResetPassword'
@@ -47,7 +48,8 @@ import { ChangeEmailPage } from './pages/account/ChangeEmail'
 import { MyRequestsPage } from './pages/account/MyRequests'
 
 const router = createBrowserRouter([
-  { path: '/', element: <RootRedirect /> },
+  { path: '/', element: <PortfolioPage /> },
+  { path: '/portfolio', element: <PortfolioPage /> },
   {
     element: <GuestGuard />,
     children: [
