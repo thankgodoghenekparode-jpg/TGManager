@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
@@ -7,11 +8,19 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
+  FormControlLabel,
   Grid,
   IconButton,
   Paper,
+  Snackbar,
   Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -36,21 +45,170 @@ import HubIcon from '@mui/icons-material/Hub'
 import FingerprintIcon from '@mui/icons-material/Fingerprint'
 import StorageIcon from '@mui/icons-material/Storage'
 import RefreshIcon from '@mui/icons-material/Refresh'
-import { platformApi } from '../../api/platform'
+import TuneIcon from '@mui/icons-material/Tune'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import BlockIcon from '@mui/icons-material/Block'
+import ChatIcon from '@mui/icons-material/Chat'
+import EventNoteIcon from '@mui/icons-material/EventNote'
+import DescriptionIcon from '@mui/icons-material/Description'
+import ArticleIcon from '@mui/icons-material/Article'
+import Inventory2Icon from '@mui/icons-material/Inventory2'
+import BallotIcon from '@mui/icons-material/Ballot'
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck'
+import BarChartIcon from '@mui/icons-material/BarChart'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import HistoryIcon from '@mui/icons-material/History'
+import ApiIcon from '@mui/icons-material/Api'
+import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import { platformApi, type PlatformTenant } from '../../api/platform'
 import { accountRequestsApi } from '../../api/accountRequests'
 import { useAuthStore } from '../../store/auth'
+import { apiErrorMessage } from '../../api/client'
+
+interface FeatureDef {
+  key: string
+  label: string
+  description: string
+  category: 'Communication' | 'Workforce' | 'Operations' | 'Governance'
+  icon: ReactNode
+}
+
+const ALL_FEATURES: FeatureDef[] = [
+  {
+    key: 'chat',
+    label: 'Team Chat & Messaging',
+    description: 'Direct team messaging, channels, and real-time audio notifications',
+    category: 'Communication',
+    icon: <ChatIcon fontSize="small" sx={{ color: '#FF4D5E' }} />,
+  },
+  {
+    key: 'memos',
+    label: 'Encrypted Executive Memos',
+    description: 'Broadcast notices, executive bulletins, and mandatory read-receipts',
+    category: 'Communication',
+    icon: <ArticleIcon fontSize="small" sx={{ color: '#FF4D5E' }} />,
+  },
+  {
+    key: 'attendance',
+    label: 'Biometric Attendance & Clock-In',
+    description: 'Hardware biometric sync, GPS geolocation fences, and shift clock-in/out',
+    category: 'Workforce',
+    icon: <FingerprintIcon fontSize="small" sx={{ color: '#38BDF8' }} />,
+  },
+  {
+    key: 'schedules',
+    label: 'Shift Scheduling & Rosters',
+    description: 'Recurring shifts, branch rosters, and employee attendance schedules',
+    category: 'Workforce',
+    icon: <EventNoteIcon fontSize="small" sx={{ color: '#38BDF8' }} />,
+  },
+  {
+    key: 'branches',
+    label: 'Multi-Branch Hierarchy',
+    description: 'Multi-location operations, physical site tracking, and branch admins',
+    category: 'Workforce',
+    icon: <ApartmentIcon fontSize="small" sx={{ color: '#38BDF8' }} />,
+  },
+  {
+    key: 'departments',
+    label: 'Departments & Groups',
+    description: 'Organizational hierarchy, functional departments, and team groups',
+    category: 'Workforce',
+    icon: <AccountTreeIcon fontSize="small" sx={{ color: '#38BDF8' }} />,
+  },
+  {
+    key: 'inventory',
+    label: 'Inventory & Asset Tracking',
+    description: 'Stock monitoring, low-stock threshold triggers, and asset allocations',
+    category: 'Operations',
+    icon: <Inventory2Icon fontSize="small" sx={{ color: '#10B981' }} />,
+  },
+  {
+    key: 'documents',
+    label: 'Secure Documents Vault',
+    description: 'Corporate file repository, contracts, policies, and revision control',
+    category: 'Operations',
+    icon: <DescriptionIcon fontSize="small" sx={{ color: '#10B981' }} />,
+  },
+  {
+    key: 'forms',
+    label: 'Custom Dynamic Forms',
+    description: 'Custom intake questionnaires, field validations, and auto-counters',
+    category: 'Operations',
+    icon: <BallotIcon fontSize="small" sx={{ color: '#10B981' }} />,
+  },
+  {
+    key: 'workflows',
+    label: 'Approval Workflows & Flows',
+    description: 'Multi-step approvals, sequential review chains, and SLA routing',
+    category: 'Operations',
+    icon: <PlaylistAddCheckIcon fontSize="small" sx={{ color: '#10B981' }} />,
+  },
+  {
+    key: 'reports',
+    label: 'Executive Analytics & Reports',
+    description: 'Cross-branch analytics, attendance KPIs, and printable PDF exports',
+    category: 'Governance',
+    icon: <BarChartIcon fontSize="small" sx={{ color: '#A78BFA' }} />,
+  },
+  {
+    key: 'weeklyReports',
+    label: 'Weekly Operations Reports',
+    description: 'Mandatory Friday operational reporting and management reviews',
+    category: 'Governance',
+    icon: <CalendarMonthIcon fontSize="small" sx={{ color: '#A78BFA' }} />,
+  },
+  {
+    key: 'audit',
+    label: 'Security Audit Logs',
+    description: 'Immutable trail of security events, administrative logins, and data edits',
+    category: 'Governance',
+    icon: <HistoryIcon fontSize="small" sx={{ color: '#A78BFA' }} />,
+  },
+  {
+    key: 'integrations',
+    label: 'API & Webhook Integrations',
+    description: 'REST API keys, outgoing webhooks, and third-party event subscriptions',
+    category: 'Governance',
+    icon: <ApiIcon fontSize="small" sx={{ color: '#A78BFA' }} />,
+  },
+]
+
+function getResolvedFeatureFlags(tenant: PlatformTenant): Record<string, boolean> {
+  const planFlags = (tenant.plan?.featureFlags as Record<string, boolean> | undefined) ?? {}
+  const customFlags = (tenant.settings?.featureFlags as Record<string, boolean> | undefined) ?? {}
+  
+  const resolved: Record<string, boolean> = {}
+  for (const feat of ALL_FEATURES) {
+    // Custom tenant override takes precedence, otherwise fallback to plan default, otherwise true
+    if (customFlags[feat.key] !== undefined) {
+      resolved[feat.key] = customFlags[feat.key]
+    } else if (planFlags[feat.key] !== undefined) {
+      resolved[feat.key] = Boolean(planFlags[feat.key])
+    } else {
+      resolved[feat.key] = true
+    }
+  }
+  return resolved
+}
 
 export function PlatformDashboardPage() {
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const user = useAuthStore((s) => s.user)
+
+  // Feature Management Dialog State
+  const [featureDialogTenant, setFeatureDialogTenant] = useState<PlatformTenant | null>(null)
+  const [activeFlags, setActiveFlags] = useState<Record<string, boolean>>({})
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null)
 
   const tenants = useQuery({
     queryKey: ['platform', 'tenants'],
-    queryFn: () => platformApi.tenants({ limit: 10 }),
+    queryFn: () => platformApi.tenants({ limit: 100 }),
   })
   const users = useQuery({
     queryKey: ['platform', 'users'],
-    queryFn: () => platformApi.users({ limit: 10 }),
+    queryFn: () => platformApi.users({ limit: 100 }),
   })
   const plans = useQuery({
     queryKey: ['platform', 'plans'],
@@ -59,6 +217,19 @@ export function PlatformDashboardPage() {
   const requestsSummary = useQuery({
     queryKey: ['admin', 'account-requests', 'summary'],
     queryFn: () => accountRequestsApi.summary(),
+  })
+
+  const updateTenantMutation = useMutation({
+    mutationFn: ({ id, settings }: { id: string; settings: Record<string, unknown> }) =>
+      platformApi.updateTenant(id, { settings }),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['platform', 'tenants'] })
+      const tenantName = featureDialogTenant?.name ?? 'Company'
+      setSnackbarMessage(`Successfully updated feature entitlements for ${tenantName}`)
+      if (featureDialogTenant?.id === vars.id) {
+        setFeatureDialogTenant((prev) => (prev ? { ...prev, settings: vars.settings } : null))
+      }
+    },
   })
 
   const tenantItems = tenants.data?.items ?? []
@@ -74,6 +245,76 @@ export function PlatformDashboardPage() {
     requestsSummary.refetch()
   }
 
+  const openFeatureManager = (tenant: PlatformTenant) => {
+    setFeatureDialogTenant(tenant)
+    setActiveFlags(getResolvedFeatureFlags(tenant))
+  }
+
+  const handleToggleFeature = async (featureKey: string, newValue: boolean) => {
+    if (!featureDialogTenant) return
+
+    const updatedFlags = { ...activeFlags, [featureKey]: newValue }
+    setActiveFlags(updatedFlags)
+
+    const updatedSettings = {
+      ...(featureDialogTenant.settings || {}),
+      featureFlags: updatedFlags,
+    }
+
+    try {
+      await updateTenantMutation.mutateAsync({
+        id: featureDialogTenant.id,
+        settings: updatedSettings,
+      })
+    } catch (err) {
+      setSnackbarMessage(`Failed to update feature: ${apiErrorMessage(err)}`)
+    }
+  }
+
+  const handleEnableAll = async () => {
+    if (!featureDialogTenant) return
+    const allOn: Record<string, boolean> = {}
+    for (const f of ALL_FEATURES) allOn[f.key] = true
+    setActiveFlags(allOn)
+    const updatedSettings = {
+      ...(featureDialogTenant.settings || {}),
+      featureFlags: allOn,
+    }
+    await updateTenantMutation.mutateAsync({
+      id: featureDialogTenant.id,
+      settings: updatedSettings,
+    })
+  }
+
+  const handleDisableNonCore = async () => {
+    if (!featureDialogTenant) return
+    const coreOnly: Record<string, boolean> = {
+      chat: false,
+      memos: false,
+      attendance: true,
+      schedules: true,
+      branches: true,
+      departments: true,
+      inventory: false,
+      documents: false,
+      forms: false,
+      workflows: false,
+      reports: true,
+      weeklyReports: false,
+      audit: true,
+      integrations: false,
+    }
+    setActiveFlags(coreOnly)
+    const updatedSettings = {
+      ...(featureDialogTenant.settings || {}),
+      featureFlags: coreOnly,
+    }
+    await updateTenantMutation.mutateAsync({
+      id: featureDialogTenant.id,
+      settings: updatedSettings,
+    })
+  }
+
   return (
     <Box sx={{ pb: 6 }}>
       {/* ─── PLATFORM SUPER ADMIN COMMAND HEADER ─── */}
@@ -83,8 +324,8 @@ export function PlatformDashboardPage() {
           p: { xs: 2.5, sm: 3.5 },
           mb: 3.5,
           borderRadius: 4,
-          background: 'linear-gradient(135deg, rgba(236, 6, 24, 0.12) 0%, rgba(13, 3, 5, 0.95) 100%)',
-          border: '1px solid rgba(236, 6, 24, 0.3)',
+          background: 'linear-gradient(135deg, rgba(236, 6, 24, 0.14) 0%, rgba(13, 3, 5, 0.95) 100%)',
+          border: '1px solid rgba(236, 6, 24, 0.35)',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -94,11 +335,11 @@ export function PlatformDashboardPage() {
             position: 'absolute',
             top: -40,
             right: -40,
-            width: 200,
-            height: 200,
+            width: 220,
+            height: 220,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(236, 6, 24, 0.25) 0%, transparent 70%)',
-            filter: 'blur(30px)',
+            background: 'radial-gradient(circle, rgba(236, 6, 24, 0.3) 0%, transparent 70%)',
+            filter: 'blur(35px)',
             pointerEvents: 'none',
           }}
         />
@@ -134,15 +375,15 @@ export function PlatformDashboardPage() {
                 }}
               />
               <Chip
-                icon={<SpeedIcon sx={{ fontSize: '14px !important', color: '#10B981 !important' }} />}
-                label="Cluster Health: 99.99%"
+                icon={<TuneIcon sx={{ fontSize: '14px !important', color: '#38BDF8 !important' }} />}
+                label="Feature Entitlements Live Sync"
                 size="small"
                 sx={{
-                  bgcolor: 'rgba(16, 185, 129, 0.12)',
-                  color: '#10B981',
+                  bgcolor: 'rgba(56, 189, 248, 0.12)',
+                  color: '#38BDF8',
                   fontWeight: 700,
                   fontSize: '0.72rem',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
                 }}
               />
             </Stack>
@@ -151,7 +392,7 @@ export function PlatformDashboardPage() {
               Platform Super Admin Cockpit
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 640 }}>
-              Live enterprise multi-tenant orchestration, global telemetry, provisioning, and platform security oversight.
+              Live multi-tenant orchestration, global telemetry, and instant <strong>Company Feature Controls</strong> (turn modules ON/OFF per company).
             </Typography>
           </Box>
 
@@ -202,7 +443,7 @@ export function PlatformDashboardPage() {
         </Stack>
       </Paper>
 
-      {/* ─── PENDING REQUESTS ALERT (IF ANY) ─── */}
+      {/* ─── PENDING REQUESTS ALERT ─── */}
       {totalPendingRequests > 0 && (
         <Alert
           severity="warning"
@@ -233,7 +474,7 @@ export function PlatformDashboardPage() {
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <PlatformMetricCard
-            title="Total Organizations"
+            title="Total Registered Companies"
             value={tenants.data?.total ?? '—'}
             caption={`${activeTenantsCount} active • ${suspendedTenantsCount} suspended`}
             icon={<ApartmentIcon sx={{ color: '#EC0618' }} />}
@@ -255,7 +496,7 @@ export function PlatformDashboardPage() {
 
         <Grid item xs={12} sm={6} md={3}>
           <PlatformMetricCard
-            title="Active Plan Tiers"
+            title="Subscription Plan Tiers"
             value={plansList.length > 0 ? plansList.length : '3'}
             caption="Starter • Pro • Enterprise"
             icon={<WorkspacePremiumIcon sx={{ color: '#38BDF8' }} />}
@@ -278,10 +519,10 @@ export function PlatformDashboardPage() {
 
       {/* ─── MAIN TWO-COLUMN DASHBOARD GRID ─── */}
       <Grid container spacing={3.5}>
-        {/* LEFT COLUMN: TENANT REGISTRY & RECENT ACCOUNTS */}
+        {/* LEFT COLUMN: REGISTERED COMPANIES & FEATURE MANAGEMENT */}
         <Grid item xs={12} lg={8}>
           <Stack spacing={3.5}>
-            {/* Organizations Directory Card */}
+            {/* Organizations & Feature Controls Matrix */}
             <Card
               variant="outlined"
               sx={{
@@ -292,13 +533,13 @@ export function PlatformDashboardPage() {
               }}
             >
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5, flexWrap: 'wrap', gap: 1.5 }}>
                   <Box>
                     <Typography variant="h6" fontWeight={800} sx={{ color: '#FFFFFF' }}>
-                      Multi-Tenant Organizations Registry
+                      Registered Companies & Feature Control Center
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Active enterprise workspaces isolated under multi-tenant nodes
+                      View company capabilities and toggle features <strong>ON</strong> or <strong>OFF</strong> with instant live enforcement
                     </Typography>
                   </Box>
                   <Button
@@ -307,7 +548,7 @@ export function PlatformDashboardPage() {
                     onClick={() => navigate('/admin/tenants')}
                     sx={{ color: '#FF4D5E', fontWeight: 700 }}
                   >
-                    View All ({tenants.data?.total ?? 0})
+                    Directory ({tenants.data?.total ?? 0})
                   </Button>
                 </Stack>
 
@@ -315,78 +556,130 @@ export function PlatformDashboardPage() {
                   <Table size="small">
                     <TableHead>
                       <TableRow sx={{ '& th': { color: '#8A8F99', fontWeight: 700, borderColor: 'rgba(255, 255, 255, 0.08)' } }}>
-                        <TableCell>Organization</TableCell>
-                        <TableCell>Slug / Domain</TableCell>
+                        <TableCell>Company Organization</TableCell>
                         <TableCell>Plan Tier</TableCell>
-                        <TableCell>Admin Email</TableCell>
+                        <TableCell>Active Capabilities</TableCell>
                         <TableCell>Status</TableCell>
-                        <TableCell align="right">Action</TableCell>
+                        <TableCell align="right">Feature Controls</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {tenantItems.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} sx={{ textAlign: 'center', py: 3, color: 'text.secondary', borderColor: 'rgba(255, 255, 255, 0.08)' }}>
-                            No organizations found.
+                          <TableCell colSpan={5} sx={{ textAlign: 'center', py: 4, color: 'text.secondary', borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+                            No registered companies found.
                           </TableCell>
                         </TableRow>
                       ) : (
-                        tenantItems.slice(0, 6).map((t) => (
-                          <TableRow
-                            key={t.id}
-                            sx={{
-                              '&:hover': { bgcolor: 'rgba(236, 6, 24, 0.04)' },
-                              '& td': { borderColor: 'rgba(255, 255, 255, 0.06)' },
-                            }}
-                          >
-                            <TableCell sx={{ fontWeight: 700, color: '#FFFFFF' }}>
-                              {t.name}
-                            </TableCell>
-                            <TableCell sx={{ color: '#9CA3AF', fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                              {t.slug}
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={t.plan?.name ?? 'Standard'}
-                                size="small"
-                                sx={{
-                                  bgcolor: 'rgba(56, 189, 248, 0.12)',
-                                  color: '#38BDF8',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ color: '#9CA3AF', fontSize: '0.85rem' }}>
-                              {t.adminEmail ?? '—'}
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={t.status}
-                                size="small"
-                                sx={{
-                                  bgcolor:
-                                    t.status === 'ACTIVE'
-                                      ? 'rgba(16, 185, 129, 0.15)'
-                                      : 'rgba(236, 6, 24, 0.15)',
-                                  color: t.status === 'ACTIVE' ? '#10B981' : '#EC0618',
-                                  fontWeight: 800,
-                                  fontSize: '0.7rem',
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell align="right">
-                              <Button
-                                size="small"
-                                variant="text"
-                                onClick={() => navigate('/admin/tenants')}
-                                sx={{ color: '#FF4D5E', fontWeight: 700, minWidth: 'auto', p: 0.5 }}
-                              >
-                                Manage
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        tenantItems.map((t) => {
+                          const resolved = getResolvedFeatureFlags(t)
+                          const activeCount = Object.values(resolved).filter(Boolean).length
+                          const totalCount = ALL_FEATURES.length
+
+                          return (
+                            <TableRow
+                              key={t.id}
+                              sx={{
+                                '&:hover': { bgcolor: 'rgba(236, 6, 24, 0.04)' },
+                                '& td': { borderColor: 'rgba(255, 255, 255, 0.06)' },
+                              }}
+                            >
+                              <TableCell sx={{ fontWeight: 700, color: '#FFFFFF' }}>
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                  <Box
+                                    sx={{
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: 1.5,
+                                      bgcolor: 'rgba(236, 6, 24, 0.15)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: '#FF4D5E',
+                                      fontWeight: 800,
+                                      fontSize: '0.75rem',
+                                    }}
+                                  >
+                                    {t.name.slice(0, 2).toUpperCase()}
+                                  </Box>
+                                  <Box>
+                                    <Typography variant="body2" fontWeight={800} color="#FFFFFF">
+                                      {t.name}
+                                    </Typography>
+                                    <Typography variant="caption" color="#8A8F99" sx={{ fontFamily: 'monospace' }}>
+                                      {t.slug} • {t.adminEmail ?? 'No admin email'}
+                                    </Typography>
+                                  </Box>
+                                </Stack>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={t.plan?.name ?? 'Standard'}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: 'rgba(56, 189, 248, 0.12)',
+                                    color: '#38BDF8',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Tooltip title={`${activeCount} of ${totalCount} modules enabled`}>
+                                  <Chip
+                                    icon={<CheckCircleIcon sx={{ fontSize: '13px !important', color: activeCount === totalCount ? '#10B981 !important' : '#F59E0B !important' }} />}
+                                    label={`${activeCount} / ${totalCount} Modules`}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: activeCount === totalCount ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                                      color: activeCount === totalCount ? '#10B981' : '#F59E0B',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                    }}
+                                  />
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={t.status}
+                                  size="small"
+                                  sx={{
+                                    bgcolor:
+                                      t.status === 'ACTIVE'
+                                        ? 'rgba(16, 185, 129, 0.15)'
+                                        : 'rgba(236, 6, 24, 0.15)',
+                                    color: t.status === 'ACTIVE' ? '#10B981' : '#EC0618',
+                                    fontWeight: 800,
+                                    fontSize: '0.7rem',
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell align="right">
+                                <Button
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<TuneIcon />}
+                                  onClick={() => openFeatureManager(t)}
+                                  sx={{
+                                    borderColor: 'rgba(236, 6, 24, 0.4)',
+                                    bgcolor: 'rgba(236, 6, 24, 0.08)',
+                                    color: '#FF4D5E',
+                                    fontWeight: 800,
+                                    fontSize: '0.75rem',
+                                    py: 0.5,
+                                    px: 1.25,
+                                    '&:hover': {
+                                      borderColor: '#EC0618',
+                                      bgcolor: 'rgba(236, 6, 24, 0.2)',
+                                    },
+                                  }}
+                                >
+                                  Features (ON/OFF)
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })
                       )}
                     </TableBody>
                   </Table>
@@ -394,7 +687,7 @@ export function PlatformDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Platform Plans Breakdown */}
+            {/* Subscription Tiers Overview */}
             <Card
               variant="outlined"
               sx={{
@@ -407,10 +700,10 @@ export function PlatformDashboardPage() {
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                   <Box>
                     <Typography variant="h6" fontWeight={800} sx={{ color: '#FFFFFF' }}>
-                      Subscription Tiers & Quota Entitlements
+                      Subscription Tiers & Quotas
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Multi-tenant quotas, branch limitations, and module entitlements
+                      Multi-tenant quotas, branch limits, and staff allowances
                     </Typography>
                   </Box>
                   <Button
@@ -419,7 +712,7 @@ export function PlatformDashboardPage() {
                     onClick={() => navigate('/admin/plans')}
                     sx={{ color: '#FF4D5E', fontWeight: 700 }}
                   >
-                    Configure Plans
+                    Manage Plans
                   </Button>
                 </Stack>
 
@@ -427,7 +720,7 @@ export function PlatformDashboardPage() {
                   {plansList.length === 0 ? (
                     <Grid item xs={12}>
                       <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-                        No customized plans configured. Default standard quotas apply.
+                        No custom plans configured. Standard default limits apply.
                       </Typography>
                     </Grid>
                   ) : (
@@ -479,7 +772,7 @@ export function PlatformDashboardPage() {
           </Stack>
         </Grid>
 
-        {/* RIGHT COLUMN: INFRASTRUCTURE TELEMETRY & ROOT COMMANDS */}
+        {/* RIGHT COLUMN: CLUSTER HEALTH & ROOT ACTIONS */}
         <Grid item xs={12} lg={4}>
           <Stack spacing={3.5}>
             {/* Global Cluster Health & Telemetry */}
@@ -616,6 +909,206 @@ export function PlatformDashboardPage() {
           </Stack>
         </Grid>
       </Grid>
+
+      {/* ─── MODAL: COMPANY FEATURE FLAGS & ENTITLEMENTS MANAGER ─── */}
+      <Dialog
+        open={Boolean(featureDialogTenant)}
+        onClose={() => setFeatureDialogTenant(null)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: '#0B0B0E',
+            backgroundImage: 'none',
+            border: '1px solid rgba(236, 6, 24, 0.35)',
+            borderRadius: 4,
+            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(236, 6, 24, 0.15)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ pb: 1, borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+            <Box>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <TuneIcon sx={{ color: '#EC0618' }} />
+                <Typography variant="h6" fontWeight={900} color="#FFFFFF">
+                  Feature Entitlements & Access Controls
+                </Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Configure modules for <strong>{featureDialogTenant?.name}</strong> (Slug: <code>{featureDialogTenant?.slug}</code>). Toggling a switch turns that feature ON or OFF in real time.
+              </Typography>
+            </Box>
+
+            {updateTenantMutation.isPending && (
+              <Chip
+                icon={<CircularProgress size={14} color="inherit" />}
+                label="Saving..."
+                size="small"
+                sx={{ bgcolor: 'rgba(236, 6, 24, 0.2)', color: '#FF4D5E', fontWeight: 700 }}
+              />
+            )}
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent sx={{ py: 2.5 }}>
+          {/* Quick Presets */}
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 1.5,
+              mb: 2.5,
+              borderRadius: 2.5,
+              bgcolor: 'rgba(255, 255, 255, 0.02)',
+              borderColor: 'rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+            }}
+          >
+            <Typography variant="caption" fontWeight={700} color="#9CA3AF">
+              QUICK ENTITLEMENT PRESETS:
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CheckCircleIcon fontSize="small" />}
+                onClick={handleEnableAll}
+                disabled={updateTenantMutation.isPending}
+                sx={{
+                  color: '#10B981',
+                  borderColor: 'rgba(16, 185, 129, 0.3)',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  '&:hover': { borderColor: '#10B981', bgcolor: 'rgba(16, 185, 129, 0.1)' },
+                }}
+              >
+                Enable All ({ALL_FEATURES.length})
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<BlockIcon fontSize="small" />}
+                onClick={handleDisableNonCore}
+                disabled={updateTenantMutation.isPending}
+                sx={{
+                  color: '#F59E0B',
+                  borderColor: 'rgba(245, 158, 11, 0.3)',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  '&:hover': { borderColor: '#F59E0B', bgcolor: 'rgba(245, 158, 11, 0.1)' },
+                }}
+              >
+                Core Modules Only
+              </Button>
+            </Stack>
+          </Paper>
+
+          {/* Feature Flags Grid */}
+          <Grid container spacing={2}>
+            {ALL_FEATURES.map((f) => {
+              const isEnabled = activeFlags[f.key] ?? true
+
+              return (
+                <Grid item xs={12} sm={6} key={f.key}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      borderRadius: 3,
+                      bgcolor: isEnabled ? 'rgba(236, 6, 24, 0.04)' : 'rgba(255, 255, 255, 0.01)',
+                      borderColor: isEnabled ? 'rgba(236, 6, 24, 0.3)' : 'rgba(255, 255, 255, 0.06)',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                          {f.icon}
+                          <Typography variant="subtitle2" fontWeight={800} color="#FFFFFF">
+                            {f.label}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.35 }}>
+                          {f.description}
+                        </Typography>
+                      </Box>
+
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={isEnabled}
+                            onChange={(e) => handleToggleFeature(f.key, e.target.checked)}
+                            disabled={updateTenantMutation.isPending}
+                            sx={{
+                              '& .MuiSwitch-switchBase.Mui-checked': {
+                                color: '#EC0618',
+                                '&:hover': { backgroundColor: 'rgba(236, 6, 24, 0.12)' },
+                              },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                backgroundColor: '#EC0618',
+                              },
+                            }}
+                          />
+                        }
+                        label={
+                          <Typography
+                            variant="caption"
+                            fontWeight={800}
+                            sx={{ color: isEnabled ? '#10B981' : '#6B7280', minWidth: 28 }}
+                          >
+                            {isEnabled ? 'ON' : 'OFF'}
+                          </Typography>
+                        }
+                        labelPlacement="bottom"
+                        sx={{ m: 0 }}
+                      />
+                    </Stack>
+                  </Paper>
+                </Grid>
+              )
+            })}
+          </Grid>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <Button
+            variant="contained"
+            onClick={() => setFeatureDialogTenant(null)}
+            sx={{
+              bgcolor: '#EC0618',
+              color: '#FFFFFF',
+              fontWeight: 800,
+              px: 3,
+              '&:hover': { bgcolor: '#FF1F33' },
+            }}
+          >
+            Done
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ─── NOTIFICATION TOAST ─── */}
+      <Snackbar
+        open={Boolean(snackbarMessage)}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarMessage(null)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            bgcolor: '#17171C',
+            color: '#FFFFFF',
+            border: '1px solid rgba(236, 6, 24, 0.4)',
+            borderRadius: 3,
+            fontWeight: 700,
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.8)',
+          },
+        }}
+      />
     </Box>
   )
 }

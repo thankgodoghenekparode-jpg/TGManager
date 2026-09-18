@@ -242,6 +242,8 @@ export interface CurrentTenant {
   status: string
   onboardingStatus: string
   timezone: string
+  settings?: Record<string, unknown>
+  featureFlags?: Record<string, boolean>
   plan: {
     code: string
     name: string

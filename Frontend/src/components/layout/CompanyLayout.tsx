@@ -38,31 +38,38 @@ export function CompanyLayout() {
   const allowed = (perms: readonly string[]) =>
     hasPermission({ role, isCompanyAdmin, tenantPermissions, required: perms })
 
-  const all: Array<{ item: NavItem; perms: readonly string[] }> = [
+  const featureFlags = tenant?.featureFlags ?? {}
+  const isFeatureEnabled = (feat?: string) => {
+    if (!feat) return true
+    if (featureFlags[feat] === false) return false
+    return true
+  }
+
+  const all: Array<{ item: NavItem; perms: readonly string[]; feature?: string }> = [
     { item: { label: 'Dashboard', path: '/app', icon: DashboardIcon }, perms: [] },
-    { item: { label: 'Branches', path: '/app/branches', icon: ApartmentIcon }, perms: PermissionBlocks.BRANCH },
-    { item: { label: 'Departments', path: '/app/departments', icon: AccountTreeIcon }, perms: PermissionBlocks.DEPARTMENT },
-    { item: { label: 'Groups', path: '/app/groups', icon: GroupsIcon }, perms: PermissionBlocks.GROUP },
-    { item: { label: 'Staff', path: '/app/staff', icon: PeopleIcon }, perms: PermissionBlocks.STAFF },
-    { item: { label: 'Roles', path: '/app/roles', icon: AdminPanelSettingsIcon }, perms: PermissionBlocks.ROLE },
-    { item: { label: 'Schedules', path: '/app/schedules', icon: EventNoteIcon }, perms: ['schedule.manage'] },
-    { item: { label: 'Attendance', path: '/app/attendance', icon: EventNoteIcon }, perms: PermissionBlocks.ATTENDANCE },
-    { item: { label: 'Chat', path: '/app/chat', icon: ChatIcon }, perms: ['chat.view', 'chat.create'] },
-    { item: { label: 'Documents', path: '/app/documents', icon: DescriptionIcon }, perms: PermissionBlocks.DOCUMENT },
-    { item: { label: 'Memos', path: '/app/memos', icon: ArticleIcon }, perms: PermissionBlocks.MEMO },
-    { item: { label: 'Inventory', path: '/app/inventory', icon: Inventory2Icon }, perms: PermissionBlocks.INVENTORY },
-    { item: { label: 'Forms', path: '/app/forms', icon: BallotIcon }, perms: PermissionBlocks.FORM },
-    { item: { label: 'Workflows', path: '/app/workflows', icon: PlaylistAddCheckIcon }, perms: PermissionBlocks.WORKFLOW },
-    { item: { label: 'Reports', path: '/app/reports', icon: BarChartIcon }, perms: ['report.view'] },
-    { item: { label: 'Weekly Reports', path: '/app/weekly-reports', icon: CalendarMonthIcon }, perms: ['report.submit'] },
-    { item: { label: 'Audit', path: '/app/audit', icon: HistoryIcon }, perms: PermissionBlocks.AUDIT },
-    { item: { label: 'Integrations', path: '/app/integrations', icon: ApiIcon }, perms: PermissionBlocks.INTEGRATION },
-    { item: { label: 'Settings', path: '/app/settings', icon: SettingsIcon }, perms: PermissionBlocks.SETTINGS },
+    { item: { label: 'Branches', path: '/app/branches', icon: ApartmentIcon }, perms: PermissionBlocks.BRANCH, feature: 'branches' },
+    { item: { label: 'Departments', path: '/app/departments', icon: AccountTreeIcon }, perms: PermissionBlocks.DEPARTMENT, feature: 'departments' },
+    { item: { label: 'Groups', path: '/app/groups', icon: GroupsIcon }, perms: PermissionBlocks.GROUP, feature: 'groups' },
+    { item: { label: 'Staff', path: '/app/staff', icon: PeopleIcon }, perms: PermissionBlocks.STAFF, feature: 'staff' },
+    { item: { label: 'Roles', path: '/app/roles', icon: AdminPanelSettingsIcon }, perms: PermissionBlocks.ROLE, feature: 'roles' },
+    { item: { label: 'Schedules', path: '/app/schedules', icon: EventNoteIcon }, perms: ['schedule.manage'], feature: 'schedules' },
+    { item: { label: 'Attendance', path: '/app/attendance', icon: EventNoteIcon }, perms: PermissionBlocks.ATTENDANCE, feature: 'attendance' },
+    { item: { label: 'Chat', path: '/app/chat', icon: ChatIcon }, perms: ['chat.view', 'chat.create'], feature: 'chat' },
+    { item: { label: 'Documents', path: '/app/documents', icon: DescriptionIcon }, perms: PermissionBlocks.DOCUMENT, feature: 'documents' },
+    { item: { label: 'Memos', path: '/app/memos', icon: ArticleIcon }, perms: PermissionBlocks.MEMO, feature: 'memos' },
+    { item: { label: 'Inventory', path: '/app/inventory', icon: Inventory2Icon }, perms: PermissionBlocks.INVENTORY, feature: 'inventory' },
+    { item: { label: 'Forms', path: '/app/forms', icon: BallotIcon }, perms: PermissionBlocks.FORM, feature: 'forms' },
+    { item: { label: 'Workflows', path: '/app/workflows', icon: PlaylistAddCheckIcon }, perms: PermissionBlocks.WORKFLOW, feature: 'workflows' },
+    { item: { label: 'Reports', path: '/app/reports', icon: BarChartIcon }, perms: ['report.view'], feature: 'reports' },
+    { item: { label: 'Weekly Reports', path: '/app/weekly-reports', icon: CalendarMonthIcon }, perms: ['report.submit'], feature: 'weeklyReports' },
+    { item: { label: 'Audit', path: '/app/audit', icon: HistoryIcon }, perms: PermissionBlocks.AUDIT, feature: 'audit' },
+    { item: { label: 'Integrations', path: '/app/integrations', icon: ApiIcon }, perms: PermissionBlocks.INTEGRATION, feature: 'integrations' },
+    { item: { label: 'Settings', path: '/app/settings', icon: SettingsIcon }, perms: PermissionBlocks.SETTINGS, feature: 'settings' },
   ]
 
-  const nav = all.filter(({ perms }) => allowed(perms)).map(({ item }) => item)
+  const nav = all.filter(({ perms, feature }) => isFeatureEnabled(feature) && allowed(perms)).map(({ item }) => item)
 
-  const chatAccess = allowed(['chat.view', 'chat.create'])
+  const chatAccess = isFeatureEnabled('chat') && allowed(['chat.view', 'chat.create'])
   useChatNotificationSound(chatAccess)
 
   return (

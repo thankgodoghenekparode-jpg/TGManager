@@ -175,7 +175,7 @@ export class PlatformService {
         skip: query.offset,
         take: query.limit,
         include: {
-          plan: { select: { id: true, name: true, code: true } },
+          plan: { select: { id: true, name: true, code: true, featureFlags: true } },
           tenantUsers: {
             where: { user: { role: 'COMPANY_ADMIN' } },
             orderBy: { createdAt: 'asc' },

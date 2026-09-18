@@ -23,10 +23,21 @@ export interface PlatformTenant {
   status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL_ENDED'
   onboardingStatus: string
   timezone: string
-  plan: { name: string; code: string } | null
+  settings?: {
+    featureFlags?: Record<string, boolean>
+    [key: string]: unknown
+  }
+  planId?: string
+  plan: { id?: string; name: string; code: string; featureFlags?: Record<string, unknown> } | null
   createdAt: string
   adminEmail: string | null
   adminUserId: string | null
+  _count?: {
+    tenantUsers?: number
+    branches?: number
+    staffRecords?: number
+    documents?: number
+  }
 }
 
 export interface PlatformUser {

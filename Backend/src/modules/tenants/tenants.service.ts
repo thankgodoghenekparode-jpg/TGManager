@@ -192,7 +192,7 @@ export class TenantsService {
       where: { id: tenantId },
       include: {
         plan: {
-          select: { code: true, name: true, maxBranches: true, maxStaff: true },
+          select: { code: true, name: true, maxBranches: true, maxStaff: true, featureFlags: true },
         },
       },
     });
@@ -220,6 +220,15 @@ export class TenantsService {
       for (const p of a.companyRole.permissions) permissionSet.add(p);
     }
 
+    const planFlags =
+      typeof tenant.plan?.featureFlags === 'object' && tenant.plan.featureFlags !== null
+        ? (tenant.plan.featureFlags as Record<string, boolean>)
+        : {};
+    const customFlags =
+      typeof tenant.settings === 'object' && tenant.settings !== null && 'featureFlags' in tenant.settings
+        ? ((tenant.settings as { featureFlags?: Record<string, boolean> }).featureFlags ?? {})
+        : {};
+
     return {
       id: tenant.id,
       name: tenant.name,
@@ -228,6 +237,8 @@ export class TenantsService {
       onboardingStatus: tenant.onboardingStatus,
       timezone: tenant.timezone,
       plan: tenant.plan,
+      settings: tenant.settings,
+      featureFlags: { ...planFlags, ...customFlags },
       permissions: [...permissionSet],
       isCompanyAdmin: assignments.some(
         (a) => a.companyRole.name === SYSTEM_ROLE_NAMES.COMPANY_ADMIN,
