@@ -221,11 +221,8 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
             <FingerprintIcon fontSize="small" />
           </Box>
           <Box>
-            <Typography variant="caption" sx={{ color: '#9CA3AF', display: 'block', fontWeight: 600 }}>
+            <Typography variant="subtitle2" fontWeight={800} color="#FFFFFF">
               Biometric Clock-In
-            </Typography>
-            <Typography variant="body2" fontWeight={800} color="#FFFFFF">
-              Hardware Secure Sync
             </Typography>
           </Box>
         </Box>
