@@ -132,7 +132,7 @@ export function CompanyDashboardPage() {
       {canSubmitReports && (
         <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12}>
-            <Card variant="outlined" sx={{ borderColor: 'rgba(37, 99, 235, 0.22)', background: 'linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%)' }}>
+            <Card variant="outlined" sx={{ borderColor: 'rgba(236, 6, 24, 0.25)', background: 'linear-gradient(180deg, #212325 0%, #17191C 100%)' }}>
               <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ flexWrap: 'wrap', gap: 1 }}>
                   <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
@@ -144,8 +144,8 @@ export function CompanyDashboardPage() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#2563eb',
-                        backgroundColor: '#2563eb18',
+                        color: '#EC0618',
+                        backgroundColor: 'rgba(236, 6, 24, 0.12)',
                       }}
                     >
                       <CalendarMonthIcon fontSize="small" />

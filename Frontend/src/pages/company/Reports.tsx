@@ -125,7 +125,7 @@ export function ReportsPage() {
     <Box>
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ mb: 3, gap: 2 }}>
         <Stack direction="row" alignItems="center" spacing={1.5}>
-          <Avatar sx={{ width: 44, height: 44, bgcolor: alpha('#2563eb', 0.12), color: '#2563eb' }}>
+          <Avatar sx={{ width: 44, height: 44, bgcolor: alpha('#EC0618', 0.12), color: '#EC0618' }}>
             <AssessmentIcon />
           </Avatar>
           <Box>
@@ -297,7 +297,7 @@ function AttendanceReport({ query, data }: { query: { isLoading: boolean }; data
     <Box>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} sm={4} lg={3}>
-          <KpiCard icon={<CalendarTodayIcon />} tint="#2563eb" label="Total records" value={summary.totalRecords} />
+          <KpiCard icon={<CalendarTodayIcon />} tint="#EC0618" label="Total records" value={summary.totalRecords} />
         </Grid>
         <Grid item xs={6} sm={4} lg={3}>
           <KpiCard icon={<CheckCircleIcon />} tint="#16a34a" label="Present days" value={summary.presentDays} />
@@ -368,7 +368,7 @@ function AttendanceReport({ query, data }: { query: { isLoading: boolean }; data
         </Grid>
         <Grid item xs={12} md={4}>
           <Stack spacing={2}>
-            <Distribution title="Status breakdown" icon={<CheckCircleIcon sx={{ color: 'text.secondary', fontSize: 18 }} />} color="#2563eb" data={byStatus} />
+            <Distribution title="Status breakdown" icon={<CheckCircleIcon sx={{ color: 'text.secondary', fontSize: 18 }} />} color="#EC0618" data={byStatus} />
             <MostCommonStatus data={byStatus} />
           </Stack>
         </Grid>
@@ -389,7 +389,7 @@ function StaffReport({ query, data }: { query: { isLoading: boolean }; data: Sta
     <Box>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} sm={4} lg={4}>
-          <KpiCard icon={<PeopleAltIcon />} tint="#2563eb" label="Total staff" value={summary.totalStaff} />
+          <KpiCard icon={<PeopleAltIcon />} tint="#EC0618" label="Total staff" value={summary.totalStaff} />
         </Grid>
         <Grid item xs={6} sm={4} lg={4}>
           <KpiCard icon={<CheckCircleIcon />} tint="#16a34a" label="Active" value={summary.active} sub={<LinearProgress variant="determinate" value={activeRate} sx={{ height: 6, borderRadius: 3, bgcolor: alpha('#16a34a', 0.12), '& .MuiLinearProgress-bar': { bgcolor: '#16a34a' } }} />} />
@@ -435,7 +435,7 @@ function StaffReport({ query, data }: { query: { isLoading: boolean }; data: Sta
         </Grid>
         <Grid item xs={12} md={4}>
           <Stack spacing={2}>
-            <Distribution title="By branch" icon={<StorefrontIcon sx={{ color: 'text.secondary', fontSize: 18 }} />} color="#2563eb" data={summary.byBranch} />
+            <Distribution title="By branch" icon={<StorefrontIcon sx={{ color: 'text.secondary', fontSize: 18 }} />} color="#EC0618" data={summary.byBranch} />
             <Distribution title="By department" icon={<ApartmentIcon sx={{ color: 'text.secondary', fontSize: 18 }} />} color="#7c3aed" data={summary.byDepartment} />
           </Stack>
         </Grid>
@@ -456,7 +456,7 @@ function InventoryReport({ query, data }: { query: { isLoading: boolean }; data:
     <Box>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} sm={4} lg={4}>
-          <KpiCard icon={<Inventory2Icon />} tint="#2563eb" label="Total items" value={summary.totalItems} />
+          <KpiCard icon={<Inventory2Icon />} tint="#EC0618" label="Total items" value={summary.totalItems} />
         </Grid>
         <Grid item xs={6} sm={4} lg={4}>
           <KpiCard icon={<WarningAmberIcon />} tint={summary.lowStockItems > 0 ? '#d97706' : '#16a34a'} label="Low stock" value={summary.lowStockItems} />
@@ -514,7 +514,7 @@ function InventoryReport({ query, data }: { query: { isLoading: boolean }; data:
         </Grid>
         <Grid item xs={12} md={4}>
           <Stack spacing={2}>
-            <Distribution title="Stock by branch" icon={<StorefrontIcon sx={{ color: 'text.secondary', fontSize: 18 }} />} color="#2563eb" data={summary.byBranch} />
+            <Distribution title="Stock by branch" icon={<StorefrontIcon sx={{ color: 'text.secondary', fontSize: 18 }} />} color="#EC0618" data={summary.byBranch} />
             <Card variant="outlined" sx={{ borderColor: summary.lowStockItems > 0 ? '#f59e0b' : 'divider' }}>
               <CardContent>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>

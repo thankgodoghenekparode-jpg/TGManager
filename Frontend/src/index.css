@@ -47,6 +47,95 @@ textarea {
   animation: app-page-enter 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes radiance-glow {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.18) translate(15px, -15px);
+    opacity: 0.75;
+  }
+}
+
+@keyframes radiance-glow-reverse {
+  0%, 100% {
+    transform: scale(1.15) translate(0, 0);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(0.9) translate(-20px, 15px);
+    opacity: 0.35;
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(3deg);
+  }
+}
+
+@keyframes text-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(236, 6, 24, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(236, 6, 24, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(236, 6, 24, 0);
+  }
+}
+
+@keyframes ticker-slide {
+  0% { opacity: 0; transform: translateY(6px); }
+  15% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.radiance-bg-orb-1 {
+  animation: radiance-glow 9s ease-in-out infinite;
+}
+
+.radiance-bg-orb-2 {
+  animation: radiance-glow-reverse 12s ease-in-out infinite;
+}
+
+.radiance-float {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+.radiance-pulse-badge {
+  animation: pulse-ring 2.5s infinite;
+}
+
+.text-gradient-radiance {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FF6B7A 45%, #EC0618 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
