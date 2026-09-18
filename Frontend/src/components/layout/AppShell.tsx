@@ -133,7 +133,7 @@ export function AppShell({
         })}
       </List>
       {user && (
-        <Box sx={{ m: 1.5, p: 1.25, borderRadius: 3, bgcolor: 'rgba(79, 70, 229, 0.05)', border: '1px solid rgba(79,70,229,0.1)', display: 'flex', alignItems: 'center', gap: 1.25 }}>
+        <Box sx={{ m: 1.5, p: 1.25, borderRadius: 3, bgcolor: 'rgba(236, 6, 24, 0.08)', border: '1px solid rgba(236, 6, 24, 0.2)', display: 'flex', alignItems: 'center', gap: 1.25 }}>
           <Avatar sx={{ width: 34, height: 34, fontSize: 13 }}>{initials(`${user.firstName} ${user.lastName}`)}</Avatar>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="body2" fontWeight={700} noWrap>{user.firstName} {user.lastName}</Typography>
@@ -191,7 +191,7 @@ export function AppShell({
                   borderColor: 'divider',
                   bgcolor: 'background.paper',
                   cursor: 'pointer',
-                  '&:hover': { borderColor: 'rgba(37, 99, 235, 0.45)' },
+                  '&:hover': { borderColor: 'rgba(236, 6, 24, 0.45)' },
                 }}
               >
                 <Avatar sx={{ width: 30, height: 30, fontSize: 12 }}>{initials(`${user.firstName} ${user.lastName}`)}</Avatar>
@@ -220,7 +220,7 @@ export function AppShell({
           open
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, backgroundImage: 'none', borderRight: '1px solid #e5e9f1' },
+            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, backgroundImage: 'none', borderRight: '1px solid', borderColor: 'divider' },
           }}
         >
           {drawer}

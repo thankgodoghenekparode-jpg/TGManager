@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import SecurityIcon from '@mui/icons-material/Security'
@@ -8,13 +8,6 @@ import HubIcon from '@mui/icons-material/Hub'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 
-const ROTATING_TEXTS = [
-  'Automate multi-branch workforce scheduling & approvals.',
-  'Hardware-ready biometric clock-in with audit verification.',
-  'Encrypted team communications, memos & real-time notices.',
-  'Unified executive analytics, financials & inventory tracking.',
-]
-
 const STATS = [
   { label: 'Uptime SLA', value: '99.99%', icon: SpeedIcon },
   { label: 'Security Standard', value: 'AES-256 Audited', icon: SecurityIcon },
@@ -22,20 +15,6 @@ const STATS = [
 ]
 
 export function AuthShell({ title, children }: { title: string; children: ReactNode }) {
-  const [activeTextIndex, setActiveTextIndex] = useState(0)
-  const [fadeState, setFadeState] = useState(true)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFadeState(false)
-      setTimeout(() => {
-        setActiveTextIndex((prev) => (prev + 1) % ROTATING_TEXTS.length)
-        setFadeState(true)
-      }, 400)
-    }, 4200)
-    return () => clearInterval(interval)
-  }, [])
-
   return (
     <Box
       sx={{
@@ -271,7 +250,7 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
             variant="h3"
             className="text-gradient-radiance"
             sx={{
-              mb: 2.5,
+              mb: 3.5,
               fontWeight: 900,
               lineHeight: 1.15,
               letterSpacing: '-0.03em',
@@ -280,50 +259,8 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
             Run your entire company in one radiant workspace.
           </Typography>
 
-          {/* Dynamic Rotating Animated Text Banner */}
-          <Box
-            sx={{
-              p: 2.4,
-              borderRadius: 3,
-              bgcolor: 'rgba(23, 25, 28, 0.7)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(236, 6, 24, 0.35)',
-              boxShadow: '0 8px 32px rgba(236, 6, 24, 0.18)',
-              minHeight: 84,
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'all 0.3s ease',
-              mb: 4,
-            }}
-          >
-            <Stack direction="row" spacing={1.6} alignItems="center">
-              <Box
-                className="radiance-pulse-badge"
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  bgcolor: '#EC0618',
-                  flexShrink: 0,
-                }}
-              />
-              <Typography
-                variant="body1"
-                sx={{
-                  fontWeight: 600,
-                  color: '#F9FAFB',
-                  opacity: fadeState ? 1 : 0,
-                  transform: fadeState ? 'translateY(0)' : 'translateY(8px)',
-                  transition: 'opacity 0.35s ease, transform 0.35s ease',
-                }}
-              >
-                {ROTATING_TEXTS[activeTextIndex]}
-              </Typography>
-            </Stack>
-          </Box>
-
           {/* Feature Highlights with Red Glowing Badges */}
-          <Stack spacing={1.8} sx={{ mb: 4 }}>
+          <Stack spacing={2} sx={{ mb: 4.5 }}>
             {[
               'Enterprise multi-tenant organization boundaries & security',
               'Real-time attendance & live staff roster analytics',

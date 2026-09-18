@@ -58,6 +58,7 @@ import DownloadIcon from '@mui/icons-material/Download'
 import PlayCircleIcon from '@mui/icons-material/PlayCircle'
 import VoiceIcon from '@mui/icons-material/RecordVoiceOver'
 import CloseIcon from '@mui/icons-material/Close'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import {
   chatApi,
   type ChatMessage,
@@ -199,8 +200,17 @@ export function ChatPage() {
   }, [conversations.data, search.data, query, me?.id])
 
   return (
-    <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' }, height: { xs: 'auto', md: 'calc(100vh - 160px)' }, minHeight: { xs: 'calc(100vh - 190px)', md: 'auto' } }}>
-      <Paper variant="outlined" sx={{ width: { xs: '100%', md: 340 }, display: 'flex', flexDirection: 'column', flexShrink: 0, maxHeight: { xs: '42vh', md: 'none' } }}>
+    <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' }, height: { xs: 'calc(100vh - 140px)', md: 'calc(100vh - 160px)' } }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          width: { xs: '100%', md: 340 },
+          display: { xs: selectedId ? 'none' : 'flex', md: 'flex' },
+          flexDirection: 'column',
+          flexShrink: 0,
+          height: '100%',
+        }}
+      >
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1.5, pb: 0, flexWrap: 'wrap', gap: 1 }}>
           <Typography variant="h6" fontWeight={700}>Chats</Typography>
           <Can permissions={['chat.create']}>
@@ -266,7 +276,16 @@ export function ChatPage() {
         )}
       </Paper>
 
-      <Paper variant="outlined" sx={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: { xs: '55vh', md: 0 } }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          flex: 1,
+          display: { xs: selectedId ? 'flex' : 'none', md: 'flex' },
+          flexDirection: 'column',
+          minWidth: 0,
+          height: '100%',
+        }}
+      >
         {selectedId ? (
           <Thread
             conversationId={selectedId}
@@ -274,6 +293,7 @@ export function ChatPage() {
             onlineIds={onlineIds}
             onForward={setForward}
             onConversationGone={() => setSelectedId('')}
+            onBack={() => setSelectedId('')}
           />
         ) : (
           <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -390,12 +410,14 @@ function Thread({
   onlineIds,
   onForward,
   onConversationGone,
+  onBack,
 }: {
   conversationId: string
   meId: string
   onlineIds: Set<string>
   onForward: (m: ChatMessage) => void
   onConversationGone: () => void
+  onBack?: () => void
 }) {
   const qc = useQueryClient()
   const [draft, setDraft] = useState('')
@@ -556,6 +578,17 @@ function Thread({
         spacing={1.5}
         sx={{ p: 1.25, pl: 2, borderBottom: 1, borderColor: 'divider' }}
       >
+        {onBack && (
+          <IconButton
+            edge="start"
+            size="small"
+            onClick={onBack}
+            sx={{ display: { md: 'none' }, mr: -0.5 }}
+            aria-label="Back to conversations"
+          >
+            <ArrowBackIcon fontSize="small" />
+          </IconButton>
+        )}
         {conversation.data
           ? <ConversationAvatar c={conversation.data} meId={meId} />
           : <Avatar sx={{ width: 26, height: 26, fontSize: 11 }} />

@@ -276,8 +276,8 @@ function Stat({
 }) {
   const color = warn ? '#e11d48' : tone
   return (
-    <Grid item xs={12} sm={6} md={4} lg={2}>
-      <Card variant="outlined" sx={{ height: '100%', transition: 'border-color .15s ease, box-shadow .15s ease', '&:hover': { borderColor: 'rgba(49, 87, 213, 0.35)', boxShadow: '0 10px 24px -18px rgba(49, 87, 213, 0.45)' } }}>
+    <Grid item xs={6} sm={4} md={4} lg={2}>
+      <Card variant="outlined" sx={{ height: '100%', transition: 'border-color .15s ease, box-shadow .15s ease', '&:hover': { borderColor: 'rgba(236, 6, 24, 0.35)', boxShadow: '0 10px 24px -18px rgba(236, 6, 24, 0.45)' } }}>
         <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
           <Stack direction="row" alignItems="center" spacing={1.25} sx={{ mb: 1, flexWrap: 'wrap' }}>
             {icon && (
