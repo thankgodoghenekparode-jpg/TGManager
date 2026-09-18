@@ -1,18 +1,9 @@
 import type { ReactNode } from 'react'
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import SecurityIcon from '@mui/icons-material/Security'
-import SpeedIcon from '@mui/icons-material/Speed'
 import FingerprintIcon from '@mui/icons-material/Fingerprint'
-import HubIcon from '@mui/icons-material/Hub'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-
-const STATS = [
-  { label: 'Uptime SLA', value: '99.99%', icon: SpeedIcon },
-  { label: 'Security Standard', value: 'AES-256 Audited', icon: SecurityIcon },
-  { label: 'Multi-Tenant Nodes', value: 'Instant Sync', icon: HubIcon },
-]
 
 export function AuthShell({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -257,7 +248,7 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
           </Typography>
 
           {/* Feature Highlights with Red Glowing Badges */}
-          <Stack spacing={2} sx={{ mb: 4.5 }}>
+          <Stack spacing={2}>
             {[
               'Enterprise multi-tenant organization boundaries & security',
               'Real-time attendance & live staff roster analytics',
@@ -269,20 +260,6 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
                   {f}
                 </Typography>
               </Stack>
-            ))}
-          </Stack>
-
-          {/* Stats Bar */}
-          <Stack direction="row" spacing={3} sx={{ pt: 2.5, borderTop: '1px solid rgba(236, 6, 24, 0.2)' }}>
-            {STATS.map((s) => (
-              <Box key={s.label}>
-                <Typography variant="subtitle2" sx={{ color: '#FF4D5E', fontWeight: 800 }}>
-                  {s.value}
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#9CA3AF' }}>
-                  {s.label}
-                </Typography>
-              </Box>
             ))}
           </Stack>
         </Box>
