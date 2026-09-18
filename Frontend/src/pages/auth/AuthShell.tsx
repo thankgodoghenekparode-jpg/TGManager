@@ -1,7 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react'
-import { Box, Card, CardContent, Stack, Typography, Chip } from '@mui/material'
+import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import SecurityIcon from '@mui/icons-material/Security'
 import SpeedIcon from '@mui/icons-material/Speed'
 import FingerprintIcon from '@mui/icons-material/Fingerprint'
@@ -267,21 +266,6 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
             </Box>
           </Box>
 
-          <Chip
-            icon={<AutoAwesomeIcon sx={{ color: '#EC0618 !important', fontSize: 16 }} />}
-            label="Red & Black Radiance Edition"
-            size="small"
-            sx={{
-              mb: 3,
-              bgcolor: 'rgba(236, 6, 24, 0.15)',
-              color: '#FF6B7A',
-              border: '1px solid rgba(236, 6, 24, 0.4)',
-              fontWeight: 700,
-              fontSize: '0.78rem',
-              boxShadow: '0 0 16px rgba(236, 6, 24, 0.25)',
-            }}
-          />
-
           {/* Animated Glowing Main Headline */}
           <Typography
             variant="h3"
@@ -466,7 +450,7 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
         </Card>
 
         <Typography variant="caption" sx={{ mt: 3.5, color: '#9CA3AF', fontWeight: 600, letterSpacing: '0.02em' }}>
-          TGManager • Red & Black Radiance Platform
+          TGManager • Secure Enterprise Workspace
         </Typography>
       </Box>
     </Box>
