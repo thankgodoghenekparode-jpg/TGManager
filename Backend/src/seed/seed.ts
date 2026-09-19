@@ -2127,6 +2127,9 @@ async function seedDemoOrg(prisma: PrismaClient) {
     console.log(`   Branches: ${branches.length}`);
     console.log(`   Staff records: ${createdStaffRecords.length}`);
     return true;
+  }, {
+    timeout: 30000,
+    maxWait: 10000,
   });
 }
 
