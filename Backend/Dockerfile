@@ -34,4 +34,4 @@ COPY --from=builder /app/prisma ./prisma
 EXPOSE 4000
 
 # Run migrations and start the production application
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
