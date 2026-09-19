@@ -326,79 +326,13 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
             }}
           />
 
-          {/* Cyber Security Lock Header Hero Banner */}
-          <Box
-            sx={{
-              position: 'relative',
-              width: '100%',
-              height: 140,
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'flex-end',
-              p: 2.5,
-              backgroundImage: 'url(/auth-security-lock.jpg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          >
-            {/* Multi-layer Gradient Overlay to seamlessly blend into card surface */}
-            <Box
-              sx={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(to bottom, rgba(10, 11, 14, 0.25) 0%, rgba(17, 19, 23, 0.7) 60%, rgba(23, 25, 28, 0.98) 100%)',
-                zIndex: 1,
-              }}
-            />
-
-            {/* Glowing Cyber Gateway Badge */}
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              sx={{
-                position: 'relative',
-                zIndex: 2,
-                px: 1.5,
-                py: 0.6,
-                borderRadius: 2,
-                bgcolor: 'rgba(10, 11, 14, 0.75)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(236, 6, 24, 0.4)',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(236, 6, 24, 0.25)',
-              }}
-            >
-              <Box
-                sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: '#10B981',
-                  boxShadow: '0 0 8px #10B981',
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{
-                  color: '#FFFFFF',
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  fontSize: '0.72rem',
-                }}
-              >
-                256-Bit Encrypted Portal
-              </Typography>
-            </Stack>
-          </Box>
-
-          <CardContent sx={{ p: { xs: 3, sm: 4 }, pt: { xs: 2.5, sm: 3 } }}>
+          <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
             {/* Header Badge */}
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
               <Box
                 sx={{
-                  width: 26,
-                  height: 26,
+                  width: 28,
+                  height: 28,
                   borderRadius: 1.5,
                   bgcolor: 'rgba(236, 6, 24, 0.18)',
                   color: '#EC0618',
@@ -407,7 +341,7 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
                   justifyContent: 'center',
                 }}
               >
-                <LockOutlinedIcon sx={{ fontSize: 15 }} />
+                <LockOutlinedIcon sx={{ fontSize: 16 }} />
               </Box>
               <Typography variant="caption" sx={{ color: '#FF6B7A', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Secure Access Gateway
@@ -417,7 +351,7 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
             <Typography variant="h5" fontWeight={900} sx={{ color: '#FFFFFF', letterSpacing: '-0.02em', mb: 0.5 }}>
               Welcome back
             </Typography>
-            <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
+            <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3.5 }}>
               {title}
             </Typography>
 
