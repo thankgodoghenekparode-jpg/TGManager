@@ -24,9 +24,13 @@ import KeyIcon from '@mui/icons-material/Key'
 import MailOutlineIcon from '@mui/icons-material/MailOutline'
 import HistoryIcon from '@mui/icons-material/History'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
 import { useAuthStore } from '../../store/auth'
+import { useColorMode } from '../../contexts/ThemeContext'
 import { NotificationsMenu } from '../NotificationsMenu'
+import { ThemeToggle } from '../ThemeToggle'
 import { ChangePasswordDialog } from '../account/ChangePasswordDialog'
 
 export interface NavItem {
@@ -173,6 +177,7 @@ export function AppShell({
             <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1 }}>{subtitle ?? title}</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', md: 'flex-end' }, gap: 0.75, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' }, pl: { xs: 5, md: 0 } }}>
+            <ThemeToggle />
             {user && <NotificationsMenu />}
             {actions}
             {user && (
@@ -261,6 +266,8 @@ export function AppShell({
             </MenuItem>
           </>
         )}
+        <Divider />
+        <ThemeMenuItem onClose={() => setMenuAnchor(null)} />
         {onLogout && (
           <MenuItem onClick={onLogout} sx={{ color: 'error.main' }}>
             <ListItemIcon sx={{ minWidth: 34 }}><LogoutIcon fontSize="small" /></ListItemIcon>
@@ -270,5 +277,28 @@ export function AppShell({
       </Menu>
       <ChangePasswordDialog open={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} />
     </Box>
+  )
+}
+
+function ThemeMenuItem({ onClose }: { onClose: () => void }) {
+  const { mode, toggleColorMode } = useColorMode()
+  const isDark = mode === 'dark'
+
+  return (
+    <MenuItem
+      onClick={() => {
+        toggleColorMode()
+        onClose()
+      }}
+    >
+      <ListItemIcon sx={{ minWidth: 34 }}>
+        {isDark ? (
+          <LightModeOutlinedIcon fontSize="small" sx={{ color: '#FBBF24' }} />
+        ) : (
+          <DarkModeOutlinedIcon fontSize="small" />
+        )}
+      </ListItemIcon>
+      {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+    </MenuItem>
   )
 }

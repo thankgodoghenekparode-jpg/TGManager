@@ -4,6 +4,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import FingerprintIcon from '@mui/icons-material/Fingerprint'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import { ThemeToggle } from '../../components/ThemeToggle'
 
 export function AuthShell({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -278,6 +279,10 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
           zIndex: 2,
         }}
       >
+        <Box sx={{ position: 'absolute', top: { xs: 16, sm: 24 }, right: { xs: 16, sm: 24 }, zIndex: 10 }}>
+          <ThemeToggle />
+        </Box>
+
         {/* Dedicated Backlight Behind Login/Password Card */}
         <Box
           sx={{

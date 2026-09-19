@@ -30,10 +30,14 @@ import CloseIcon from '@mui/icons-material/Close'
 import { useAuthStore } from '../store/auth'
 import { getTenantId } from '../api/client'
 import { isPlatformAdmin } from '../store/tenant'
+import { ThemeToggle } from '../components/ThemeToggle'
+import { useColorMode } from '../contexts/ThemeContext'
 
 export function PortfolioPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const { mode } = useColorMode()
+  const isDark = mode === 'dark'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -55,7 +59,16 @@ export function PortfolioPage() {
   }
 
   return (
-    <Box sx={{ bgcolor: '#010101', color: '#FFFFFF', minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+    <Box
+      sx={{
+        bgcolor: isDark ? '#010101' : '#F8FAFC',
+        color: isDark ? '#FFFFFF' : '#0F172A',
+        minHeight: '100vh',
+        position: 'relative',
+        overflowX: 'hidden',
+        transition: 'background-color 0.25s ease, color 0.25s ease',
+      }}
+    >
       {/* ─── FULL-BLEED RADIANCE BACKGROUND ORBS ─── */}
       <Box
         className="radiance-bg-orb-1"
@@ -66,7 +79,9 @@ export function PortfolioPage() {
           width: 800,
           height: 800,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(236, 6, 24, 0.4) 0%, rgba(184, 0, 16, 0.18) 40%, transparent 70%)',
+          background: isDark
+            ? 'radial-gradient(circle, rgba(236, 6, 24, 0.4) 0%, rgba(184, 0, 16, 0.18) 40%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(236, 6, 24, 0.15) 0%, rgba(184, 0, 16, 0.06) 40%, transparent 70%)',
           filter: 'blur(80px)',
           pointerEvents: 'none',
           zIndex: 0,
@@ -81,7 +96,9 @@ export function PortfolioPage() {
           width: 750,
           height: 750,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255, 51, 68, 0.28) 0%, rgba(133, 0, 10, 0.2) 45%, transparent 75%)',
+          background: isDark
+            ? 'radial-gradient(circle, rgba(255, 51, 68, 0.28) 0%, rgba(133, 0, 10, 0.2) 45%, transparent 75%)'
+            : 'radial-gradient(circle, rgba(255, 51, 68, 0.1) 0%, rgba(133, 0, 10, 0.05) 45%, transparent 75%)',
           filter: 'blur(85px)',
           pointerEvents: 'none',
           zIndex: 0,
@@ -95,7 +112,9 @@ export function PortfolioPage() {
           width: 650,
           height: 650,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(236, 6, 24, 0.25) 0%, transparent 70%)',
+          background: isDark
+            ? 'radial-gradient(circle, rgba(236, 6, 24, 0.25) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(236, 6, 24, 0.08) 0%, transparent 70%)',
           filter: 'blur(70px)',
           pointerEvents: 'none',
           zIndex: 0,
@@ -112,7 +131,7 @@ export function PortfolioPage() {
             linear-gradient(to bottom, rgba(236, 6, 24, 0.04) 1px, transparent 1px)
           `,
           backgroundSize: '48px 48px',
-          opacity: 0.7,
+          opacity: isDark ? 0.7 : 0.4,
           pointerEvents: 'none',
           zIndex: 0,
         }}
@@ -128,9 +147,22 @@ export function PortfolioPage() {
           right: 0,
           zIndex: 100,
           transition: 'all 0.3s ease',
-          bgcolor: scrolled ? 'rgba(1, 1, 1, 0.85)' : 'transparent',
+          bgcolor: scrolled
+            ? isDark
+              ? 'rgba(1, 1, 1, 0.88)'
+              : 'rgba(255, 255, 255, 0.92)'
+            : 'transparent',
           backdropFilter: scrolled ? 'blur(20px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(236, 6, 24, 0.25)' : '1px solid transparent',
+          borderBottom: scrolled
+            ? isDark
+              ? '1px solid rgba(236, 6, 24, 0.25)'
+              : '1px solid #E2E8F0'
+            : '1px solid transparent',
+          boxShadow: scrolled
+            ? isDark
+              ? '0 10px 30px rgba(0,0,0,0.5)'
+              : '0 4px 20px rgba(15,23,42,0.06)'
+            : 'none',
           py: 2,
         }}
       >
@@ -155,7 +187,7 @@ export function PortfolioPage() {
               >
                 TG
               </Box>
-              <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: '#FFFFFF' }}>
+              <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: isDark ? '#FFFFFF' : '#0F172A' }}>
                 TGManager
               </Typography>
             </Stack>
@@ -171,16 +203,21 @@ export function PortfolioPage() {
 
             {/* Action Buttons */}
             <Stack direction="row" spacing={1.5} alignItems="center">
+              <ThemeToggle />
               <Button
                 variant="outlined"
                 onClick={() => navigate('/login')}
                 sx={{
                   display: { xs: 'none', sm: 'inline-flex' },
-                  borderColor: 'rgba(236, 6, 24, 0.5)',
-                  color: '#FFFFFF',
+                  borderColor: isDark ? 'rgba(236, 6, 24, 0.5)' : '#DC2626',
+                  color: isDark ? '#FFFFFF' : '#B80010',
                   borderRadius: 3,
                   px: 2.5,
-                  '&:hover': { borderColor: '#EC0618', bgcolor: 'rgba(236, 6, 24, 0.1)' },
+                  fontWeight: 700,
+                  '&:hover': {
+                    borderColor: '#EC0618',
+                    bgcolor: isDark ? 'rgba(236, 6, 24, 0.1)' : 'rgba(236, 6, 24, 0.06)',
+                  },
                 }}
               >
                 {user ? 'Open App' : 'Sign In'}
@@ -201,7 +238,7 @@ export function PortfolioPage() {
               {/* Mobile Menu Toggle */}
               <IconButton
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                sx={{ display: { md: 'none' }, color: '#FFFFFF' }}
+                sx={{ display: { md: 'none' }, color: isDark ? '#FFFFFF' : '#0F172A' }}
               >
                 {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
               </IconButton>

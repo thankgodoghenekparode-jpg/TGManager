@@ -18,6 +18,29 @@ body {
   background-color: #010101;
   color: #ffffff;
   overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+html[data-theme='light'] body,
+body.light {
+  background-color: #F8FAFC;
+  color: #0F172A;
+}
+
+html[data-theme='dark'] body,
+body.dark {
+  background-color: #010101;
+  color: #ffffff;
+}
+
+body,
+.MuiPaper-root,
+.MuiCard-root,
+.MuiAppBar-root,
+.MuiDrawer-paper,
+.MuiTableCell-root,
+.MuiButton-root {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
 }
 
 a {
@@ -163,12 +186,27 @@ textarea {
   animation: text-shimmer 6s linear infinite;
 }
 
+html[data-theme='light'] .text-gradient-radiance {
+  background: linear-gradient(135deg, #0F172A 0%, #B80010 60%, #EC0618 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .auth-radiant-card {
   background: rgba(23, 25, 28, 0.72) !important;
   backdrop-filter: blur(28px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
   border: 1px solid rgba(236, 6, 24, 0.35) !important;
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 35px rgba(236, 6, 24, 0.22) !important;
+}
+
+html[data-theme='light'] .auth-radiant-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(28px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(180%) !important;
+  border: 1px solid rgba(236, 6, 24, 0.2) !important;
+  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.12), 0 0 25px rgba(236, 6, 24, 0.1) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

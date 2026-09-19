@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { ThemeProvider } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
 import { Box, CircularProgress } from '@mui/material'
 import { createBrowserRouter, RouterProvider, useLocation, useNavigate } from 'react-router-dom'
-import { theme } from './theme'
+import { AppThemeProvider } from './contexts/ThemeContext'
 import { queryClient } from './lib/query'
 import { useAuthStore } from './store/auth'
 import { useTenantStore } from './store/tenant'
@@ -184,11 +182,10 @@ function AppBootstrap() {
 
 export default function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <AppThemeProvider>
       <QueryClientProvider client={queryClient}>
         <AppBootstrap />
       </QueryClientProvider>
-    </ThemeProvider>
+    </AppThemeProvider>
   )
 }

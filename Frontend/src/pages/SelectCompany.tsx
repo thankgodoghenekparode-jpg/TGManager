@@ -16,6 +16,8 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { useAuthStore } from '../store/auth'
 import { useTenantStore } from '../store/tenant'
 import { setTenantId } from '../api/client'
+import { ThemeToggle } from '../components/ThemeToggle'
+import { useColorMode } from '../contexts/ThemeContext'
 
 export function SelectCompanyPage() {
   const navigate = useNavigate()
@@ -23,6 +25,8 @@ export function SelectCompanyPage() {
   const loadTenant = useTenantStore((s) => s.load)
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const { mode } = useColorMode()
+  const isDark = mode === 'dark'
 
   useEffect(() => {
     if (memberships.length === 1) {
@@ -49,7 +53,8 @@ export function SelectCompanyPage() {
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: '#010101',
+        bgcolor: 'background.default',
+        color: 'text.primary',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -57,9 +62,16 @@ export function SelectCompanyPage() {
         p: { xs: 2.5, sm: 4 },
         position: 'relative',
         overflow: 'hidden',
-        background: 'radial-gradient(circle at 50% 20%, #150204 0%, #010101 70%)',
+        background: isDark
+          ? 'radial-gradient(circle at 50% 20%, #150204 0%, #010101 70%)'
+          : 'radial-gradient(circle at 50% 10%, #FFF0F2 0%, #F8FAFC 75%)',
+        transition: 'background 0.3s ease',
       }}
     >
+      <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
+        <ThemeToggle />
+      </Box>
+
       <Box
         className="radiance-bg-orb-1"
         sx={{
@@ -68,7 +80,9 @@ export function SelectCompanyPage() {
           width: 500,
           height: 500,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(236, 6, 24, 0.3) 0%, transparent 70%)',
+          background: isDark
+            ? 'radial-gradient(circle, rgba(236, 6, 24, 0.3) 0%, transparent 70%)'
+            : 'radial-gradient(circle, rgba(236, 6, 24, 0.15) 0%, transparent 70%)',
           filter: 'blur(60px)',
           pointerEvents: 'none',
         }}
@@ -95,16 +109,16 @@ export function SelectCompanyPage() {
           >
             TG
           </Box>
-          <Typography variant="h4" fontWeight={900} sx={{ color: '#FFFFFF', letterSpacing: '-0.02em', mb: 0.5 }}>
+          <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', mb: 0.5 }}>
             Choose Workspace
           </Typography>
-          <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+          <Typography variant="body2" color="text.secondary">
             Select the organization you wish to manage today
           </Typography>
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2.5, bgcolor: 'rgba(236, 6, 24, 0.12)', border: '1px solid rgba(236, 6, 24, 0.4)', color: '#FF6B7A' }}>
+          <Alert severity="error" sx={{ mb: 2.5, bgcolor: 'rgba(236, 6, 24, 0.12)', border: '1px solid rgba(236, 6, 24, 0.4)' }}>
             {error}
           </Alert>
         )}
@@ -116,8 +130,11 @@ export function SelectCompanyPage() {
               className="auth-radiant-card"
               sx={{
                 borderRadius: 3,
-                transition: 'transform 0.2s ease, border-color 0.2s ease',
-                '&:hover': { transform: 'translateY(-2px)', borderColor: '#EC0618 !important' },
+                transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#EC0618 !important',
+                },
               }}
             >
               <CardActionArea onClick={() => enter(m.id)} disabled={loading !== null} sx={{ p: 1 }}>
@@ -140,11 +157,11 @@ export function SelectCompanyPage() {
                         <BusinessIcon fontSize="small" />
                       </Box>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="subtitle1" fontWeight={800} noWrap sx={{ color: '#FFFFFF' }}>
+                        <Typography variant="subtitle1" fontWeight={800} noWrap>
                           {m.name}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: '#9CA3AF', display: 'block' }} noWrap>
-                          {m.plan?.name ?? 'Standard Plan'} · <span style={{ color: '#10B981' }}>{m.status}</span>
+                        <Typography variant="caption" color="text.secondary" noWrap display="block">
+                          {m.plan?.name ?? 'Standard Plan'} · <span style={{ color: '#10B981', fontWeight: 700 }}>{m.status}</span>
                         </Typography>
                       </Box>
                     </Stack>
