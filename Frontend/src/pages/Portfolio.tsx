@@ -32,6 +32,7 @@ import { getTenantId } from '../api/client'
 import { isPlatformAdmin } from '../store/tenant'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useColorMode } from '../contexts/ThemeContext'
+import { Logo } from '../components/brand/Logo'
 
 export function PortfolioPage() {
   const navigate = useNavigate()
@@ -169,28 +170,9 @@ export function PortfolioPage() {
         <Container maxWidth="lg">
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             {/* Brand Monogram & Title */}
-            <Stack direction="row" alignItems="center" spacing={1.5} sx={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <Box
-                sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 2.5,
-                  background: 'linear-gradient(135deg, #EC0618 0%, #88000A 100%)',
-                  color: '#FFFFFF',
-                  fontWeight: 900,
-                  fontSize: 18,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 4px 18px rgba(236, 6, 24, 0.6)',
-                }}
-              >
-                TG
-              </Box>
-              <Typography variant="h5" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: isDark ? '#FFFFFF' : '#0F172A' }}>
-                TGManager
-              </Typography>
-            </Stack>
+            <Box sx={{ cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <Logo variant="full" height={36} />
+            </Box>
 
             {/* Desktop Navigation Links */}
             <Stack direction="row" spacing={3.5} alignItems="center" sx={{ display: { xs: 'none', md: 'flex' } }}>
@@ -671,18 +653,11 @@ export function PortfolioPage() {
       </Container>
 
       {/* ─── FOOTER ─── */}
-      <Box component="footer" sx={{ borderTop: '1px solid #2D3035', py: 5, bgcolor: '#050608' }}>
+      <Box component="footer" sx={{ borderTop: isDark ? '1px solid #2D3035' : '1px solid #E2E8F0', py: 5, bgcolor: isDark ? '#050608' : '#F1F5F9' }}>
         <Container maxWidth="lg">
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={3}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: '#EC0618', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
-                TG
-              </Box>
-              <Typography variant="subtitle1" fontWeight={800} color="#FFFFFF">
-                TGManager
-              </Typography>
-            </Stack>
-            <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
+            <Logo variant="full" height={30} />
+            <Typography variant="body2" sx={{ color: isDark ? '#9CA3AF' : '#64748B' }}>
               © {new Date().getFullYear()} TGManager. All rights reserved. Enterprise Workforce Cloud.
             </Typography>
           </Stack>

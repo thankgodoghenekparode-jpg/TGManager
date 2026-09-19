@@ -5,6 +5,7 @@ import FingerprintIcon from '@mui/icons-material/Fingerprint'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { ThemeToggle } from '../../components/ThemeToggle'
+import { Logo } from '../../components/brand/Logo'
 
 export function AuthShell({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -222,16 +223,11 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
         {/* Content Container */}
         <Box sx={{ position: 'relative', zIndex: 2, maxWidth: 510, width: '100%' }}>
           {/* Logo & Platform Tag */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <BrandSymbol size={50} />
-            <Box>
-              <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: '#FFFFFF', lineHeight: 1.1 }}>
-                TGManager
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#FF4D5E', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Enterprise Operations Platform
-              </Typography>
-            </Box>
+          <Box sx={{ mb: 3.5 }}>
+            <Logo variant="full" height={44} />
+            <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#FF4D5E', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Enterprise Operations Platform
+            </Typography>
           </Box>
 
           {/* Animated Glowing Main Headline */}
@@ -299,11 +295,8 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
 
         {/* Mobile Header */}
         <Box sx={{ display: { md: 'none' }, mb: 3, textAlign: 'center' }}>
-          <BrandSymbol size={56} />
-          <Typography variant="h5" fontWeight={900} sx={{ mt: 1.5, color: '#FFFFFF' }}>
-            TGManager
-          </Typography>
-          <Typography variant="caption" sx={{ color: '#FF4D5E', fontWeight: 700 }}>
+          <Logo variant="full" height={40} />
+          <Typography variant="caption" sx={{ display: 'block', mt: 0.75, color: '#FF4D5E', fontWeight: 700 }}>
             Enterprise Workspace
           </Typography>
         </Box>
@@ -436,37 +429,6 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
           TGManager • Secure Enterprise Workspace
         </Typography>
       </Box>
-    </Box>
-  )
-}
-
-function BrandSymbol({ size }: { size: number }) {
-  return (
-    <Box
-      aria-hidden="true"
-      sx={{
-        width: size * 1.25,
-        height: size * 1.25,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 3,
-        background: 'linear-gradient(135deg, #EC0618 0%, #88000A 100%)',
-        color: '#FFFFFF',
-        fontWeight: 900,
-        fontSize: Math.max(18, size * 0.44),
-        letterSpacing: '-0.02em',
-        boxShadow: '0 8px 24px -4px rgba(236, 6, 24, 0.75), 0 0 16px rgba(236, 6, 24, 0.45)',
-        border: '1px solid rgba(255, 255, 255, 0.25)',
-        flexShrink: 0,
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        '&:hover': {
-          transform: 'scale(1.05)',
-          boxShadow: '0 12px 32px -4px rgba(236, 6, 24, 0.9), 0 0 20px rgba(236, 6, 24, 0.6)',
-        },
-      }}
-    >
-      TG
     </Box>
   )
 }

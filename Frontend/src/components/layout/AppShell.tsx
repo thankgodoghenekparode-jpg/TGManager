@@ -32,6 +32,7 @@ import { useColorMode } from '../../contexts/ThemeContext'
 import { NotificationsMenu } from '../NotificationsMenu'
 import { ThemeToggle } from '../ThemeToggle'
 import { ChangePasswordDialog } from '../account/ChangePasswordDialog'
+import { Logo } from '../brand/Logo'
 
 export interface NavItem {
   label: string
@@ -40,29 +41,6 @@ export interface NavItem {
 }
 
 const DRAWER_WIDTH = 264
-function LogoMark({ size = 40 }: { size?: number }) {
-  return (
-    <Box
-      aria-hidden="true"
-      sx={{
-        width: size,
-        height: size,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 2,
-        bgcolor: 'primary.main',
-        color: 'primary.contrastText',
-        fontWeight: 900,
-        fontSize: Math.max(13, size * 0.38),
-        letterSpacing: 0,
-        flexShrink: 0,
-      }}
-    >
-      TG
-    </Box>
-  )
-}
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -103,7 +81,7 @@ export function AppShell({
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 2.5, py: 2.75, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={onNavigateHome}>
-        <LogoMark />
+        <Logo variant="mark" size={38} />
         <Box>
           <Typography variant="h6" sx={{ lineHeight: 1.1 }}>{title}</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ letterSpacing: 0.4 }}>
@@ -173,7 +151,7 @@ export function AppShell({
             <MenuIcon />
           </IconButton>
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-            <LogoMark size={34} />
+            <Logo variant="mark" size={32} />
             <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1 }}>{subtitle ?? title}</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', md: 'flex-end' }, gap: 0.75, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' }, pl: { xs: 5, md: 0 } }}>

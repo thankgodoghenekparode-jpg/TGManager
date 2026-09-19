@@ -18,6 +18,7 @@ import { useTenantStore } from '../store/tenant'
 import { setTenantId } from '../api/client'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useColorMode } from '../contexts/ThemeContext'
+import { Logo } from '../components/brand/Logo'
 
 export function SelectCompanyPage() {
   const navigate = useNavigate()
@@ -90,24 +91,8 @@ export function SelectCompanyPage() {
 
       <Box sx={{ width: '100%', maxWidth: 480, position: 'relative', zIndex: 2 }}>
         <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Box
-            sx={{
-              width: 54,
-              height: 54,
-              mx: 'auto',
-              mb: 2,
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #EC0618 0%, #88000A 100%)',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 900,
-              fontSize: 22,
-              boxShadow: '0 8px 24px -4px rgba(236, 6, 24, 0.75)',
-            }}
-          >
-            TG
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+            <Logo variant="mark" size={64} />
           </Box>
           <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', mb: 0.5 }}>
             Choose Workspace
