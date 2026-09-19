@@ -60,9 +60,9 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import HistoryIcon from '@mui/icons-material/History'
 import ApiIcon from '@mui/icons-material/Api'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import { platformApi, type PlatformTenant } from '../../api/platform'
 import { accountRequestsApi } from '../../api/accountRequests'
-import { useAuthStore } from '../../store/auth'
 import { apiErrorMessage } from '../../api/client'
 
 interface FeatureDef {
@@ -195,7 +195,6 @@ function getResolvedFeatureFlags(tenant: PlatformTenant): Record<string, boolean
 export function PlatformDashboardPage() {
   const navigate = useNavigate()
   const qc = useQueryClient()
-  const user = useAuthStore((s) => s.user)
 
   // Feature Management Dialog State
   const [featureDialogTenant, setFeatureDialogTenant] = useState<PlatformTenant | null>(null)
@@ -365,30 +364,31 @@ export function PlatformDashboardPage() {
                 }}
               />
               <Chip
-                label={user?.role ?? 'SUPER_ADMIN'}
+                icon={<AdminPanelSettingsIcon sx={{ fontSize: '14px !important', color: '#EC0618 !important' }} />}
+                label="Super Admin Authority"
                 size="small"
                 sx={{
-                  bgcolor: 'rgba(255, 255, 255, 0.08)',
-                  color: '#FFFFFF',
+                  bgcolor: 'rgba(236, 6, 24, 0.12)',
+                  color: 'text.primary',
                   fontWeight: 700,
                   fontSize: '0.72rem',
                 }}
               />
               <Chip
-                icon={<TuneIcon sx={{ fontSize: '14px !important', color: '#38BDF8 !important' }} />}
+                icon={<TuneIcon sx={{ fontSize: '14px !important', color: '#0284C7 !important' }} />}
                 label="Feature Entitlements Live Sync"
                 size="small"
                 sx={{
-                  bgcolor: 'rgba(56, 189, 248, 0.12)',
-                  color: '#38BDF8',
+                  bgcolor: 'rgba(2, 132, 199, 0.12)',
+                  color: '#0284C7',
                   fontWeight: 700,
                   fontSize: '0.72rem',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  border: '1px solid rgba(2, 132, 199, 0.3)',
                 }}
               />
             </Stack>
 
-            <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: '#FFFFFF' }}>
+            <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: '-0.02em', color: 'text.primary' }}>
               Platform Super Admin Cockpit
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 640 }}>
@@ -401,10 +401,11 @@ export function PlatformDashboardPage() {
               <IconButton
                 onClick={handleRefresh}
                 sx={{
-                  bgcolor: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: '#FFFFFF',
-                  '&:hover': { bgcolor: 'rgba(236, 6, 24, 0.2)', borderColor: 'rgba(236, 6, 24, 0.4)' },
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: 'rgba(236, 6, 24, 0.15)', borderColor: '#EC0618' },
                 }}
               >
                 <RefreshIcon fontSize="small" />
@@ -416,10 +417,7 @@ export function PlatformDashboardPage() {
               startIcon={<PersonAddIcon />}
               onClick={() => navigate('/admin/users')}
               sx={{
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: '#FFFFFF',
                 fontWeight: 700,
-                '&:hover': { borderColor: '#EC0618', bgcolor: 'rgba(236, 6, 24, 0.1)' },
               }}
             >
               Add User
@@ -430,11 +428,7 @@ export function PlatformDashboardPage() {
               startIcon={<AddBusinessIcon />}
               onClick={() => navigate('/admin/tenants')}
               sx={{
-                bgcolor: '#EC0618',
-                color: '#FFFFFF',
                 fontWeight: 800,
-                boxShadow: '0 4px 18px rgba(236, 6, 24, 0.45)',
-                '&:hover': { bgcolor: '#FF1F33' },
               }}
             >
               Provision Organization
@@ -535,7 +529,7 @@ export function PlatformDashboardPage() {
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5, flexWrap: 'wrap', gap: 1.5 }}>
                   <Box>
-                    <Typography variant="h6" fontWeight={800} sx={{ color: '#FFFFFF' }}>
+                    <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
                       Registered Companies & Feature Control Center
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -546,7 +540,7 @@ export function PlatformDashboardPage() {
                     size="small"
                     endIcon={<ArrowForwardIcon />}
                     onClick={() => navigate('/admin/tenants')}
-                    sx={{ color: '#FF4D5E', fontWeight: 700 }}
+                    sx={{ color: '#EC0618', fontWeight: 700 }}
                   >
                     Directory ({tenants.data?.total ?? 0})
                   </Button>
@@ -555,7 +549,7 @@ export function PlatformDashboardPage() {
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
-                      <TableRow sx={{ '& th': { color: '#8A8F99', fontWeight: 700, borderColor: 'rgba(255, 255, 255, 0.08)' } }}>
+                      <TableRow>
                         <TableCell>Company Organization</TableCell>
                         <TableCell>Plan Tier</TableCell>
                         <TableCell>Active Capabilities</TableCell>
@@ -566,7 +560,7 @@ export function PlatformDashboardPage() {
                     <TableBody>
                       {tenantItems.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} sx={{ textAlign: 'center', py: 4, color: 'text.secondary', borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+                          <TableCell colSpan={5} sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
                             No registered companies found.
                           </TableCell>
                         </TableRow>
@@ -579,12 +573,8 @@ export function PlatformDashboardPage() {
                           return (
                             <TableRow
                               key={t.id}
-                              sx={{
-                                '&:hover': { bgcolor: 'rgba(236, 6, 24, 0.04)' },
-                                '& td': { borderColor: 'rgba(255, 255, 255, 0.06)' },
-                              }}
                             >
-                              <TableCell sx={{ fontWeight: 700, color: '#FFFFFF' }}>
+                              <TableCell sx={{ fontWeight: 700 }}>
                                 <Stack direction="row" alignItems="center" spacing={1}>
                                   <Box
                                     sx={{
@@ -595,7 +585,7 @@ export function PlatformDashboardPage() {
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
-                                      color: '#FF4D5E',
+                                      color: '#EC0618',
                                       fontWeight: 800,
                                       fontSize: '0.75rem',
                                     }}
@@ -603,10 +593,10 @@ export function PlatformDashboardPage() {
                                     {t.name.slice(0, 2).toUpperCase()}
                                   </Box>
                                   <Box>
-                                    <Typography variant="body2" fontWeight={800} color="#FFFFFF">
+                                    <Typography variant="body2" fontWeight={800} color="text.primary">
                                       {t.name}
                                     </Typography>
-                                    <Typography variant="caption" color="#8A8F99" sx={{ fontFamily: 'monospace' }}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                                       {t.slug} • {t.adminEmail ?? 'No admin email'}
                                     </Typography>
                                   </Box>
@@ -699,7 +689,7 @@ export function PlatformDashboardPage() {
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                   <Box>
-                    <Typography variant="h6" fontWeight={800} sx={{ color: '#FFFFFF' }}>
+                    <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
                       Subscription Tiers & Quotas
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -710,7 +700,7 @@ export function PlatformDashboardPage() {
                     size="small"
                     endIcon={<ArrowForwardIcon />}
                     onClick={() => navigate('/admin/plans')}
-                    sx={{ color: '#FF4D5E', fontWeight: 700 }}
+                    sx={{ color: '#EC0618', fontWeight: 700 }}
                   >
                     Manage Plans
                   </Button>
@@ -731,8 +721,6 @@ export function PlatformDashboardPage() {
                           sx={{
                             p: 2,
                             borderRadius: 2.5,
-                            bgcolor: 'rgba(255, 255, 255, 0.02)',
-                            borderColor: 'rgba(255, 255, 255, 0.08)',
                             transition: 'all 0.2s ease',
                             '&:hover': {
                               borderColor: 'rgba(236, 6, 24, 0.4)',
@@ -741,15 +729,15 @@ export function PlatformDashboardPage() {
                           }}
                         >
                           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                            <Typography variant="subtitle2" fontWeight={800} color="#FFFFFF">
+                            <Typography variant="subtitle2" fontWeight={800} color="text.primary">
                               {p.name}
                             </Typography>
                             <Chip
                               label={`$${(p.priceCents / 100).toFixed(0)}/mo`}
                               size="small"
                               sx={{
-                                bgcolor: 'rgba(236, 6, 24, 0.15)',
-                                color: '#FF4D5E',
+                                bgcolor: 'rgba(236, 6, 24, 0.12)',
+                                color: '#B80010',
                                 fontWeight: 800,
                                 fontSize: '0.72rem',
                               }}
@@ -758,8 +746,8 @@ export function PlatformDashboardPage() {
                           <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
                             Max Branches: {p.maxBranches ? p.maxBranches : 'Unlimited'} • Max Staff: {p.maxStaff ? p.maxStaff : 'Unlimited'}
                           </Typography>
-                          <Divider sx={{ my: 1, borderColor: 'rgba(255, 255, 255, 0.06)' }} />
-                          <Typography variant="caption" color="#9CA3AF" display="block">
+                          <Divider sx={{ my: 1 }} />
+                          <Typography variant="caption" color="text.secondary" display="block">
                             Storage: {p.maxStorageBytes ? `${Math.round(parseInt(p.maxStorageBytes) / (1024 * 1024))} MB` : '10 GB'}
                           </Typography>
                         </Paper>
@@ -779,15 +767,13 @@ export function PlatformDashboardPage() {
             <Card
               variant="outlined"
               sx={{
-                bgcolor: '#0A0A0C',
-                borderColor: 'rgba(255, 255, 255, 0.08)',
                 borderRadius: 3.5,
               }}
             >
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                   <SecurityIcon sx={{ color: '#EC0618', fontSize: 20 }} />
-                  <Typography variant="h6" fontWeight={800} sx={{ color: '#FFFFFF' }}>
+                  <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary' }}>
                     Cluster Telemetry
                   </Typography>
                 </Stack>
@@ -800,16 +786,16 @@ export function PlatformDashboardPage() {
                     statusColor="#10B981"
                   />
                   <TelemetryItem
-                    icon={<FingerprintIcon sx={{ color: '#38BDF8', fontSize: 18 }} />}
+                    icon={<FingerprintIcon sx={{ color: '#0284C7', fontSize: 18 }} />}
                     title="Biometric Hardware Engine"
                     status="Online & In-Sync"
-                    statusColor="#38BDF8"
+                    statusColor="#0284C7"
                   />
                   <TelemetryItem
-                    icon={<HubIcon sx={{ color: '#A78BFA', fontSize: 18 }} />}
+                    icon={<HubIcon sx={{ color: '#7C3AED', fontSize: 18 }} />}
                     title="API Gateway Cluster"
                     status="24ms Latency (Nominal)"
-                    statusColor="#A78BFA"
+                    statusColor="#7C3AED"
                   />
                   <TelemetryItem
                     icon={<SpeedIcon sx={{ color: '#10B981', fontSize: 18 }} />}
@@ -825,13 +811,11 @@ export function PlatformDashboardPage() {
             <Card
               variant="outlined"
               sx={{
-                bgcolor: '#0A0A0C',
-                borderColor: 'rgba(255, 255, 255, 0.08)',
                 borderRadius: 3.5,
               }}
             >
               <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Typography variant="h6" fontWeight={800} sx={{ color: '#FFFFFF', mb: 2 }}>
+                <Typography variant="h6" fontWeight={800} sx={{ color: 'text.primary', mb: 2 }}>
                   Root Management Tools
                 </Typography>
 
@@ -843,11 +827,8 @@ export function PlatformDashboardPage() {
                     onClick={() => navigate('/admin/tenants')}
                     sx={{
                       justifyContent: 'flex-start',
-                      borderColor: 'rgba(255, 255, 255, 0.12)',
-                      color: '#FFFFFF',
                       py: 1.2,
                       fontWeight: 700,
-                      '&:hover': { borderColor: '#EC0618', bgcolor: 'rgba(236, 6, 24, 0.08)' },
                     }}
                   >
                     Manage Organizations & Tenants
@@ -860,11 +841,8 @@ export function PlatformDashboardPage() {
                     onClick={() => navigate('/admin/account-requests')}
                     sx={{
                       justifyContent: 'flex-start',
-                      borderColor: 'rgba(255, 255, 255, 0.12)',
-                      color: '#FFFFFF',
                       py: 1.2,
                       fontWeight: 700,
-                      '&:hover': { borderColor: '#EC0618', bgcolor: 'rgba(236, 6, 24, 0.08)' },
                     }}
                   >
                     Audit Account Requests {totalPendingRequests > 0 ? `(${totalPendingRequests})` : ''}
@@ -877,11 +855,8 @@ export function PlatformDashboardPage() {
                     onClick={() => navigate('/admin/plans')}
                     sx={{
                       justifyContent: 'flex-start',
-                      borderColor: 'rgba(255, 255, 255, 0.12)',
-                      color: '#FFFFFF',
                       py: 1.2,
                       fontWeight: 700,
-                      '&:hover': { borderColor: '#EC0618', bgcolor: 'rgba(236, 6, 24, 0.08)' },
                     }}
                   >
                     Manage Pricing & Tier Plans
@@ -894,11 +869,8 @@ export function PlatformDashboardPage() {
                     onClick={() => navigate('/admin/settings')}
                     sx={{
                       justifyContent: 'flex-start',
-                      borderColor: 'rgba(255, 255, 255, 0.12)',
-                      color: '#FFFFFF',
                       py: 1.2,
                       fontWeight: 700,
-                      '&:hover': { borderColor: '#EC0618', bgcolor: 'rgba(236, 6, 24, 0.08)' },
                     }}
                   >
                     Global Platform Settings
@@ -1135,8 +1107,6 @@ function PlatformMetricCard({
       sx={{
         height: '100%',
         cursor: 'pointer',
-        bgcolor: '#0A0A0C',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
         borderRadius: 3.5,
         transition: 'all 0.25s ease',
         '&:hover': {
@@ -1148,7 +1118,7 @@ function PlatformMetricCard({
     >
       <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
-          <Typography variant="body2" fontWeight={700} color="#9CA3AF">
+          <Typography variant="body2" fontWeight={700} color="text.secondary">
             {title}
           </Typography>
           <Box
@@ -1166,10 +1136,10 @@ function PlatformMetricCard({
             {icon}
           </Box>
         </Stack>
-        <Typography variant="h3" fontWeight={900} sx={{ color: '#FFFFFF', lineHeight: 1.1, mb: 0.75 }}>
+        <Typography variant="h3" fontWeight={900} sx={{ color: 'text.primary', lineHeight: 1.1, mb: 0.75 }}>
           {value}
         </Typography>
-        <Typography variant="caption" sx={{ color: '#6B7280', fontWeight: 600 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
           {caption}
         </Typography>
       </CardContent>

@@ -44,6 +44,7 @@ import { IntegrationsPage } from './pages/company/Integrations'
 import { CompanySettingsPage } from './pages/company/Settings'
 import { ChangeEmailPage } from './pages/account/ChangeEmail'
 import { MyRequestsPage } from './pages/account/MyRequests'
+import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 
 const router = createBrowserRouter([
   { path: '/', element: <PortfolioPage /> },
@@ -177,7 +178,12 @@ function AppBootstrap() {
     )
   }
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <PWAInstallPrompt />
+    </>
+  )
 }
 
 export default function App() {

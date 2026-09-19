@@ -1,15 +1,15 @@
 {
   "id": "/",
-  "name": "TGManager",
+  "name": "TGManager - Enterprise Operations",
   "short_name": "TGManager",
-  "description": "TGManager - manage workflows, attendance, forms and company operations.",
+  "description": "TGManager - manage workflows, biometric attendance, smart schedules and enterprise multi-tenant operations.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#863bff",
-  "theme_color": "#863bff",
-  "categories": ["business", "productivity"],
+  "background_color": "#010101",
+  "theme_color": "#EC0618",
+  "categories": ["business", "productivity", "utilities"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -34,6 +34,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
