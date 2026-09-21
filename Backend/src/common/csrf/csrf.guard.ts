@@ -4,9 +4,11 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { CSRF_COOKIE, CSRF_HEADER } from './csrf.constants';
 import { csrfTokensEqual } from './csrf.util';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -18,13 +20,27 @@ const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  * cookie, the client must echo its value in the `x-csrf-token` header.
  * Cross-site attackers cannot read the cookie value (same-origin policy), so
  * they cannot forge the matching header. Requests without the cookie (e.g.
- * server-to-server integration calls using `X-Api-Key`) are allowed through.
+ * server-to-server integration calls using `X-Api-Key` or Bearer tokens) are allowed through.
+ * Public routes (like login, refresh, forgot-password) bypass CSRF checks.
  */
 @Injectable()
 export class CsrfGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+
   canActivate(context: ExecutionContext): boolean {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const request = context.switchToHttp().getRequest<Request>();
     if (!MUTATING_METHODS.has(request.method)) return true;
+
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return true;
+    }
 
     const cookieToken = request.cookies?.[CSRF_COOKIE] as string | undefined;
     if (!cookieToken) return true;
@@ -37,3 +53,4 @@ export class CsrfGuard implements CanActivate {
     return true;
   }
 }
+
