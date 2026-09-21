@@ -200,7 +200,17 @@ export function ChatPage() {
   }, [conversations.data, search.data, query, me?.id])
 
   return (
-    <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', md: 'row' }, height: { xs: 'calc(100vh - 140px)', md: 'calc(100vh - 160px)' } }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 2,
+        flexDirection: { xs: 'column', md: 'row' },
+        height: {
+          xs: 'calc(100dvh - 120px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
+          md: 'calc(100dvh - 140px - env(safe-area-inset-top, 0px))',
+        },
+      }}
+    >
       <Paper
         variant="outlined"
         sx={{
@@ -1087,7 +1097,7 @@ function Composer({
   }
 
   return (
-    <Box sx={{ p: 1.5, borderTop: 1, borderColor: 'divider' }}>
+    <Box sx={{ p: { xs: 1, sm: 1.5 }, pb: { xs: 'calc(8px + env(safe-area-inset-bottom, 0px))', sm: 1.5 }, borderTop: 1, borderColor: 'divider' }}>
       {replyTo && (
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1, flexWrap: 'wrap' }}>
           <ReplyIcon sx={{ fontSize: 16, color: 'primary.main', transform: 'scaleX(-1)' }} />
@@ -1100,7 +1110,7 @@ function Composer({
           <IconButton size="small" onClick={onClearReply}><CloseIcon fontSize="small" /></IconButton>
         </Stack>
       )}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'flex-end' }}>
+      <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="flex-end">
         <input
           ref={fileRef}
           hidden
@@ -1112,11 +1122,11 @@ function Composer({
             if (picked.length > 0) void uploadAndSend(picked)
           }}
         />
-        <IconButton onClick={() => fileRef.current?.click()} disabled={uploading || recording}>
-          <AttachFileIcon />
+        <IconButton size="small" onClick={() => fileRef.current?.click()} disabled={uploading || recording} sx={{ mb: 0.25 }}>
+          <AttachFileIcon fontSize="small" />
         </IconButton>
-        <IconButton onClick={(e) => setEmojiAnchor(e.currentTarget)} disabled={recording}>
-          <EmojiEmotionsIcon />
+        <IconButton size="small" onClick={(e) => setEmojiAnchor(e.currentTarget)} disabled={recording} sx={{ mb: 0.25, display: { xs: 'none', sm: 'inline-flex' } }}>
+          <EmojiEmotionsIcon fontSize="small" />
         </IconButton>
         <TextField
           fullWidth
@@ -1135,27 +1145,42 @@ function Composer({
             }
           }}
           disabled={uploading}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 3,
+              py: 0.5,
+            },
+          }}
         />
         {recording ? (
-          <IconButton onClick={() => { recRef.current?.stop(); setRecording(false) }} color="error">
+          <IconButton onClick={() => { recRef.current?.stop(); setRecording(false) }} color="error" sx={{ mb: 0.25 }}>
             <StopCircleIcon />
           </IconButton>
         ) : (
-          <IconButton onClick={() => void startRecording()} disabled={uploading}>
-            <MicIcon />
+          <IconButton onClick={() => void startRecording()} disabled={uploading} sx={{ mb: 0.25 }}>
+            <MicIcon fontSize="small" />
           </IconButton>
         )}
-        <Button
-          variant="contained"
+        <IconButton
+          color="primary"
           disabled={uploading || pending || !draft.trim()}
           onClick={() => {
             onSend(draft.trim(), [])
             onChange('')
           }}
-          sx={{ width: { xs: '100%', sm: 'auto' } }}
+          sx={{
+            mb: 0.25,
+            bgcolor: 'primary.main',
+            color: '#FFFFFF',
+            borderRadius: 2.5,
+            width: 36,
+            height: 36,
+            '&:hover': { bgcolor: 'primary.dark' },
+            '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'action.disabled' },
+          }}
         >
-          <SendIcon />
-        </Button>
+          <SendIcon sx={{ fontSize: 18 }} />
+        </IconButton>
       </Stack>
       {recording && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, color: 'error.main' }}>

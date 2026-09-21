@@ -53,7 +53,7 @@ export function SelectCompanyPage() {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         bgcolor: 'background.default',
         color: 'text.primary',
         display: 'flex',
@@ -61,6 +61,10 @@ export function SelectCompanyPage() {
         alignItems: 'center',
         justifyContent: 'center',
         p: { xs: 2.5, sm: 4 },
+        pt: { xs: 'calc(24px + env(safe-area-inset-top, 0px))', sm: 4 },
+        pb: { xs: 'calc(24px + env(safe-area-inset-bottom, 0px))', sm: 4 },
+        pl: { xs: 'calc(16px + env(safe-area-inset-left, 0px))', sm: 4 },
+        pr: { xs: 'calc(16px + env(safe-area-inset-right, 0px))', sm: 4 },
         position: 'relative',
         overflow: 'hidden',
         background: isDark
@@ -69,7 +73,14 @@ export function SelectCompanyPage() {
         transition: 'background 0.3s ease',
       }}
     >
-      <Box sx={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: { xs: 'calc(14px + env(safe-area-inset-top, 0px))', sm: 20 },
+          right: { xs: 'calc(14px + env(safe-area-inset-right, 0px))', sm: 20 },
+          zIndex: 10,
+        }}
+      >
         <ThemeToggle />
       </Box>
 

@@ -11,7 +11,7 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
         bgcolor: '#010101',
@@ -271,11 +271,22 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
           alignItems: 'center',
           justifyContent: 'center',
           p: { xs: 2.5, sm: 5 },
+          pt: { xs: 'calc(24px + env(safe-area-inset-top, 0px))', sm: 5 },
+          pb: { xs: 'calc(24px + env(safe-area-inset-bottom, 0px))', sm: 5 },
+          pl: { xs: 'calc(16px + env(safe-area-inset-left, 0px))', sm: 5 },
+          pr: { xs: 'calc(16px + env(safe-area-inset-right, 0px))', sm: 5 },
           position: 'relative',
           zIndex: 2,
         }}
       >
-        <Box sx={{ position: 'absolute', top: { xs: 16, sm: 24 }, right: { xs: 16, sm: 24 }, zIndex: 10 }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: { xs: 'calc(14px + env(safe-area-inset-top, 0px))', sm: 24 },
+            right: { xs: 'calc(14px + env(safe-area-inset-right, 0px))', sm: 24 },
+            zIndex: 10,
+          }}
+        >
           <ThemeToggle />
         </Box>
 

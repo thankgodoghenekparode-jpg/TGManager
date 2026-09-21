@@ -107,7 +107,12 @@ export function FloatingChatButton() {
       sx={{
         position: 'fixed',
         zIndex: (t) => t.zIndex.fab,
-        ...(pos ? { left: pos.left, top: pos.top } : { right: { xs: 16, sm: 24 }, bottom: { xs: 16, sm: 24 } }),
+        ...(pos
+          ? { left: pos.left, top: pos.top }
+          : {
+              right: { xs: 'calc(16px + env(safe-area-inset-right, 0px))', sm: 24 },
+              bottom: { xs: 'calc(20px + env(safe-area-inset-bottom, 0px))', sm: 24 },
+            }),
         touchAction: 'none',
         cursor: 'grab',
         '&:active': { cursor: 'grabbing' },

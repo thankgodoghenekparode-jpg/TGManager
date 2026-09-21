@@ -164,7 +164,8 @@ export function PortfolioPage() {
               ? '0 10px 30px rgba(0,0,0,0.5)'
               : '0 4px 20px rgba(15,23,42,0.06)'
             : 'none',
-          py: 2,
+          pt: 'calc(12px + env(safe-area-inset-top, 0px))',
+          pb: 1.75,
         }}
       >
         <Container maxWidth="lg">
@@ -209,6 +210,7 @@ export function PortfolioPage() {
                 onClick={handleGetStarted}
                 endIcon={<ArrowForwardIcon />}
                 sx={{
+                  display: { xs: 'none', sm: 'inline-flex' },
                   borderRadius: 3,
                   px: 3,
                   fontWeight: 800,
@@ -221,6 +223,7 @@ export function PortfolioPage() {
               <IconButton
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 sx={{ display: { md: 'none' }, color: isDark ? '#FFFFFF' : '#0F172A' }}
+                aria-label="Toggle navigation menu"
               >
                 {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
               </IconButton>
@@ -233,11 +236,12 @@ export function PortfolioPage() {
           <Box
             sx={{
               display: { md: 'none' },
-              bgcolor: 'rgba(10, 11, 14, 0.98)',
+              bgcolor: isDark ? 'rgba(10, 11, 14, 0.98)' : 'rgba(255, 255, 255, 0.98)',
               borderBottom: '1px solid rgba(236, 6, 24, 0.3)',
               px: 3,
               py: 2.5,
               mt: 1.5,
+              boxShadow: '0 12px 30px rgba(0,0,0,0.3)',
             }}
           >
             <Stack spacing={2}>
@@ -246,8 +250,8 @@ export function PortfolioPage() {
               <MobileNavLink href="#architecture" onClick={() => setMobileMenuOpen(false)}>Architecture</MobileNavLink>
               <MobileNavLink href="#pricing" onClick={() => setMobileMenuOpen(false)}>Plans</MobileNavLink>
               <MobileNavLink href="#security" onClick={() => setMobileMenuOpen(false)}>Security</MobileNavLink>
-              <Button variant="outlined" fullWidth onClick={() => { setMobileMenuOpen(false); navigate('/login') }}>
-                Sign In
+              <Button variant="contained" fullWidth onClick={() => { setMobileMenuOpen(false); handleGetStarted() }} sx={{ py: 1.2, fontWeight: 800, borderRadius: 2.5 }}>
+                {user ? 'Open App' : 'Get Started / Sign In'}
               </Button>
             </Stack>
           </Box>
@@ -255,7 +259,7 @@ export function PortfolioPage() {
       </Box>
 
       {/* ─── HERO SECTION ─── */}
-      <Container maxWidth="lg" sx={{ pt: { xs: 18, sm: 22, md: 24 }, pb: { xs: 10, md: 14 }, position: 'relative', zIndex: 1, textAlign: 'center' }}>
+      <Container maxWidth="lg" sx={{ pt: { xs: 'calc(110px + env(safe-area-inset-top, 0px))', sm: 'calc(130px + env(safe-area-inset-top, 0px))', md: 24 }, pb: { xs: 10, md: 14 }, position: 'relative', zIndex: 1, textAlign: 'center' }}>
         <Chip
           label="Enterprise Operations & Workforce Operating System"
           size="small"
@@ -653,7 +657,7 @@ export function PortfolioPage() {
       </Container>
 
       {/* ─── FOOTER ─── */}
-      <Box component="footer" sx={{ borderTop: isDark ? '1px solid #2D3035' : '1px solid #E2E8F0', py: 5, bgcolor: isDark ? '#050608' : '#F1F5F9' }}>
+      <Box component="footer" sx={{ borderTop: isDark ? '1px solid #2D3035' : '1px solid #E2E8F0', pt: 5, pb: 'calc(32px + env(safe-area-inset-bottom, 0px))', bgcolor: isDark ? '#050608' : '#F1F5F9' }}>
         <Container maxWidth="lg">
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={3}>
             <Logo variant="full" height={30} />

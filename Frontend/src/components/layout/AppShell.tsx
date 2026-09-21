@@ -134,7 +134,7 @@ export function AppShell({
   const handleMenuOpen = (e: MouseEvent<HTMLElement>) => setMenuAnchor(e.currentTarget)
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default' }}>
       <AppBar
         position="fixed"
         color="inherit"
@@ -146,15 +146,48 @@ export function AppShell({
           boxShadow: '0 4px 18px -16px rgba(15, 23, 42, 0.4)',
         }}
       >
-        <Toolbar sx={{ gap: 1, flexWrap: { xs: 'wrap', md: 'nowrap' }, py: { xs: 1, sm: 1.25 } }}>
-          <IconButton aria-label={open ? 'Close navigation' : 'Open navigation'} edge="start" color="inherit" onClick={() => setOpen(!open)} sx={{ mr: 0.5, display: { md: 'none' } }}>
+        <Toolbar
+          sx={{
+            gap: { xs: 1, sm: 1.5 },
+            flexWrap: 'nowrap',
+            minHeight: { xs: 56, sm: 64 },
+            px: { xs: 1.25, sm: 2.5 },
+          }}
+        >
+          <IconButton
+            aria-label={open ? 'Close navigation' : 'Open navigation'}
+            edge="start"
+            color="inherit"
+            onClick={() => setOpen(!open)}
+            sx={{ mr: 0.5, display: { md: 'none' }, flexShrink: 0 }}
+          >
             <MenuIcon />
           </IconButton>
-          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              minWidth: 0,
+              cursor: 'pointer',
+            }}
+            onClick={onNavigateHome}
+          >
             <Logo variant="mark" size={32} />
-            <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1 }}>{subtitle ?? title}</Typography>
+            <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1, fontWeight: 800 }}>
+              {subtitle ?? title}
+            </Typography>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'space-between', md: 'flex-end' }, gap: 0.75, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' }, pl: { xs: 5, md: 0 } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: { xs: 0.5, sm: 1 },
+              flexShrink: 0,
+            }}
+          >
             <ThemeToggle />
             {user && <NotificationsMenu />}
             {actions}
@@ -165,10 +198,10 @@ export function AppShell({
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1,
+                  gap: 0.75,
                   py: 0.5,
                   pl: 0.5,
-                  pr: 1,
+                  pr: { xs: 0.5, sm: 1 },
                   borderRadius: 999,
                   border: '1px solid',
                   borderColor: 'divider',
@@ -177,11 +210,11 @@ export function AppShell({
                   '&:hover': { borderColor: 'rgba(236, 6, 24, 0.45)' },
                 }}
               >
-                <Avatar sx={{ width: 30, height: 30, fontSize: 12 }}>{initials(`${user.firstName} ${user.lastName}`)}</Avatar>
+                <Avatar sx={{ width: 28, height: 28, fontSize: 11 }}>{initials(`${user.firstName} ${user.lastName}`)}</Avatar>
                 <Box sx={{ display: { xs: 'none', sm: 'block' }, lineHeight: 1 }}>
                   <Typography variant="body2" fontWeight={700} noWrap>{user.firstName}</Typography>
                 </Box>
-                <ArrowDropDownIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                <ArrowDropDownIcon fontSize="small" sx={{ color: 'text.secondary', display: { xs: 'none', sm: 'block' } }} />
               </Box>
             )}
           </Box>
@@ -194,7 +227,15 @@ export function AppShell({
           open={open}
           onClose={() => setOpen(false)}
           ModalProps={{ keepMounted: true }}
-          sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { width: { xs: 'min(88vw, 320px)', sm: DRAWER_WIDTH }, backgroundImage: 'none' } }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': {
+              width: { xs: 'min(88vw, 320px)', sm: DRAWER_WIDTH },
+              backgroundImage: 'none',
+              pt: 'env(safe-area-inset-top, 0px)',
+              pb: 'env(safe-area-inset-bottom, 0px)',
+            },
+          }}
         >
           {drawer}
         </Drawer>
@@ -203,7 +244,13 @@ export function AppShell({
           open
           sx={{
             display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { width: DRAWER_WIDTH, backgroundImage: 'none', borderRight: '1px solid', borderColor: 'divider' },
+            '& .MuiDrawer-paper': {
+              width: DRAWER_WIDTH,
+              backgroundImage: 'none',
+              borderRight: '1px solid',
+              borderColor: 'divider',
+              pt: 'env(safe-area-inset-top, 0px)',
+            },
           }}
         >
           {drawer}
@@ -211,8 +258,30 @@ export function AppShell({
       </Box>
 
       <Box component="main" sx={{ flexGrow: 1, width: { md: `calc(100% - ${DRAWER_WIDTH}px)` }, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <Toolbar />
-        <Box key={pathname} className="app-page-enter" sx={{ p: { xs: 1.5, sm: 2, md: 3.5 }, flex: 1, minWidth: 0, overflowX: 'hidden' }}>{children}</Box>
+        {/* Dynamic spacer matching fixed AppBar + iOS safe-area-inset-top */}
+        <Box
+          sx={{
+            minHeight: {
+              xs: 'calc(56px + env(safe-area-inset-top, 0px))',
+              sm: 'calc(64px + env(safe-area-inset-top, 0px))',
+            },
+          }}
+        />
+        <Box
+          key={pathname}
+          className="app-page-enter"
+          sx={{
+            p: { xs: 1.5, sm: 2, md: 3.5 },
+            pb: { xs: 'calc(24px + env(safe-area-inset-bottom, 0px))', sm: 3.5 },
+            pl: { xs: 'calc(12px + env(safe-area-inset-left, 0px))', sm: 2, md: 3.5 },
+            pr: { xs: 'calc(12px + env(safe-area-inset-right, 0px))', sm: 2, md: 3.5 },
+            flex: 1,
+            minWidth: 0,
+            overflowX: 'hidden',
+          }}
+        >
+          {children}
+        </Box>
       </Box>
 
       <Menu
