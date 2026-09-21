@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { DistributedLockService } from '../../common/locks/distributed-lock.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 
@@ -10,10 +11,17 @@ export class EscalationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workflows: WorkflowsService,
+    private readonly locks: DistributedLockService,
   ) {}
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async evaluate() {
+    await this.locks.runOnce('workflow-escalation', 15 * 60_000, () =>
+      this.runEvaluation(),
+    );
+  }
+
+  private async runEvaluation() {
     try {
       const pendingSteps = await this.prisma.workflowStepInstance.findMany({
         where: {

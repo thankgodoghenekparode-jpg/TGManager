@@ -1059,3 +1059,12 @@ model WeeklyReport {
   @@index([tenantId])
   @@index([submittedByUserId])
 }
+
+model DistributedLock {
+  name       String   @id
+  owner      String
+  acquiredAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@index([expiresAt])
+}
