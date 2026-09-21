@@ -260,6 +260,14 @@ async function repairExistingDemoLogins(
     where: { slug: sunshineSlug },
   });
   if (sunshineTenant) {
+    await prisma.tenant.update({
+      where: { id: sunshineTenant.id },
+      data: { status: 'ACTIVE' },
+    });
+    await prisma.tenantSubscription.updateMany({
+      where: { tenantId: sunshineTenant.id },
+      data: { status: 'ACTIVE' },
+    });
     await prisma.tenantUser.upsert({
       where: {
         tenantId_userId: {
@@ -348,7 +356,7 @@ async function seedDemoOrg(prisma: PrismaClient) {
         name: 'Sunshine Energy Ltd',
         slug: sunshineSlug,
         planId: freePlan.id,
-        status: 'SUSPENDED',
+        status: 'ACTIVE',
         onboardingStatus: 'COMPLETED',
         timezone: 'Africa/Lagos',
       },
@@ -2121,7 +2129,7 @@ async function seedDemoOrg(prisma: PrismaClient) {
     console.log(`\n✅ Demo org seeded successfully!`);
     console.log(`   Tenant: ${demoTenant.name} (${demoTenant.id})`);
     console.log(
-      `   Sunshine: ${sunshineTenant.name} (${sunshineTenant.id}) — SUSPENDED`,
+      `   Sunshine: ${sunshineTenant.name} (${sunshineTenant.id}) — ACTIVE`,
     );
     console.log(`   Users: ${allUsers.length}`);
     console.log(`   Branches: ${branches.length}`);

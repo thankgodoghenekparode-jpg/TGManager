@@ -17,10 +17,12 @@ services:
         fromDatabase:
           name: tgmanager-db
           property: connectionString
-      - key: JWT_SECRET
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        value: "https://tgmanager-react.vercel.app,https://tgmanager-flutter.vercel.app"
+        value: "https://tg-manager.vercel.app"
       - key: SEED_DEMO
         value: "true"
       - key: DB_SEED_ON_START
