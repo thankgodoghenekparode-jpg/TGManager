@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, type Paged } from './client'
 
 export type DocumentType = 'GENERAL' | 'INVENTORY'
 
@@ -32,11 +32,15 @@ export interface DocRecord {
 export interface ListDocumentsQuery {
   branchId?: string
   type?: DocumentType
+  limit?: number
+  cursor?: string
 }
 
 export const documentsApi = {
   list(query?: ListDocumentsQuery) {
-    return api.get<DocRecord[]>('/documents', { params: query }).then((r) => r.data)
+    return api
+      .get<Paged<DocRecord>>('/documents', { params: query })
+      .then((r) => r.data)
   },
   get(id: string) {
     return api.get<DocRecord>(`/documents/${id}`).then((r) => r.data)

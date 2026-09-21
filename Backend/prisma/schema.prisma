@@ -544,6 +544,7 @@ model Document {
   messages Message[]
 
   @@index([tenantId, branchId])
+  @@index([tenantId, createdAt])
   @@index([tenantId])
 }
 
@@ -761,6 +762,7 @@ model WorkflowInstance {
   stepInstances WorkflowStepInstance[]
 
   @@index([tenantId, templateId])
+  @@index([tenantId, createdAt])
 }
 
 model WorkflowStepInstance {

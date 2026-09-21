@@ -261,3 +261,9 @@ export interface Paginated<T> {
   limit: number
   offset: number
 }
+
+/** Cursor-paginated result envelope used by list endpoints. */
+export interface Paged<T> {
+  items: T[]
+  nextCursor: string | null
+}

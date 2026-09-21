@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, type Paged } from './client'
 
 export type ConversationType = 'DIRECT' | 'GROUP'
 export type MessageKind = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE' | 'VOICE'
@@ -141,7 +141,7 @@ export const chatApi = {
     query?: { limit?: number; cursor?: string },
   ) {
     return api
-      .get<ChatMessage[]>(`/chat/conversations/${conversationId}/messages`, {
+      .get<Paged<ChatMessage>>(`/chat/conversations/${conversationId}/messages`, {
         params: query,
       })
       .then((r) => r.data)

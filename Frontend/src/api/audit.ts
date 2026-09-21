@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, type Paged } from './client'
 
 export interface AuditLog {
   id: string
@@ -20,10 +20,11 @@ export interface ListAuditQuery {
   from?: string
   to?: string
   limit?: number
+  cursor?: string
 }
 
 export const auditApi = {
   list(query: ListAuditQuery = {}) {
-    return api.get<AuditLog[]>('/audit', { params: query }).then((r) => r.data)
+    return api.get<Paged<AuditLog>>('/audit', { params: query }).then((r) => r.data)
   },
 }

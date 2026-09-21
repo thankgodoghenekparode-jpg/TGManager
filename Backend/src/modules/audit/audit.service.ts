@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  decodeCursor,
+  paginate,
+} from '../../common/pagination/pagination.util';
 
 export interface AuditInput {
   userId?: string;
@@ -18,6 +22,7 @@ export interface ListAuditQuery {
   from?: string;
   to?: string;
   limit?: number;
+  cursor?: string;
 }
 
 @Injectable()
@@ -59,16 +64,19 @@ export class AuditService {
     }
 
     const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
+    const cursor = decodeCursor(query.cursor);
 
-    return this.prisma.auditLog.findMany({
+    const rows = await this.prisma.auditLog.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
-      take: limit,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         user: {
           select: { id: true, firstName: true, lastName: true, email: true },
         },
       },
     });
+    return paginate(rows, limit);
   }
 }

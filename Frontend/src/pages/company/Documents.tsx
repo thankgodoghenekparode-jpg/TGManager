@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Alert,
   Box,
@@ -40,9 +40,16 @@ export function DocumentsPage() {
   const [confirm, setConfirm] = useState<DocRecord | null>(null)
 
   const branches = useQuery({ queryKey: ['branches'], queryFn: () => branchesApi.list() })
-  const documents = useQuery({
+  const documents = useInfiniteQuery({
+    initialPageParam: null as string | null,
     queryKey: ['documents', branchFilter],
-    queryFn: () => documentsApi.list({ branchId: branchFilter || undefined }),
+    queryFn: ({ pageParam }) =>
+      documentsApi.list({
+        branchId: branchFilter || undefined,
+        limit: 50,
+        cursor: pageParam ?? undefined,
+      }),
+    getNextPageParam: (last) => last.nextCursor,
   })
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['documents'] })
@@ -52,7 +59,10 @@ export function DocumentsPage() {
     onSuccess: () => { setConfirm(null); invalidate() },
   })
 
-  const rows = documents.data ?? []
+  const rows = useMemo(
+    () => documents.data?.pages.flatMap((p) => p.items) ?? [],
+    [documents.data],
+  )
 
   return (
     <Box>
@@ -111,6 +121,18 @@ export function DocumentsPage() {
           </TableBody>
         </Table>
       </TableContainer>
+      {documents.hasNextPage && (
+        <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => documents.fetchNextPage()}
+            disabled={documents.isFetchingNextPage}
+          >
+            {documents.isFetchingNextPage ? 'Loading…' : 'Load more'}
+          </Button>
+        </Stack>
+      )}
 
       {uploading && (
         <UploadDialog

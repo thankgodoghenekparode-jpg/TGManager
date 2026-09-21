@@ -273,6 +273,19 @@ export const listWorkflowInstancesSchema = z.object({
     .enum(['true'])
     .optional()
     .describe('Filter to instances assigned to the current user'),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe('Maximum number of instances to return (1-100)'),
+  cursor: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe('Opaque cursor for the next page of results'),
 });
 
 export type ListWorkflowInstancesDto = z.infer<

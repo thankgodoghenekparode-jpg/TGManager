@@ -6,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { basename } from 'path';
+import {
+  decodeCursor,
+  paginate,
+} from '../../common/pagination/pagination.util';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PlanLimitsService } from '../plans/plan-limits.service';
@@ -365,18 +369,21 @@ export class ChatService {
         conversationId,
         NOT: { senderId: userId, deletedForSender: true },
       },
-      orderBy: { createdAt: 'desc' },
-      take: query.limit,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: query.limit + 1,
       ...(query.cursor
         ? {
-            cursor: { id: query.cursor },
+            cursor: { id: decodeCursor(query.cursor)! },
             skip: 1,
           }
         : {}),
       include: this.messageInclude(),
     });
 
-    return messages.map((m) => this.messagePayload(m, userId));
+    return paginate(
+      messages.map((m) => this.messagePayload(m, userId)),
+      query.limit,
+    );
   }
 
   async markRead(tenantId: string, userId: string, conversationId: string) {

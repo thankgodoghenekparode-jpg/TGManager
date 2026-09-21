@@ -8,6 +8,10 @@ import {
 import { basename } from 'path';
 import { randomUUID } from 'crypto';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
+import {
+  decodeCursor,
+  paginate,
+} from '../../common/pagination/pagination.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma, DocumentType } from '../../generated/prisma/client';
 import { PlanLimitsService } from '../plans/plan-limits.service';
@@ -99,16 +103,24 @@ export class DocumentsService {
       }
     }
 
+    const limit = Math.min(Math.max(query.limit ?? 50, 1), 200);
+    const cursor = decodeCursor(query.cursor);
+
     const docs = await this.prisma.document.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         createdByUser: {
           select: { id: true, firstName: true, lastName: true },
         },
       },
     });
-    return docs.map((d) => this.toResponse(d));
+    return paginate(
+      docs.map((d) => this.toResponse(d)),
+      limit,
+    );
   }
 
   async getOne(

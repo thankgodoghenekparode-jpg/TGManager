@@ -5,6 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
+import {
+  decodeCursor,
+  paginate,
+} from '../../common/pagination/pagination.util';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PERMISSIONS } from '../rbac/permissions/permissions.constants';
@@ -417,9 +421,14 @@ export class WorkflowsService {
       ];
     }
 
-    return this.prisma.workflowInstance.findMany({
+    const limit = Math.min(Math.max(query.limit ?? 50, 1), 100);
+    const cursor = decodeCursor(query.cursor);
+
+    const rows = await this.prisma.workflowInstance.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         stepInstances: {
           orderBy: { step: { order: 'asc' } },
@@ -440,6 +449,7 @@ export class WorkflowsService {
         },
       },
     });
+    return paginate(rows, limit);
   }
 
   async getInstance(

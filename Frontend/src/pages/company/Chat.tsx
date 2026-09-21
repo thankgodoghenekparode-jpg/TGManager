@@ -68,7 +68,7 @@ import {
   type MessageReaction,
 } from '../../api/chat'
 import { staffApi } from '../../api/staff'
-import { apiErrorMessage } from '../../api/client'
+import { apiErrorMessage, type Paged } from '../../api/client'
 import { useAuthStore } from '../../store/auth'
 import { useBlobUrl } from '../../hooks/useBlobUrl'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
@@ -464,7 +464,7 @@ function Thread({
   })
 
   const ordered = useMemo(() => {
-    const list = messages.data ?? []
+    const list = messages.data?.items ?? []
     return [...list].reverse()
   }, [messages.data])
 
@@ -484,10 +484,10 @@ function Thread({
       if (p.conversationId && p.conversationId !== conversationId) return
       if (event === 'chat:message') {
         const m = payload as ChatMessage
-        qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) => {
+        qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) => {
           if (!prev) return prev
-          if (prev.some((x) => x.id === m.id)) return prev
-          return [m, ...prev]
+          if (prev.items.some((x) => x.id === m.id)) return prev
+          return { ...prev, items: [m, ...prev.items] }
         })
         qc.setQueryData<Conversation>(['conversation', conversationId], (prev) =>
           prev
@@ -497,36 +497,39 @@ function Thread({
         if (m.senderId !== meId) markRead()
       } else if (event === 'chat:message_edited') {
         const m = payload as ChatMessage
-        qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
-          prev ? prev.map((x) => (x.id === m.id ? m : x)) : prev,
+        qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
+          prev ? { ...prev, items: prev.items.map((x) => (x.id === m.id ? m : x)) } : prev,
         )
       } else if (event === 'chat:message_deleted') {
         const { messageId, deletedAt } = p as { messageId: string; deletedAt: string }
-        qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
+        qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
           prev
-            ? prev.map((x) => (x.id === messageId ? { ...x, deletedAt, body: null } : x))
+            ? { ...prev, items: prev.items.map((x) => (x.id === messageId ? { ...x, deletedAt, body: null } : x)) }
             : prev,
         )
       } else if (event === 'chat:message_deleted_for_me') {
         const { messageId } = p as { messageId: string }
-        qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
-          prev ? prev.filter((x) => x.id !== messageId) : prev,
+        qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
+          prev ? { ...prev, items: prev.items.filter((x) => x.id !== messageId) } : prev,
         )
       } else if (event === 'chat:reaction') {
         const { messageId, reactions } = p as { messageId: string; reactions: MessageReaction[] }
-        qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
-          prev ? prev.map((x) => (x.id === messageId ? { ...x, reactions } : x)) : prev,
+        qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
+          prev ? { ...prev, items: prev.items.map((x) => (x.id === messageId ? { ...x, reactions } : x)) } : prev,
         )
       } else if (event === 'chat:read') {
         const { userId, messageIds } = p as { userId: string; messageIds: string[] }
         const ids = new Set(messageIds ?? [])
-        qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
+        qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
           prev
-            ? prev.map((x) =>
-                ids.has(x.id)
-                  ? { ...x, readBy: [{ userId, readAt: new Date().toISOString() }, ...x.readBy.filter((r) => r.userId !== userId)] }
-                  : x,
-              )
+            ? {
+                ...prev,
+                items: prev.items.map((x) =>
+                  ids.has(x.id)
+                    ? { ...x, readBy: [{ userId, readAt: new Date().toISOString() }, ...x.readBy.filter((r) => r.userId !== userId)] }
+                    : x,
+                ),
+              }
             : prev,
         )
       } else if (event === 'chat:typing') {
@@ -670,8 +673,8 @@ function Thread({
                     void chatApi
                       .editMessage(editingId, { body: editText.trim() })
                       .then((updated) => {
-                        qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
-                          prev ? prev.map((x) => (x.id === updated.id ? updated : x)) : prev,
+                        qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
+                          prev ? { ...prev, items: prev.items.map((x) => (x.id === updated.id ? updated : x)) } : prev,
                         )
                       })
                       .catch((e) => setError(apiErrorMessage(e)))
@@ -687,9 +690,9 @@ function Thread({
                     : chatApi.addReaction(m.id, emoji)
                   void action
                     .then((res) => {
-                      qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
-                        prev ? prev.map((x) => (x.id === m.id ? { ...x, reactions: res.reactions } : x)) : prev,
-                      )
+qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
+                          prev ? { ...prev, items: prev.items.map((x) => (x.id === m.id ? { ...x, reactions: res.reactions } : x)) } : prev,
+                        )
                     })
                     .catch((e) => setError(apiErrorMessage(e)))
                 }}
@@ -697,9 +700,9 @@ function Thread({
                   void chatApi
                     .deleteMessage(m.id, scope)
                     .then((updated) => {
-                      qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) =>
-                        prev ? prev.map((x) => (x.id === m.id ? updated : x)) : prev,
-                      )
+qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
+                          prev ? { ...prev, items: prev.items.map((x) => (x.id === m.id ? updated : x)) } : prev,
+                        )
                     })
                     .catch((e) => setError(apiErrorMessage(e)))
                 }}
@@ -711,21 +714,22 @@ function Thread({
               <CircularProgress size={22} />
             </Stack>
           )}
-          {conversation.data && ordered.length >= 50 && (
+          {conversation.data && messages.data?.nextCursor && (
             <Button
               size="small"
               variant="text"
               onClick={() => {
-                const oldest = ordered[0]
+                const cursor = messages.data?.nextCursor
+                if (!cursor) return
                 qc.fetchQuery({
-                  queryKey: ['messages-older', conversationId, oldest.id],
-                  queryFn: () => chatApi.listMessages(conversationId, { limit: 50, cursor: oldest.id }),
+                  queryKey: ['messages-older', conversationId, cursor],
+                  queryFn: () => chatApi.listMessages(conversationId, { limit: 50, cursor }),
                 }).then((older) => {
-                  qc.setQueryData<ChatMessage[]>(['messages', conversationId], (prev) => {
+                  qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) => {
                     if (!prev) return prev
-                    const existing = new Set(prev.map((x) => x.id))
-                    const add = older.filter((x) => !existing.has(x.id))
-                    return [...prev, ...add]
+                    const existing = new Set(prev.items.map((x) => x.id))
+                    const add = older.items.filter((x) => !existing.has(x.id))
+                    return { ...prev, items: [...prev.items, ...add], nextCursor: older.nextCursor }
                   })
                 })
               }}

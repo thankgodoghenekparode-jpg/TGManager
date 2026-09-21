@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, type Paged } from './client'
 import type { FormField } from './forms'
 
 export type WorkflowStepAction =
@@ -136,8 +136,17 @@ export const workflowsApi = {
   approvals() {
     return api.get<WorkflowInstance[]>('/workflows/approvals').then((r) => r.data)
   },
-  listInstances(query?: { status?: WorkflowStatus; templateId?: string; branchId?: string; mine?: boolean }) {
-    return api.get<WorkflowInstance[]>('/workflows/instances', { params: query }).then((r) => r.data)
+  listInstances(query?: {
+    status?: WorkflowStatus
+    templateId?: string
+    branchId?: string
+    mine?: boolean
+    limit?: number
+    cursor?: string
+  }) {
+    return api
+      .get<Paged<WorkflowInstance>>('/workflows/instances', { params: query })
+      .then((r) => r.data)
   },
   getInstance(id: string) {
     return api.get<WorkflowInstance>(`/workflows/instances/${id}`).then((r) => r.data)

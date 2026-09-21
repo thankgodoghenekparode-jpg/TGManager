@@ -2,7 +2,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { DistributedLockService } from './distributed-lock.service';
 
 jest.mock('crypto', () => {
-  const actual = jest.requireActual('crypto') as typeof import('crypto');
+  const actual = jest.requireActual('crypto');
   return { ...actual, randomUUID: (): string => 'test-owner' };
 });
 
@@ -33,7 +33,9 @@ describe('DistributedLockService', () => {
 
     await expect(locks.runOnce('job', 60_000, fn)).resolves.toBe(42);
     expect(fn).toHaveBeenCalledTimes(1);
-    expect(deleteMany).toHaveBeenCalledWith({ where: { name: 'job', owner: OWNER } });
+    expect(deleteMany).toHaveBeenCalledWith({
+      where: { name: 'job', owner: OWNER },
+    });
   });
 
   it('skips the job when another instance owns the lock', async () => {
@@ -53,7 +55,9 @@ describe('DistributedLockService', () => {
     const fn = jest.fn().mockRejectedValue(new Error('boom'));
 
     await expect(locks.runOnce('job', 60_000, fn)).rejects.toThrow('boom');
-    expect(deleteMany).toHaveBeenCalledWith({ where: { name: 'job', owner: OWNER } });
+    expect(deleteMany).toHaveBeenCalledWith({
+      where: { name: 'job', owner: OWNER },
+    });
   });
 
   it('claims the lease via upsert when the existing lock is expired', async () => {

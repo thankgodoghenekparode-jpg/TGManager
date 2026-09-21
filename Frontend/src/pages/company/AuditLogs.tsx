@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   Box,
+  Button,
   Chip,
   MenuItem,
   Paper,
@@ -37,23 +38,28 @@ export function AuditLogsPage() {
   const [userId, setUserId] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
-  const [limit, setLimit] = useState(50)
 
   const staff = useQuery({ queryKey: ['staff'], queryFn: () => staffApi.list() })
-  const logs = useQuery({
-    queryKey: ['audit', { entityType, action, userId, from: fromDate, to: toDate, limit }],
-    queryFn: () =>
+  const logs = useInfiniteQuery({
+    initialPageParam: null as string | null,
+    queryKey: ['audit', { entityType, action, userId, from: fromDate, to: toDate }],
+    queryFn: ({ pageParam }) =>
       auditApi.list({
         entityType: entityType || undefined,
         action: action || undefined,
         userId: userId || undefined,
         from: fromDate ? new Date(fromDate).toISOString() : undefined,
         to: toDate ? new Date(toDate + 'T23:59:59').toISOString() : undefined,
-        limit,
+        limit: 100,
+        cursor: pageParam ?? undefined,
       }),
+    getNextPageParam: (last) => last.nextCursor,
   })
 
-  const rows = logs.data ?? []
+  const rows = useMemo(
+    () => logs.data?.pages.flatMap((p) => p.items) ?? [],
+    [logs.data],
+  )
   const userName = (uid: string | null) => {
     if (!uid) return '—'
     const s = staff.data?.find((x) => x.user.id === uid)
@@ -81,9 +87,6 @@ export function AuditLogsPage() {
         </TextField>
         <TextField label="From" type="date" size="small" value={fromDate} onChange={(e) => setFromDate(e.target.value)} InputLabelProps={{ shrink: true }} />
         <TextField label="To" type="date" size="small" value={toDate} onChange={(e) => setToDate(e.target.value)} InputLabelProps={{ shrink: true }} />
-        <TextField select label="Limit" size="small" value={limit} onChange={(e) => setLimit(Number(e.target.value))} sx={{ minWidth: 110, width: { xs: '100%', sm: 'auto' } }}>
-          {[20, 50, 100, 200].map((l) => <MenuItem key={l} value={l}>{l}</MenuItem>)}
-        </TextField>
       </Stack>
 
       <TableContainer component={Paper} variant="outlined">
@@ -119,6 +122,18 @@ export function AuditLogsPage() {
           </TableBody>
         </Table>
       </TableContainer>
+      {logs.hasNextPage && (
+        <Stack alignItems="center" sx={{ mt: 2 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => logs.fetchNextPage()}
+            disabled={logs.isFetchingNextPage}
+          >
+            {logs.isFetchingNextPage ? 'Loading…' : 'Load more'}
+          </Button>
+        </Stack>
+      )}
     </Box>
   )
 }

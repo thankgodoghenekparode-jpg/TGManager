@@ -30,6 +30,12 @@ export const listAuditSchema = z.object({
     .max(200)
     .optional()
     .describe('Maximum number of records to return (1-200)'),
+  cursor: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe('Opaque cursor for the next page of results'),
 });
 
 export type ListAuditDto = z.infer<typeof listAuditSchema>;

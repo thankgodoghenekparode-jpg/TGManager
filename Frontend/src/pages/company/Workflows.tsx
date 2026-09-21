@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo, useState } from 'react'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Alert,
   Box,
@@ -66,9 +66,16 @@ export function WorkflowsPage() {
   const canStart = useTenantStore((s) => canStartWorkflow(s.current?.roles ?? []))
 
   const templates = useQuery({ queryKey: ['wf-templates'], queryFn: () => workflowsApi.listTemplates() })
-  const instances = useQuery({
+  const instances = useInfiniteQuery({
+    initialPageParam: null as string | null,
     queryKey: ['wf-instances', statusFilter],
-    queryFn: () => workflowsApi.listInstances({ status: (statusFilter as WorkflowStatus) || undefined }),
+    queryFn: ({ pageParam }) =>
+      workflowsApi.listInstances({
+        status: (statusFilter as WorkflowStatus) || undefined,
+        limit: 30,
+        cursor: pageParam ?? undefined,
+      }),
+    getNextPageParam: (last) => last.nextCursor,
   })
   const approvals = useQuery({ queryKey: ['wf-approvals'], queryFn: () => workflowsApi.approvals() })
 
@@ -84,7 +91,10 @@ export function WorkflowsPage() {
   })
 
   const rows = templates.data ?? []
-  const instanceRows = instances.data ?? []
+  const instanceRows = useMemo(
+    () => instances.data?.pages.flatMap((p) => p.items) ?? [],
+    [instances.data],
+  )
   const approvalRows = approvals.data ?? []
 
   return (
@@ -188,6 +198,18 @@ export function WorkflowsPage() {
               </TableBody>
             </Table>
           </TableContainer>
+          {instances.hasNextPage && (
+            <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => instances.fetchNextPage()}
+                disabled={instances.isFetchingNextPage}
+              >
+                {instances.isFetchingNextPage ? 'Loading…' : 'Load more'}
+              </Button>
+            </Stack>
+          )}
         </Box>
       )}
 

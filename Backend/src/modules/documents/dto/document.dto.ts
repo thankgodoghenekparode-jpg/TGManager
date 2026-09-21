@@ -61,6 +61,19 @@ export type UpdateDocumentDto = z.infer<typeof updateDocumentSchema>;
 export const listDocumentsSchema = z.object({
   branchId: z.string().trim().min(1).optional().describe('Filter by branch ID'),
   type: documentTypeSchema.optional().describe('Filter by document type'),
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(200)
+    .optional()
+    .describe('Maximum number of documents to return (1-200)'),
+  cursor: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .describe('Opaque cursor for the next page of results'),
 });
 
 export type ListDocumentsDto = z.infer<typeof listDocumentsSchema>;
