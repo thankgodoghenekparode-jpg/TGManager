@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (lint + typecheck + build + jest)
+    runs-on: ubuntu-latest
+    env:
+      # prisma.config.ts reads DIRECT_URL; never connected to during CI builds/tests.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Backend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: Backend
+      - name: Lint (eslint + prettier, as the repo's lint script defines it)
+        run: npm run lint
+        working-directory: Backend
+      - name: Typecheck + build
+        run: npm run build
+        working-directory: Backend
+      - name: Unit tests
+        run: npm test -- --runInBand
+        working-directory: Backend
+
+  frontend:
+    name: Frontend (lint + typecheck + build + jest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: Frontend
+      - name: Lint (oxlint)
+        run: npm run lint
+        working-directory: Frontend
+      - name: Unit tests (vitest)
+        run: npm test
+        working-directory: Frontend
+      - name: Typecheck + build
+        run: npm run build
+        working-directory: Frontend

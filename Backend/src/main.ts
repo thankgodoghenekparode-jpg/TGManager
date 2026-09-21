@@ -62,8 +62,9 @@ async function bootstrap(): Promise<void> {
         return;
       }
 
-      const localOrigin =
-        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      const localOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(
+        origin,
+      );
       if (origins.includes(origin) || (isLocalDevelopment && localOrigin)) {
         callback(null, true);
         return;

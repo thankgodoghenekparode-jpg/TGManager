@@ -91,7 +91,9 @@ export class PushService {
   }
 
   async removeSubscription(userId: string, endpoint: string): Promise<void> {
-    await this.prisma.pushSubscription.deleteMany({ where: { userId, endpoint } });
+    await this.prisma.pushSubscription.deleteMany({
+      where: { userId, endpoint },
+    });
   }
 
   /**

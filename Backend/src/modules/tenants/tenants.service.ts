@@ -192,7 +192,13 @@ export class TenantsService {
       where: { id: tenantId },
       include: {
         plan: {
-          select: { code: true, name: true, maxBranches: true, maxStaff: true, featureFlags: true },
+          select: {
+            code: true,
+            name: true,
+            maxBranches: true,
+            maxStaff: true,
+            featureFlags: true,
+          },
         },
       },
     });
@@ -221,12 +227,16 @@ export class TenantsService {
     }
 
     const planFlags =
-      typeof tenant.plan?.featureFlags === 'object' && tenant.plan.featureFlags !== null
+      typeof tenant.plan?.featureFlags === 'object' &&
+      tenant.plan.featureFlags !== null
         ? (tenant.plan.featureFlags as Record<string, boolean>)
         : {};
     const customFlags =
-      typeof tenant.settings === 'object' && tenant.settings !== null && 'featureFlags' in tenant.settings
-        ? ((tenant.settings as { featureFlags?: Record<string, boolean> }).featureFlags ?? {})
+      typeof tenant.settings === 'object' &&
+      tenant.settings !== null &&
+      'featureFlags' in tenant.settings
+        ? ((tenant.settings as { featureFlags?: Record<string, boolean> })
+            .featureFlags ?? {})
         : {};
 
     return {
