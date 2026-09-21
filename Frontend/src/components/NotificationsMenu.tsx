@@ -24,6 +24,7 @@ import {
   disconnectNotificationsSocket,
   subscribeNotifications,
 } from '../lib/notificationsSocket'
+import { ensurePushSubscription } from '../lib/push'
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -57,6 +58,7 @@ export function NotificationsMenu() {
   useEffect(() => {
     if (!hasTenant) return
     connectNotificationsSocket()
+    ensurePushSubscription()
     const unsubscribe = subscribeNotifications(() => {
       qc.invalidateQueries({ queryKey: ['notifications'] })
       qc.invalidateQueries({ queryKey: ['notifications-unread'] })

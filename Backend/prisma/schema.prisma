@@ -184,6 +184,7 @@ model User {
   messageReads                  MessageRead[]
   auditLogs                     AuditLog[]
   notifications                 Notification[]
+  pushSubscriptions             PushSubscription[]
   passwordResetTokens           PasswordResetToken[]
   emailChangeRequests           EmailChangeRequest[]   @relation("EmailChangeRequests")
   emailChangeRequestsReviewed   EmailChangeRequest[]   @relation("EmailChangeRequestsReviewed")
@@ -280,6 +281,7 @@ model Tenant {
   integrationApiKeys  IntegrationApiKey[]
   integrationWebhooks IntegrationWebhook[]
   weeklyReports       WeeklyReport[]
+  pushSubscriptions   PushSubscription[]
 
   @@index([planId])
 }
@@ -922,6 +924,24 @@ model Notification {
 
   @@index([userId, readAt])
   @@index([tenantId, createdAt])
+}
+
+// ============================= Push Subscriptions =============================
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([tenantId])
 }
 
 // ============================= Platform Config =============================

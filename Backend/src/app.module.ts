@@ -29,6 +29,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { WorkflowsModule } from './modules/workflows/workflows.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { PushModule } from './modules/push/push.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
@@ -67,6 +68,7 @@ import { SeedModule } from './seed/seed.module';
     WorkflowsModule,
     ChatModule,
     NotificationsModule,
+    PushModule,
     AuditModule,
     PlatformModule,
     IntegrationsModule,

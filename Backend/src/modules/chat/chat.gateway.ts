@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   ConnectedSocket,
@@ -13,6 +14,7 @@ import { Server, Socket } from 'socket.io';
 import { ACCESS_TOKEN_COOKIE } from '../../common/constants/cookies';
 import type { JwtPayload } from '../../common/types/authenticated-request.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import { ChatService } from './chat.service';
 import {
   socketJoinSchema,
@@ -49,6 +51,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly chat: ChatService,
+    private readonly push: PushService,
+    private readonly config: ConfigService,
   ) {}
 
   async handleConnection(client: AuthedSocket): Promise<void> {
@@ -243,8 +247,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       senderId,
       message,
     );
+    const online = new Set(this.getOnlineUserIds(tenantId));
+    const frontendUrl =
+      this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:5173';
     for (const notification of notifications) {
       this.emitToUser(notification.userId, 'notification:new', notification);
+      if (online.has(notification.userId)) continue;
+      await this.push.sendToUser(notification.userId, {
+        title: notification.title,
+        body: notification.body ?? undefined,
+        data: {
+          type: notification.type,
+          conversationId,
+          messageId: message.id,
+          senderId,
+          url: `${frontendUrl}/chat`,
+        },
+      });
     }
   }
 

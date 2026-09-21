@@ -35,6 +35,7 @@ import {
 import SendIcon from '@mui/icons-material/Send'
 import SearchIcon from '@mui/icons-material/Search'
 import AddCommentIcon from '@mui/icons-material/AddComment'
+import CloudOffIcon from '@mui/icons-material/CloudOff'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
 import MicIcon from '@mui/icons-material/Mic'
@@ -70,6 +71,7 @@ import { staffApi } from '../../api/staff'
 import { apiErrorMessage } from '../../api/client'
 import { useAuthStore } from '../../store/auth'
 import { useBlobUrl } from '../../hooks/useBlobUrl'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { Can } from '../../components/PermissionGate'
 import {
   connectNotificationsSocket,
@@ -88,6 +90,7 @@ export function ChatPage() {
   const [query, setQuery] = useState('')
   const [liveOnline, setLiveOnline] = useState<Set<string>>(new Set())
   const [offline, setOffline] = useState<Set<string>>(new Set())
+  const online = useOnlineStatus()
 
   const conversations = useQuery({
     queryKey: ['conversations'],
@@ -200,11 +203,21 @@ export function ChatPage() {
   }, [conversations.data, search.data, query, me?.id])
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 2,
-        flexDirection: { xs: 'column', md: 'row' },
+    <>
+      {!online && (
+        <Alert
+          severity="warning"
+          icon={<CloudOffIcon fontSize="small" />}
+          sx={{ mb: 1.5, py: 0, alignItems: 'center' }}
+        >
+          You're offline. Cached messages are shown and will sync when you reconnect.
+        </Alert>
+      )}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          flexDirection: { xs: 'column', md: 'row' },
         height: {
           xs: 'calc(100dvh - 120px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
           md: 'calc(100dvh - 140px - env(safe-area-inset-top, 0px))',
@@ -326,6 +339,7 @@ export function ChatPage() {
         />
       )}
     </Box>
+    </>
   )
 }
 

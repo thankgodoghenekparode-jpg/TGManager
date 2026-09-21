@@ -27,6 +27,13 @@ services:
         value: "true"
       - key: DB_SEED_ON_START
         value: "true"
+      # Web Push (chat offline + push). Add the VAPID keys in the Render
+      # dashboard (Settings > Environment) rather than committing the private
+      # key here. Example values:
+      #   PUSH_ENABLED=true
+      #   VAPID_PUBLIC_KEY=BOR0F9mc45i9uNFQgV0EpRGhOJzh9L-ZsvaVGXhaIdCvQnbaPkQsE0LyEFMF8uXUtV-zk3uwkpi--oC4GDBRDFA
+      #   VAPID_PRIVATE_KEY=<generated with: npx web-push generate-vapid-keys>
+      #   VAPID_SUBJECT=mailto:no-reply@tgmanager.example
 
 databases:
   # Managed PostgreSQL Database

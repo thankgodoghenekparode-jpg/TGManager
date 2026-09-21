@@ -43,6 +43,12 @@ export const envSchema = z.object({
   EMAIL_USER: z.string().optional(),
   EMAIL_PASSWORD: z.string().optional(),
   EMAIL_FROM: z.string().default('TGManager <no-reply@tgmanager.example>'),
+  PUSH_ENABLED: z.enum(['true', 'false']).default('false'),
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z
+    .string()
+    .default('mailto:no-reply@tgmanager.example'),
 });
 
 export type Env = z.infer<typeof envSchema>;
