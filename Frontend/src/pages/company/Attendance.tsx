@@ -35,6 +35,7 @@ import {
 } from '../../api/attendance'
 import { branchesApi, type Branch } from '../../api/branches'
 import { staffApi } from '../../api/staff'
+import { settingsApi, type TenantSettings } from '../../api/settings'
 import { apiErrorMessage } from '../../api/client'
 import { BiometricClockIn, type BiometricVerification } from '../../components/BiometricClockIn'
 import { Can } from '../../components/PermissionGate'
@@ -137,6 +138,7 @@ export function AttendancePage() {
   const range = useMemo(() => attendancePeriodRange(period), [period])
 
   const branches = useQuery({ queryKey: ['branches'], queryFn: () => branchesApi.list() })
+  const settings = useQuery({ queryKey: ['settings'], queryFn: () => settingsApi.get() })
   const staff = useQuery({ queryKey: ['staff'], queryFn: () => staffApi.list() })
   const records = useQuery({
     queryKey: ['attendance', branchId, staffRecordId, status, range.from, range.to],
@@ -259,6 +261,7 @@ export function AttendancePage() {
         <ClockDialog
           kind={clockDialog}
           branches={branches.data ?? []}
+          settings={settings.data}
           onCancel={() => setClockDialog(null)}
           onConfirm={(position) => clock.mutate({ kind: clockDialog, position })}
           busy={clock.isPending}
@@ -271,12 +274,14 @@ export function AttendancePage() {
 export function ClockDialog({
   kind,
   branches,
+  settings,
   onCancel,
   onConfirm,
   busy,
 }: {
   kind: 'in' | 'out'
   branches: Branch[]
+  settings?: TenantSettings
   onCancel: () => void
   onConfirm: (position: GeoPosition) => void
   busy: boolean
@@ -309,10 +314,40 @@ export function ClockDialog({
   }
 
   const refBranch = branches.find((b) => b.id === branchId) ?? branches[0] ?? null
-  const refLat = refBranch?.latitude ?? 5.564747
-  const refLng = refBranch?.longitude ?? 5.815643
-  const refRadius = refBranch?.radiusMeters ?? 200
-  const within = position ? distanceMeters(refLat, refLng, position.latitude, position.longitude) <= refRadius : false
+  // Mirror the backend's geofence resolution: prefer a branch with real
+  // coordinates, then tenant-level geolocation defaults (where the admin
+  // sets the company geofence), and only then a static fallback.
+  const branchHasGeofence =
+    refBranch != null &&
+    typeof refBranch.latitude === 'number' &&
+    typeof refBranch.longitude === 'number' &&
+    refBranch.radiusMeters != null &&
+    (refBranch.latitude !== 0 || refBranch.longitude !== 0)
+  const useSettingsDefaults =
+    !branchHasGeofence &&
+    typeof settings?.defaultLatitude === 'number' &&
+    typeof settings?.defaultLongitude === 'number' &&
+    typeof settings?.defaultRadiusMeters === 'number'
+  const refLat = branchHasGeofence
+    ? refBranch!.latitude
+    : useSettingsDefaults
+      ? settings!.defaultLatitude!
+      : 5.564747
+  const refLng = branchHasGeofence
+    ? refBranch!.longitude
+    : useSettingsDefaults
+      ? settings!.defaultLongitude!
+      : 5.815643
+  const refRadius: number | null = branchHasGeofence
+    ? refBranch!.radiusMeters
+    : useSettingsDefaults
+      ? settings!.defaultRadiusMeters!
+      : 200
+  const within =
+    refRadius == null ||
+    (position
+      ? distanceMeters(refLat, refLng, position.latitude, position.longitude) <= refRadius
+      : false)
 
   return (
     <Dialog open onClose={onCancel} fullWidth maxWidth="xs">
