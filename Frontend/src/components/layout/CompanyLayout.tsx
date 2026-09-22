@@ -17,6 +17,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import HistoryIcon from '@mui/icons-material/History'
 import ApiIcon from '@mui/icons-material/Api'
 import SettingsIcon from '@mui/icons-material/Settings'
+import CreditCardIcon from '@mui/icons-material/CreditCard'
 import { AppShell, type NavItem } from './AppShell'
 import { useAuthStore } from '../../store/auth'
 import { useTenantStore } from '../../store/tenant'
@@ -65,6 +66,7 @@ export function CompanyLayout() {
     { item: { label: 'Audit', path: '/app/audit', icon: HistoryIcon }, perms: PermissionBlocks.AUDIT, feature: 'audit' },
     { item: { label: 'Integrations', path: '/app/integrations', icon: ApiIcon }, perms: PermissionBlocks.INTEGRATION, feature: 'integrations' },
     { item: { label: 'Settings', path: '/app/settings', icon: SettingsIcon }, perms: PermissionBlocks.SETTINGS, feature: 'settings' },
+    { item: { label: 'Billing', path: '/app/billing', icon: CreditCardIcon }, perms: PermissionBlocks.SETTINGS, feature: 'billing' },
   ]
 
   const nav = all.filter(({ perms, feature }) => isFeatureEnabled(feature) && allowed(perms)).map(({ item }) => item)

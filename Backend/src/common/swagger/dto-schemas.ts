@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { checkoutSchema } from '../../modules/billing/dto/billing.dto';
 import { loginSchema } from '../../modules/auth/dto/login.dto';
 import {
   changePasswordSchema,
@@ -155,6 +156,7 @@ export const DTO_SCHEMAS: Record<string, z.ZodTypeAny> = {
   SubmitWeeklyReportDto: submitWeeklyReportSchema,
   UpdateWeeklyReportDto: updateWeeklyReportSchema,
   ReviewWeeklyReportDto: reviewWeeklyReportSchema,
+  StartCheckoutDto: checkoutSchema,
 };
 
 /**

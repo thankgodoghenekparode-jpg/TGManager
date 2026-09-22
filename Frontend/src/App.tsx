@@ -42,6 +42,7 @@ import { WeeklyReportsPage } from './pages/company/WeeklyReports'
 import { AuditLogsPage } from './pages/company/AuditLogs'
 import { IntegrationsPage } from './pages/company/Integrations'
 import { CompanySettingsPage } from './pages/company/Settings'
+import { BillingPage } from './pages/company/Billing'
 import { ChangeEmailPage } from './pages/account/ChangeEmail'
 import { MyRequestsPage } from './pages/account/MyRequests'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
@@ -104,6 +105,7 @@ const router = createBrowserRouter([
               { path: '/app/audit', element: <AuditLogsPage /> },
               { path: '/app/integrations', element: <IntegrationsPage /> },
               { path: '/app/settings', element: <CompanySettingsPage /> },
+              { path: '/app/billing', element: <BillingPage /> },
               { path: '/app/account/change-email', element: <ChangeEmailPage /> },
               { path: '/app/account/requests', element: <MyRequestsPage /> },
             ],

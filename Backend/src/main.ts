@@ -16,7 +16,9 @@ import { SecurityHeadersMiddleware } from './common/middleware/security-headers.
 import { RateLimitMiddleware } from './common/middleware/rate-limit.middleware';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true,
+  });
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 

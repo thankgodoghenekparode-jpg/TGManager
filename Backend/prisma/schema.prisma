@@ -258,6 +258,7 @@ model Tenant {
   updatedAt        DateTime               @updatedAt
 
   subscriptions       TenantSubscription[]
+  creditTransactions  CreditTransaction[]
   tenantUsers         TenantUser[]
   branches            Branch[]
   departments         Department[]
@@ -287,18 +288,40 @@ model Tenant {
 }
 
 model TenantSubscription {
-  id        String             @id @default(cuid())
-  tenantId  String
-  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  planId    String
-  plan      Plan               @relation(fields: [planId], references: [id])
-  status    SubscriptionStatus @default(TRIAL)
-  startsAt  DateTime           @default(now())
-  endsAt    DateTime?
-  createdAt DateTime           @default(now())
+  id                   String             @id @default(cuid())
+  tenantId             String
+  tenant               Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId               String
+  plan                 Plan               @relation(fields: [planId], references: [id])
+  status               SubscriptionStatus @default(TRIAL)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  credits              Json               @default("{}")
+  startsAt             DateTime           @default(now())
+  endsAt               DateTime?
+  createdAt            DateTime           @default(now())
+  transactions         CreditTransaction[]
 
   @@index([tenantId])
   @@index([planId])
+  @@index([stripeSubscriptionId])
+}
+
+model CreditTransaction {
+  id             String             @id @default(cuid())
+  tenantId       String
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subscriptionId String
+  subscription   TenantSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  kind           String
+  delta          Int
+  reason         String
+  ref            String?
+  createdAt      DateTime           @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([subscriptionId])
+  @@map("CreditTransaction")
 }
 
 model TenantUser {

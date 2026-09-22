@@ -35,6 +35,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { PlatformModule } from './modules/platform/platform.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { AccountRequestsModule } from './modules/account-requests/account-requests.module';
 import { WeeklyReportsModule } from './modules/weekly-reports/weekly-reports.module';
 import { SeedModule } from './seed/seed.module';
@@ -75,6 +76,7 @@ import { SeedModule } from './seed/seed.module';
     PlatformModule,
     IntegrationsModule,
     SettingsModule,
+    BillingModule,
     AccountRequestsModule,
     WeeklyReportsModule,
     SeedModule,
