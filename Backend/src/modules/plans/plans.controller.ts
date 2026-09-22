@@ -11,16 +11,12 @@ export class PlansController {
   @Public()
   @Get()
   @ApiOperation({
-    summary: 'List active plans',
+    summary: 'List plans and pricing',
     description:
-      'Lists the active subscription plans available to new tenants.',
+      'Returns the 3-tier pricing catalog (features, limits, billing) served to the pricing page.',
   })
-  @ApiOkResponse({ description: 'List of active plans.' })
-  async listPlans() {
-    const plans = await this.plansService.listActive();
-    return plans.map(({ maxStorageBytes, ...plan }) => ({
-      ...plan,
-      maxStorageBytes: maxStorageBytes?.toString() ?? null,
-    }));
+  @ApiOkResponse({ description: 'Pricing catalog.' })
+  listPlans() {
+    return this.plansService.getCatalog();
   }
 }

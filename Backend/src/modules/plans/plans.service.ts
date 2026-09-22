@@ -1,42 +1,13 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import type { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-
-const DEFAULT_PLANS = [
-  {
-    name: 'Free',
-    code: 'free',
-    priceCents: 0,
-    maxBranches: 1,
-    maxStaff: 10,
-    featureFlags: { chat: true, workflows: true, reports: true },
-  },
-  {
-    name: 'Pro',
-    code: 'pro',
-    priceCents: 4900,
-    maxBranches: 5,
-    maxStaff: 100,
-    featureFlags: {
-      chat: true,
-      workflows: true,
-      reports: true,
-      inventory: true,
-    },
-  },
-  {
-    name: 'Enterprise',
-    code: 'enterprise',
-    priceCents: 14900,
-    maxBranches: null,
-    maxStaff: null,
-    featureFlags: {
-      chat: true,
-      workflows: true,
-      reports: true,
-      inventory: true,
-    },
-  },
-] as const;
+import type { Permission } from '../rbac/permissions/permissions.constants';
+import {
+  PLAN_TIERS,
+  PLAN_BY_CODE,
+  planAllows,
+  tierFeatureFlags,
+} from './plans.catalog';
 
 @Injectable()
 export class PlansService implements OnApplicationBootstrap {
@@ -49,23 +20,29 @@ export class PlansService implements OnApplicationBootstrap {
   }
 
   async ensureDefaultPlans(): Promise<void> {
-    for (const plan of DEFAULT_PLANS) {
+    for (const tier of PLAN_TIERS) {
       await this.prisma.plan.upsert({
-        where: { code: plan.code },
+        where: { code: tier.code },
         update: {
-          name: plan.name,
-          priceCents: plan.priceCents,
-          maxBranches: plan.maxBranches,
-          maxStaff: plan.maxStaff,
-          featureFlags: plan.featureFlags,
+          name: tier.name,
+          priceCents: tier.priceCents,
+          maxBranches: tier.maxBranches,
+          maxStaff: tier.maxStaff,
+          maxDocuments: tier.maxDocuments,
+          maxStorageBytes: tier.maxStorageBytes,
+          maxChatMessages: tier.maxChatMessages,
+          featureFlags: tierFeatureFlags(tier) as Prisma.InputJsonValue,
         },
         create: {
-          name: plan.name,
-          code: plan.code,
-          priceCents: plan.priceCents,
-          maxBranches: plan.maxBranches,
-          maxStaff: plan.maxStaff,
-          featureFlags: plan.featureFlags,
+          name: tier.name,
+          code: tier.code,
+          priceCents: tier.priceCents,
+          maxBranches: tier.maxBranches,
+          maxStaff: tier.maxStaff,
+          maxDocuments: tier.maxDocuments,
+          maxStorageBytes: tier.maxStorageBytes,
+          maxChatMessages: tier.maxChatMessages,
+          featureFlags: tierFeatureFlags(tier) as Prisma.InputJsonValue,
         },
       });
     }
@@ -81,5 +58,41 @@ export class PlansService implements OnApplicationBootstrap {
 
   findByCode(code: string) {
     return this.prisma.plan.findUnique({ where: { code } });
+  }
+
+  /**
+   * Public 3-tier pricing payload for the pricing page / checkout. Driven by
+   * the catalog (single source of truth) so copy stays consistent.
+   */
+  getCatalog() {
+    return PLAN_TIERS.map((tier) => ({
+      code: tier.code,
+      name: tier.name,
+      priceCents: tier.priceCents,
+      pricePerSeatCents: tier.pricePerSeatCents,
+      billingCycle: tier.billingCycle,
+      highlight: tier.highlight ?? null,
+      features: [...tier.features],
+      limits: {
+        maxBranches: tier.maxBranches,
+        maxStaff: tier.maxStaff,
+        maxDocuments: tier.maxDocuments,
+        maxStorageBytes: tier.maxStorageBytes?.toString() ?? null,
+        maxChatMessages: tier.maxChatMessages,
+      },
+    }));
+  }
+
+  /** Whether a catalog insight version of a plan grants a company permission. */
+  allowsPlanRow(
+    plan: { code: string; featureFlags: Prisma.JsonValue | null | undefined },
+    permission: Permission,
+  ): boolean {
+    return planAllows(plan, permission);
+  }
+
+  allowsCode(code: string, permission: Permission): boolean {
+    const tier = PLAN_BY_CODE.get(code);
+    return tier ? tier.permissions.includes(permission) : true;
   }
 }
