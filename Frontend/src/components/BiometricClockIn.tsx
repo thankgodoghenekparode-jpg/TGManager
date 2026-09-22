@@ -19,6 +19,40 @@ export interface BiometricVerification {
   photoDataUrl?: string
 }
 
+const PASSKEY_STORE_KEY = 'tgmanager-passkeys'
+const UV_FLAG_BIT = 4
+
+function loadPasskeyIds(): string[] {
+  try {
+    const raw = window.localStorage.getItem(PASSKEY_STORE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed)
+      ? parsed.filter((v): v is string => typeof v === 'string')
+      : []
+  } catch {
+    return []
+  }
+}
+
+function savePasskeyId(id: string): void {
+  const ids = loadPasskeyIds()
+  if (!ids.includes(id)) {
+    ids.push(id)
+    window.localStorage.setItem(PASSKEY_STORE_KEY, JSON.stringify(ids))
+  }
+}
+
+function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
+  const base64 = value.replaceAll('-', '+').replaceAll('_', '/')
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+  const raw = window.atob(padded)
+  const buffer = new ArrayBuffer(raw.length)
+  const bytes = new Uint8Array(buffer)
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+  return bytes
+}
+
 export function BiometricClockIn({
   onVerified,
   disabled,
@@ -33,6 +67,7 @@ export function BiometricClockIn({
   const [cameraActive, setCameraActive] = useState(false)
   const [verified, setVerified] = useState<VerifyMethod | null>(null)
   const [error, setError] = useState('')
+  const [hasSaved, setHasSaved] = useState(loadPasskeyIds().length > 0)
 
   function stopCamera() {
     streamRef.current?.getTracks().forEach((track) => track.stop())
@@ -44,6 +79,61 @@ export function BiometricClockIn({
     return () => stopCamera()
   }, [])
 
+  const completeFingerprint = (credential: PublicKeyCredential) => {
+    const response = credential.response as AuthenticatorAssertionResponse
+    const authData = new Uint8Array(response.authenticatorData as ArrayBuffer)
+    if ((authData[32] & UV_FLAG_BIT) === 0) {
+      setError('The fingerprint sensor did not verify your identity. Try again.')
+      return
+    }
+    setVerified('webauthn')
+    onVerified({ method: 'webauthn', capturedAt: new Date().toISOString() })
+  }
+
+  const registerFingerprint = async () => {
+    setError('')
+    if (!window.PublicKeyCredential || !navigator.credentials) {
+      setError('Fingerprint registration is not available in this browser. Use camera verification instead.')
+      return
+    }
+    setBusy(true)
+    try {
+      const challenge = new Uint8Array(32)
+      window.crypto.getRandomValues(challenge)
+      const userId = new Uint8Array(16)
+      window.crypto.getRandomValues(userId)
+      const credential = (await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: 'TGManager' },
+          user: {
+            id: userId,
+            name: 'staff-fingerprint',
+            displayName: 'Staff fingerprint',
+          },
+          pubKeyCredParams: [
+            { type: 'public-key', alg: -7 },
+            { type: 'public-key', alg: -257 },
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            residentKey: 'required',
+            userVerification: 'required',
+          },
+          timeout: 60000,
+          attestation: 'none',
+        },
+      })) as PublicKeyCredential
+      savePasskeyId(credential.id)
+      setHasSaved(true)
+      completeFingerprint(credential)
+    } catch {
+      setError('Fingerprint registration was cancelled or unavailable. You can verify with the camera.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const verifyWithFingerprint = async () => {
     setError('')
     if (!window.PublicKeyCredential || !navigator.credentials) {
@@ -51,21 +141,33 @@ export function BiometricClockIn({
       return
     }
 
+    const savedIds = loadPasskeyIds()
+    if (savedIds.length === 0) {
+      await registerFingerprint()
+      return
+    }
+
     setBusy(true)
     try {
       const challenge = new Uint8Array(32)
       window.crypto.getRandomValues(challenge)
-      await navigator.credentials.get({
+      const credential = (await navigator.credentials.get({
         publicKey: {
           challenge,
           timeout: 60000,
-          userVerification: 'preferred',
+          userVerification: 'required',
+          allowCredentials: savedIds.map((id) => ({
+            type: 'public-key',
+            id: base64UrlToBytes(id),
+            transports: ['internal'],
+          })),
         },
-      })
-      setVerified('webauthn')
-      onVerified({ method: 'webauthn', capturedAt: new Date().toISOString() })
+      })) as PublicKeyCredential
+      completeFingerprint(credential)
     } catch {
-      setError('Fingerprint verification was cancelled or unavailable. You can verify with the camera.')
+      setError(
+        'No fingerprint on this device matches the saved one. Verify with the camera, or tap “Re-save fingerprint” to enroll this device.',
+      )
     } finally {
       setBusy(false)
     }
@@ -134,8 +236,19 @@ export function BiometricClockIn({
           onClick={() => void verifyWithFingerprint()}
           disabled={disabled || busy}
         >
-          Verify fingerprint
+          {hasSaved ? 'Verify fingerprint' : 'Save fingerprint'}
         </Button>
+        {hasSaved && (
+          <Button
+            size="small"
+            color="info"
+            onClick={() => void registerFingerprint()}
+            disabled={disabled || busy}
+            sx={{ alignSelf: 'center' }}
+          >
+            Re-save fingerprint
+          </Button>
+        )}
         <Button
           variant="outlined"
           startIcon={<PhotoCameraIcon />}
