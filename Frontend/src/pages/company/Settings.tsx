@@ -136,6 +136,32 @@ function SettingsForm({
   const [dirty, setDirty] = useState(false)
   const [saveError, setSaveError] = useState('')
 
+  const lat = parseFloat(defaultLatitude)
+  const long = parseFloat(defaultLongitude)
+  const radius = parseFloat(defaultRadiusMeters)
+  const latError =
+    defaultLatitude !== ''
+      ? Number.isNaN(lat) || lat < -90 || lat > 90
+        ? 'Latitude must be between -90 and 90.'
+        : ''
+      : ''
+  const longError =
+    defaultLongitude !== ''
+      ? Number.isNaN(long) || long < -180 || long > 180
+        ? 'Longitude must be between -180 and 180.'
+        : ''
+      : ''
+  const radiusError =
+    defaultRadiusMeters !== ''
+      ? Number.isNaN(radius) ||
+        !Number.isInteger(radius) ||
+        radius < 1 ||
+        radius > 100000
+        ? 'Radius must be a whole number between 1 and 100,000 meters.'
+        : ''
+      : ''
+  const hasInvalidFields = Boolean(latError || longError || radiusError)
+
   const markDirty = (setter: (v: string) => void) => (e: ChangeEvent<HTMLInputElement>) => {
     setter(e.target.value)
     setDirty(true)
@@ -267,6 +293,8 @@ function SettingsForm({
               value={defaultLatitude}
               onChange={markDirty(setDefaultLatitude)}
               fullWidth
+              error={Boolean(latError)}
+              helperText={latError || 'Geofence center used when a branch has no location. Leave blank to skip.'}
             />
             <TextField
               label="Default longitude"
@@ -274,6 +302,8 @@ function SettingsForm({
               value={defaultLongitude}
               onChange={markDirty(setDefaultLongitude)}
               fullWidth
+              error={Boolean(longError)}
+              helperText={longError || 'Must be between -180 and 180.'}
             />
             <TextField
               label="Default radius (meters)"
@@ -281,7 +311,8 @@ function SettingsForm({
               value={defaultRadiusMeters}
               onChange={markDirty(setDefaultRadiusMeters)}
               fullWidth
-              helperText="Geofence radius for clock-ins without a branch radius."
+              error={Boolean(radiusError)}
+              helperText={radiusError || 'Geofence radius for clock-ins without a branch radius.'}
             />
           </Stack>
         </CardContent>
@@ -292,7 +323,7 @@ function SettingsForm({
           <Button
             variant="contained"
             startIcon={<SaveIcon />}
-            disabled={save.isPending}
+            disabled={save.isPending || hasInvalidFields}
             onClick={() => save.mutate()}
           >
             {save.isPending ? 'Saving…' : 'Save settings'}

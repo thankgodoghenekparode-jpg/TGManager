@@ -42,6 +42,9 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+  // Fail a stalled request instead of hanging forever (e.g. a sleeping free-tier
+  // backend or a lost connection). Surfaced as a friendly axios error message.
+  timeout: 45_000,
 })
 
 /** Set once after login/refresh so that API calls that need a bearer fallback can use it. */
