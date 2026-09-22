@@ -1,11 +1,11 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import type {
   CreateGroupDto,
   GroupMembersDto,
@@ -14,10 +14,13 @@ import type {
 
 @Injectable()
 export class GroupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: AccessControlService,
+  ) {}
 
   async create(tenantId: string, dto: CreateGroupDto) {
-    await this.assertBranchAccess(tenantId, dto.branchId);
+    await this.access.assertBranchAccess(tenantId, dto.branchId);
     return this.prisma.group.create({
       data: {
         tenantId,
@@ -30,7 +33,7 @@ export class GroupsService {
 
   async list(tenantId: string, abilities: AbilitiesContext, branchId?: string) {
     if (branchId) {
-      await this.assertBranchAccess(tenantId, branchId);
+      await this.access.assertBranchAccess(tenantId, branchId);
     }
     const where: { tenantId: string; branchId?: string | { in: string[] } } = {
       tenantId,
@@ -73,7 +76,7 @@ export class GroupsService {
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    await this.assertBranchAccess(tenantId, group.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, group.branchId, abilities);
     return {
       ...group,
       members: group.staffGroups.map((sg) => sg.staffRecord),
@@ -92,7 +95,7 @@ export class GroupsService {
     if (!existing) {
       throw new NotFoundException('Group not found');
     }
-    await this.assertBranchAccess(
+    await this.access.assertBranchAccess(
       tenantId,
       dto.branchId ?? existing.branchId,
       abilities,
@@ -114,7 +117,11 @@ export class GroupsService {
     if (!existing) {
       throw new NotFoundException('Group not found');
     }
-    await this.assertBranchAccess(tenantId, existing.branchId, abilities);
+    await this.access.assertBranchAccess(
+      tenantId,
+      existing.branchId,
+      abilities,
+    );
     await this.prisma.group.delete({ where: { id: groupId } });
   }
 
@@ -130,7 +137,7 @@ export class GroupsService {
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    await this.assertBranchAccess(tenantId, group.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, group.branchId, abilities);
 
     const staff = await this.prisma.staffRecord.findMany({
       where: {
@@ -165,29 +172,10 @@ export class GroupsService {
     if (!group) {
       throw new NotFoundException('Group not found');
     }
-    await this.assertBranchAccess(tenantId, group.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, group.branchId, abilities);
     await this.prisma.staffGroup.deleteMany({
       where: { groupId, staffRecordId },
     });
     return this.getOne(tenantId, groupId, abilities);
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities?: AbilitiesContext,
-  ): Promise<void> {
-    if (abilities && abilities.accessibleBranchIds !== null) {
-      if (!abilities.accessibleBranchIds.includes(branchId)) {
-        throw new ForbiddenException('You do not have access to this branch');
-      }
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) {
-      throw new BadRequestException('Branch not found in this tenant');
-    }
   }
 }

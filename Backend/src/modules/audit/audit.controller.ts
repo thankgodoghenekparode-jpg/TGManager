@@ -6,8 +6,7 @@ import {
 } from '@nestjs/swagger';
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import { Permissions } from '../../common/decorators/permissions.decorator';
-import { AbilitiesGuard } from '../../common/guards/abilities.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { AccessGuard } from '../../common/guards/access.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import type { PermissionRequest } from '../../common/types/permission-request.interface';
 import { PERMISSIONS } from '../rbac/permissions/permissions.constants';
@@ -16,7 +15,7 @@ import { listAuditSchema, type ListAuditDto } from './dto/audit.dto';
 
 @ApiTags('Audit')
 @Controller('audit')
-@UseGuards(TenantGuard, AbilitiesGuard)
+@UseGuards(AccessGuard)
 export class AuditController {
   constructor(private readonly audit: AuditService) {}
 

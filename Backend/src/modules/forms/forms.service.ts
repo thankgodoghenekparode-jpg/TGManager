@@ -7,6 +7,7 @@ import {
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import type {
   CreateFormDto,
   ListFormsDto,
@@ -28,7 +29,10 @@ function isApproverRoleKey(roleKey: string | null | undefined): boolean {
 
 @Injectable()
 export class FormsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: AccessControlService,
+  ) {}
 
   async create(
     tenantId: string,
@@ -37,7 +41,7 @@ export class FormsService {
     abilities: AbilitiesContext,
   ) {
     if (dto.branchId) {
-      await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
     }
     if (dto.parentFormId) {
       await this.assertParentForm(tenantId, dto.parentFormId, abilities);
@@ -116,7 +120,7 @@ export class FormsService {
       },
     });
     if (!form) throw new NotFoundException('Form not found');
-    this.assertFormAccess(form.branchId, abilities);
+    this.access.assertBranchScope(form.branchId, abilities);
     return form;
   }
 
@@ -218,7 +222,7 @@ export class FormsService {
     if (!form) {
       throw new NotFoundException('Published form not found');
     }
-    this.assertFormAccess(form.branchId, abilities);
+    this.access.assertBranchScope(form.branchId, abilities);
     this.validateSubmission(form.fields, dto.data);
     const data = this.sanitizeSubmissionData(form.fields, dto.data);
 
@@ -315,7 +319,7 @@ export class FormsService {
       where: { id: formId, tenantId },
     });
     if (!form) throw new NotFoundException('Form not found');
-    this.assertFormAccess(form.branchId, abilities);
+    this.access.assertBranchScope(form.branchId, abilities);
 
     const isManager =
       abilities.isCompanyAdmin || abilities.permissions.includes('form.manage');
@@ -349,7 +353,7 @@ export class FormsService {
       where: { id: formId, tenantId },
     });
     if (!form) throw new NotFoundException('Form not found');
-    this.assertFormAccess(form.branchId, abilities);
+    this.access.assertBranchScope(form.branchId, abilities);
 
     const isManager =
       abilities.isCompanyAdmin || abilities.permissions.includes('form.manage');
@@ -468,24 +472,6 @@ export class FormsService {
     }
   }
 
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities: AbilitiesContext,
-  ): Promise<void> {
-    if (
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) throw new NotFoundException('Branch not found');
-  }
-
   private async assertParentForm(
     tenantId: string,
     parentFormId: string,
@@ -499,19 +485,6 @@ export class FormsService {
         'Parent form must be an existing Customer Ticket form',
       );
     }
-    this.assertFormAccess(parent.branchId, abilities);
-  }
-
-  private assertFormAccess(
-    branchId: string | null,
-    abilities: AbilitiesContext,
-  ): void {
-    if (
-      branchId !== null &&
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
+    this.access.assertBranchScope(parent.branchId, abilities);
   }
 }

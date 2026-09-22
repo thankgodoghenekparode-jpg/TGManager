@@ -7,8 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { Controller, Get, Header, Query, Req, UseGuards } from '@nestjs/common';
 import { Permissions } from '../../common/decorators/permissions.decorator';
-import { AbilitiesGuard } from '../../common/guards/abilities.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { AccessGuard } from '../../common/guards/access.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import type { PermissionRequest } from '../../common/types/permission-request.interface';
 import { PERMISSIONS } from '../rbac/permissions/permissions.constants';
@@ -24,7 +23,7 @@ import { ReportsService } from './reports.service';
 
 @ApiTags('Reports')
 @Controller('reports')
-@UseGuards(TenantGuard, AbilitiesGuard)
+@UseGuards(AccessGuard)
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 

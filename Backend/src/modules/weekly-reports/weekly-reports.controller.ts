@@ -21,8 +21,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Permissions } from '../../common/decorators/permissions.decorator';
-import { AbilitiesGuard } from '../../common/guards/abilities.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { AccessGuard } from '../../common/guards/access.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { schemaRef } from '../../common/swagger/zod-to-openapi';
 import type { PermissionRequest } from '../../common/types/permission-request.interface';
@@ -39,7 +38,7 @@ import { WeeklyReportsService } from './weekly-reports.service';
 
 @ApiTags('Weekly Reports')
 @Controller('weekly-reports')
-@UseGuards(TenantGuard, AbilitiesGuard)
+@UseGuards(AccessGuard)
 export class WeeklyReportsController {
   constructor(private readonly weeklyReports: WeeklyReportsService) {}
 

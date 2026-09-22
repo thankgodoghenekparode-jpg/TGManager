@@ -20,8 +20,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { AbilitiesGuard } from '../../common/guards/abilities.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { AccessGuard } from '../../common/guards/access.guard';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { schemaRef } from '../../common/swagger/zod-to-openapi';
@@ -37,7 +36,7 @@ import {
 
 @ApiTags('Branches')
 @Controller('branches')
-@UseGuards(TenantGuard, AbilitiesGuard)
+@UseGuards(AccessGuard)
 export class BranchesController {
   constructor(private readonly branches: BranchesService) {}
 

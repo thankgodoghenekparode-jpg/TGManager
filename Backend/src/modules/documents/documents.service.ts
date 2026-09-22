@@ -13,6 +13,7 @@ import {
   paginate,
 } from '../../common/pagination/pagination.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import { Prisma, DocumentType } from '../../generated/prisma/client';
 import { PlanLimitsService } from '../plans/plan-limits.service';
 import { StorageService } from '../storage/storage.service';
@@ -29,6 +30,7 @@ export class DocumentsService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly planLimits: PlanLimitsService,
+    private readonly access: AccessControlService,
   ) {}
 
   async create(
@@ -39,7 +41,7 @@ export class DocumentsService {
     abilities: AbilitiesContext,
   ) {
     if (dto.branchId) {
-      await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
     }
 
     const metadata = this.parseMetadata(dto.metadata);
@@ -234,7 +236,7 @@ export class DocumentsService {
     }
     await this.assertDocumentWriteAccess(existing, userId, abilities);
     if (dto.branchId) {
-      await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
     }
 
     const updated = await this.prisma.document.update({
@@ -260,7 +262,7 @@ export class DocumentsService {
     if (!existing) {
       throw new NotFoundException('Document not found');
     }
-    this.assertDocAccess(existing.branchId, abilities);
+    this.access.assertBranchScope(existing.branchId, abilities);
     await this.prisma.document.update({
       where: { id: documentId },
       data: { deletedAt: new Date() },
@@ -369,7 +371,7 @@ export class DocumentsService {
   ): Promise<void> {
     if (abilities.isCompanyAdmin) return;
     if (abilities.permissions.includes('document.update')) {
-      this.assertDocAccess(doc.branchId, abilities);
+      this.access.assertBranchScope(doc.branchId, abilities);
       return;
     }
     if (doc.createdByUserId === userId) return;
@@ -389,7 +391,7 @@ export class DocumentsService {
   ): Promise<void> {
     if (abilities.isCompanyAdmin) return;
     if (abilities.permissions.includes('document.update')) {
-      this.assertDocAccess(doc.branchId, abilities);
+      this.access.assertBranchScope(doc.branchId, abilities);
       return;
     }
     if (doc.createdByUserId === userId) return;
@@ -420,37 +422,6 @@ export class DocumentsService {
   private buildKey(tenantId: string, originalName: string): string {
     const safe = basename(originalName).replace(/[^\w.-]+/g, '_') || 'file';
     return `documents/${tenantId}/${randomUUID()}/${safe}`;
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities: AbilitiesContext,
-  ): Promise<void> {
-    if (
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) throw new NotFoundException('Branch not found');
-  }
-
-  private assertDocAccess(
-    branchId: string | null,
-    abilities: AbilitiesContext,
-  ): void {
-    if (
-      branchId !== null &&
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
   }
 
   private toResponse(doc: {

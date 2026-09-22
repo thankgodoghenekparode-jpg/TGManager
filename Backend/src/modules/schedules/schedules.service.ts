@@ -6,6 +6,7 @@ import {
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
 import { isValidTimeZone } from '../../common/utils/time.util';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import type { ScheduleScope } from '../../generated/prisma/client';
 import type {
   CreateScheduleDto,
@@ -15,7 +16,10 @@ import type {
 
 @Injectable()
 export class SchedulesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: AccessControlService,
+  ) {}
 
   async create(tenantId: string, dto: CreateScheduleDto) {
     const target = await this.resolveScopeTarget(tenantId, dto);
@@ -92,7 +96,7 @@ export class SchedulesService {
     query: ListSchedulesDto,
   ) {
     if (query.branchId) {
-      await this.assertBranchAccess(tenantId, query.branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, query.branchId, abilities);
     }
     const where: {
       tenantId: string;
@@ -345,18 +349,5 @@ export class SchedulesService {
         );
       }
     }
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities: AbilitiesContext,
-  ): Promise<void> {
-    if (abilities.accessibleBranchIds !== null) {
-      if (!abilities.accessibleBranchIds.includes(branchId)) {
-        throw new BadRequestException('You do not have access to this branch');
-      }
-    }
-    await this.assertBranchExists(tenantId, branchId);
   }
 }

@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +9,7 @@ import { Prisma } from '../../generated/prisma/client';
 import { UserRole } from '../../generated/prisma/enums';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import { SYSTEM_ROLE_NAMES } from '../rbac/system-roles/system-roles.constants';
 import { AuditService } from '../audit/audit.service';
 import { PlanLimitsService } from '../plans/plan-limits.service';
@@ -36,6 +36,7 @@ export class StaffService {
     private readonly audit: AuditService,
     private readonly planLimits: PlanLimitsService,
     private readonly passwordReset: PasswordResetService,
+    private readonly access: AccessControlService,
   ) {}
 
   async create(
@@ -45,7 +46,7 @@ export class StaffService {
     abilities: AbilitiesContext,
   ) {
     await this.planLimits.enforceStaffLimit(tenantId);
-    await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
 
     const generatedPassword = randomBytes(9).toString('base64url');
     const passwordHash = await bcrypt.hash(generatedPassword, BCRYPT_ROUNDS);
@@ -186,7 +187,7 @@ export class StaffService {
     if (abilities.accessibleBranchIds !== null) {
       where.branchId = { in: abilities.accessibleBranchIds };
     } else if (filters.branchId) {
-      await this.assertBranchAccess(tenantId, filters.branchId);
+      await this.access.assertBranchAccess(tenantId, filters.branchId);
       where.branchId = filters.branchId;
     }
 
@@ -228,7 +229,7 @@ export class StaffService {
     if (!record) {
       throw new NotFoundException('Staff record not found');
     }
-    await this.assertBranchAccess(tenantId, record.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, record.branchId, abilities);
     return this.present(record);
   }
 
@@ -244,7 +245,7 @@ export class StaffService {
     if (!existing) {
       throw new NotFoundException('Staff record not found');
     }
-    await this.assertBranchAccess(
+    await this.access.assertBranchAccess(
       tenantId,
       dto.branchId ?? existing.branchId,
       abilities,
@@ -293,7 +294,11 @@ export class StaffService {
     if (!existing) {
       throw new NotFoundException('Staff record not found');
     }
-    await this.assertBranchAccess(tenantId, existing.branchId, abilities);
+    await this.access.assertBranchAccess(
+      tenantId,
+      existing.branchId,
+      abilities,
+    );
     await this.prisma.staffRecord.update({
       where: { id: staffId },
       data: { isActive: false },
@@ -320,7 +325,11 @@ export class StaffService {
     if (!existing) {
       throw new NotFoundException('Staff record not found');
     }
-    await this.assertBranchAccess(tenantId, existing.branchId, abilities);
+    await this.access.assertBranchAccess(
+      tenantId,
+      existing.branchId,
+      abilities,
+    );
 
     const result = await this.passwordReset.issueAndEmailForUser(
       existing.user.id,
@@ -356,7 +365,7 @@ export class StaffService {
     if (!record) {
       throw new NotFoundException('Staff record not found');
     }
-    await this.assertBranchAccess(tenantId, record.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, record.branchId, abilities);
 
     if (dto.branchId) {
       const branch = await this.prisma.branch.findFirst({
@@ -426,7 +435,7 @@ export class StaffService {
     if (!record) {
       throw new NotFoundException('Staff record not found');
     }
-    await this.assertBranchAccess(tenantId, record.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, record.branchId, abilities);
 
     const assignment = await this.prisma.roleAssignment.findFirst({
       where: { id: assignmentId, tenantId, userId: record.userId },
@@ -575,24 +584,5 @@ export class StaffService {
     const { passwordHash, ...safe } = user;
     void passwordHash;
     return safe;
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities?: AbilitiesContext,
-  ): Promise<void> {
-    if (abilities && abilities.accessibleBranchIds !== null) {
-      if (!abilities.accessibleBranchIds.includes(branchId)) {
-        throw new ForbiddenException('You do not have access to this branch');
-      }
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) {
-      throw new BadRequestException('Branch not found in this tenant');
-    }
   }
 }

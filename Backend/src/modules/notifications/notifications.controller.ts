@@ -14,14 +14,13 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { AbilitiesGuard } from '../../common/guards/abilities.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { AccessGuard } from '../../common/guards/access.guard';
 import type { PermissionRequest } from '../../common/types/permission-request.interface';
 import { NotificationsService } from './notifications.service';
 
 @ApiTags('Notifications')
 @Controller('notifications')
-@UseGuards(TenantGuard, AbilitiesGuard)
+@UseGuards(AccessGuard)
 export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 

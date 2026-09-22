@@ -7,8 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { Permissions } from '../../common/decorators/permissions.decorator';
-import { AbilitiesGuard } from '../../common/guards/abilities.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { AccessGuard } from '../../common/guards/access.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { schemaRef } from '../../common/swagger/zod-to-openapi';
 import type { PermissionRequest } from '../../common/types/permission-request.interface';
@@ -19,7 +18,7 @@ import { SettingsService } from './settings.service';
 @ApiTags('Settings')
 @ApiSecurity('tgmanager_access')
 @Controller('settings')
-@UseGuards(TenantGuard, AbilitiesGuard)
+@UseGuards(AccessGuard)
 export class SettingsController {
   constructor(private readonly settings: SettingsService) {}
 

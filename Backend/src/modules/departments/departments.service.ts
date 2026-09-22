@@ -1,11 +1,11 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import type {
   CreateDepartmentDto,
   UpdateDepartmentDto,
@@ -13,10 +13,13 @@ import type {
 
 @Injectable()
 export class DepartmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: AccessControlService,
+  ) {}
 
   async create(tenantId: string, dto: CreateDepartmentDto) {
-    await this.assertBranchAccess(tenantId, dto.branchId);
+    await this.access.assertBranchAccess(tenantId, dto.branchId);
     if (dto.managerUserId) {
       await this.assertUserInTenant(tenantId, dto.managerUserId);
     }
@@ -32,7 +35,7 @@ export class DepartmentsService {
 
   async list(tenantId: string, abilities: AbilitiesContext, branchId?: string) {
     if (branchId) {
-      await this.assertBranchAccess(tenantId, branchId);
+      await this.access.assertBranchAccess(tenantId, branchId);
     }
     const where: {
       tenantId: string;
@@ -73,7 +76,11 @@ export class DepartmentsService {
     if (!department) {
       throw new NotFoundException('Department not found');
     }
-    await this.assertBranchAccess(tenantId, department.branchId, abilities);
+    await this.access.assertBranchAccess(
+      tenantId,
+      department.branchId,
+      abilities,
+    );
     return department;
   }
 
@@ -89,7 +96,7 @@ export class DepartmentsService {
     if (!existing) {
       throw new NotFoundException('Department not found');
     }
-    await this.assertBranchAccess(
+    await this.access.assertBranchAccess(
       tenantId,
       dto.branchId ?? existing.branchId,
       abilities,
@@ -118,27 +125,12 @@ export class DepartmentsService {
     if (!existing) {
       throw new NotFoundException('Department not found');
     }
-    await this.assertBranchAccess(tenantId, existing.branchId, abilities);
+    await this.access.assertBranchAccess(
+      tenantId,
+      existing.branchId,
+      abilities,
+    );
     await this.prisma.department.delete({ where: { id: departmentId } });
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities?: AbilitiesContext,
-  ): Promise<void> {
-    if (abilities && abilities.accessibleBranchIds !== null) {
-      if (!abilities.accessibleBranchIds.includes(branchId)) {
-        throw new ForbiddenException('You do not have access to this branch');
-      }
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) {
-      throw new BadRequestException('Branch not found in this tenant');
-    }
   }
 
   private async assertUserInTenant(

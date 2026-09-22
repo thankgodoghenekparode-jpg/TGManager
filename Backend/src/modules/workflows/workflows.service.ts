@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
+import { AccessControlService } from '../../common/access/access-control.service';
 import {
   decodeCursor,
   paginate,
@@ -50,6 +51,7 @@ export class WorkflowsService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
+    private readonly access: AccessControlService,
   ) {}
 
   private async canStartWorkflow(
@@ -84,7 +86,7 @@ export class WorkflowsService {
     abilities: AbilitiesContext,
   ) {
     if (dto.branchId) {
-      await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
     }
     if (dto.formId) {
       await this.assertFormExists(tenantId, dto.formId);
@@ -160,7 +162,7 @@ export class WorkflowsService {
       },
     });
     if (!template) throw new NotFoundException('Workflow template not found');
-    this.assertRecordBranchAccess(template.branchId, abilities);
+    this.access.assertBranchScope(template.branchId, abilities);
     return template;
   }
 
@@ -253,7 +255,7 @@ export class WorkflowsService {
     if (!template) {
       throw new NotFoundException('Active workflow template not found');
     }
-    this.assertRecordBranchAccess(template.branchId, abilities);
+    this.access.assertBranchScope(template.branchId, abilities);
 
     if (dto.submissionId) {
       const submission = await this.prisma.formSubmission.findFirst({
@@ -279,7 +281,7 @@ export class WorkflowsService {
 
     const branchId = dto.branchId ?? template.branchId ?? null;
     if (branchId) {
-      await this.assertBranchAccess(tenantId, branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, branchId, abilities);
     }
 
     const instance = await this.prisma.$transaction(async (tx) => {
@@ -505,7 +507,7 @@ export class WorkflowsService {
       },
     });
     if (!instance) throw new NotFoundException('Workflow instance not found');
-    this.assertRecordBranchAccess(instance.branchId, abilities);
+    this.access.assertBranchScope(instance.branchId, abilities);
 
     // Expose the current step so the frontend can render the approver's own
     // role-gated form section for inline fill and the correct action button.
@@ -661,7 +663,7 @@ export class WorkflowsService {
       where: { id: instanceId, tenantId },
     });
     if (!instance) throw new NotFoundException('Workflow instance not found');
-    this.assertRecordBranchAccess(instance.branchId, abilities);
+    this.access.assertBranchScope(instance.branchId, abilities);
 
     if (instance.initiatedByUserId !== userId && !abilities.isCompanyAdmin) {
       throw new ForbiddenException(
@@ -710,7 +712,7 @@ export class WorkflowsService {
     });
     if (!instance)
       throw new NotFoundException('Pending workflow instance not found');
-    this.assertRecordBranchAccess(instance.branchId, abilities);
+    this.access.assertBranchScope(instance.branchId, abilities);
 
     const current = instance.stepInstances.find((s) => s.status === 'PENDING');
     if (!current) {
@@ -813,7 +815,7 @@ export class WorkflowsService {
     });
     if (!instance)
       throw new NotFoundException('Pending workflow instance not found');
-    this.assertRecordBranchAccess(instance.branchId, abilities);
+    this.access.assertBranchScope(instance.branchId, abilities);
 
     const instanceRef = instance;
     const current =
@@ -1238,37 +1240,6 @@ export class WorkflowsService {
       !abilities.permissions.includes(PERMISSIONS.WORKFLOW_CREATE)
     ) {
       throw new ForbiddenException('You cannot manage this workflow template');
-    }
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities: AbilitiesContext,
-  ): Promise<void> {
-    if (
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) throw new NotFoundException('Branch not found');
-  }
-
-  private assertRecordBranchAccess(
-    branchId: string | null,
-    abilities: AbilitiesContext,
-  ): void {
-    if (
-      branchId !== null &&
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
     }
   }
 

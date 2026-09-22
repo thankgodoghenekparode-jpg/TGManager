@@ -1,11 +1,11 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import type {
   AdjustInventoryDto,
@@ -21,6 +21,7 @@ export class InventoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly access: AccessControlService,
   ) {}
 
   async create(
@@ -29,7 +30,7 @@ export class InventoryService {
     dto: CreateInventoryItemDto,
     abilities: AbilitiesContext,
   ) {
-    await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+    await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
     return this.prisma.inventoryItem.create({
       data: {
         tenantId,
@@ -82,7 +83,7 @@ export class InventoryService {
       include: { branch: { select: { id: true, name: true } } },
     });
     if (!item) throw new NotFoundException('Inventory item not found');
-    this.assertItemAccess(item.branchId, abilities);
+    this.access.assertBranchScope(item.branchId, abilities);
     return { ...item, isLowStock: item.quantity <= item.minQuantity };
   }
 
@@ -96,7 +97,7 @@ export class InventoryService {
       where: { id: itemId, tenantId },
     });
     if (!existing) throw new NotFoundException('Inventory item not found');
-    this.assertItemAccess(existing.branchId, abilities);
+    this.access.assertBranchScope(existing.branchId, abilities);
 
     const updated = await this.prisma.inventoryItem.update({
       where: { id: itemId },
@@ -123,7 +124,7 @@ export class InventoryService {
       where: { id: itemId, tenantId },
     });
     if (!existing) throw new NotFoundException('Inventory item not found');
-    this.assertItemAccess(existing.branchId, abilities);
+    this.access.assertBranchScope(existing.branchId, abilities);
 
     const nextQuantity = existing.quantity + dto.delta;
     if (nextQuantity < 0) {
@@ -177,7 +178,7 @@ export class InventoryService {
       where: { id: itemId, tenantId },
     });
     if (!existing) throw new NotFoundException('Inventory item not found');
-    this.assertItemAccess(existing.branchId, abilities);
+    this.access.assertBranchScope(existing.branchId, abilities);
     await this.prisma.inventoryItem.delete({ where: { id: itemId } });
   }
 
@@ -192,35 +193,5 @@ export class InventoryService {
       select: { userId: true },
     });
     return [...new Set(assignments.map((a) => a.userId))];
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities: AbilitiesContext,
-  ): Promise<void> {
-    if (
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) throw new NotFoundException('Branch not found');
-  }
-
-  private assertItemAccess(
-    branchId: string,
-    abilities: AbilitiesContext,
-  ): void {
-    if (
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
   }
 }

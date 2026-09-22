@@ -1,9 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import {
-  decodeCursor,
-  encodeCursor,
-  paginate,
-} from './pagination.util';
+import { decodeCursor, encodeCursor, paginate } from './pagination.util';
 
 describe('pagination util', () => {
   it('round-trips a record id through an opaque cursor', () => {

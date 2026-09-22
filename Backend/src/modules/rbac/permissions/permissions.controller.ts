@@ -1,7 +1,6 @@
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AbilitiesGuard } from '../../../common/guards/abilities.guard';
-import { TenantGuard } from '../../../common/guards/tenant.guard';
+import { AccessGuard } from '../../../common/guards/access.guard';
 import { Permissions } from '../../../common/decorators/permissions.decorator';
 import { ALL_PERMISSIONS, PERMISSIONS } from './permissions.constants';
 import { SYSTEM_ROLE_DEFS } from '../system-roles/system-roles.constants';
@@ -15,7 +14,7 @@ import { SYSTEM_ROLE_DEFS } from '../system-roles/system-roles.constants';
 @Controller('permissions')
 export class PermissionsController {
   @Get()
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.ROLE_VIEW)
   @ApiOperation({
     summary: 'List permission catalog and system roles',

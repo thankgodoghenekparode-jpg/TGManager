@@ -6,6 +6,7 @@ import { validateEnv } from './config/env.validation';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { PlatformRoleGuard } from './common/guards/platform-role.guard';
 import { CsrfGuard } from './common/csrf/csrf.guard';
+import { AccessControlModule } from './common/access/access-control.module';
 import { MailerModule } from './common/mailer/mailer.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
@@ -47,6 +48,7 @@ import { SeedModule } from './seed/seed.module';
     }),
     PrismaModule,
     MailerModule,
+    AccessControlModule,
     UsersModule,
     PlansModule,
     TenantsModule,

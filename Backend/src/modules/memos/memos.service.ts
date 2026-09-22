@@ -7,6 +7,7 @@ import type { AbilitiesContext } from '../../common/types/permission-request.int
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AccessControlService } from '../../common/access/access-control.service';
 import type {
   CreateMemoDto,
   ListMemosDto,
@@ -27,6 +28,7 @@ export class MemosService {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
+    private readonly access: AccessControlService,
   ) {}
 
   async create(
@@ -36,7 +38,7 @@ export class MemosService {
     abilities: AbilitiesContext,
   ) {
     if (dto.branchId) {
-      await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
     }
     const audience = dto.audience ?? { all: true };
     await this.assertAudienceValid(tenantId, audience, abilities);
@@ -148,7 +150,7 @@ export class MemosService {
     this.assertManage(memo, userId, abilities);
 
     if (dto.branchId) {
-      await this.assertBranchAccess(tenantId, dto.branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
     }
     if (dto.audience) {
       await this.assertAudienceValid(tenantId, dto.audience, abilities);
@@ -258,7 +260,7 @@ export class MemosService {
     if (abilities.accessibleBranchIds === null) return;
     const branchIds = audience.branchIds ?? [];
     for (const branchId of branchIds) {
-      await this.assertBranchAccess(tenantId, branchId, abilities);
+      await this.access.assertBranchAccess(tenantId, branchId, abilities);
     }
   }
 
@@ -360,24 +362,6 @@ export class MemosService {
     ) {
       throw new ForbiddenException('You cannot manage this memo');
     }
-  }
-
-  private async assertBranchAccess(
-    tenantId: string,
-    branchId: string,
-    abilities: AbilitiesContext,
-  ): Promise<void> {
-    if (
-      abilities.accessibleBranchIds !== null &&
-      !abilities.accessibleBranchIds.includes(branchId)
-    ) {
-      throw new ForbiddenException('You do not have access to this branch');
-    }
-    const branch = await this.prisma.branch.findFirst({
-      where: { id: branchId, tenantId },
-      select: { id: true },
-    });
-    if (!branch) throw new NotFoundException('Branch not found');
   }
 
   private toResponse(

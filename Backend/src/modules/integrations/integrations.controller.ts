@@ -24,8 +24,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { Permissions } from '../../common/decorators/permissions.decorator';
-import { AbilitiesGuard } from '../../common/guards/abilities.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { AccessGuard } from '../../common/guards/access.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { schemaRef } from '../../common/swagger/zod-to-openapi';
 import type { PermissionRequest } from '../../common/types/permission-request.interface';
@@ -59,7 +58,7 @@ export class IntegrationsController {
   constructor(private readonly integrations: IntegrationsService) {}
 
   @Post('api-keys')
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.TENANT_MANAGE)
   @ApiOperation({
     summary: 'Create an API key',
@@ -78,7 +77,7 @@ export class IntegrationsController {
   }
 
   @Get('api-keys')
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.TENANT_MANAGE)
   @ApiOperation({
     summary: 'List API keys',
@@ -90,7 +89,7 @@ export class IntegrationsController {
   }
 
   @Delete('api-keys/:keyId')
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.TENANT_MANAGE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -107,7 +106,7 @@ export class IntegrationsController {
   }
 
   @Post('webhooks')
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.TENANT_MANAGE)
   @ApiOperation({
     summary: 'Create a webhook',
@@ -123,7 +122,7 @@ export class IntegrationsController {
   }
 
   @Get('webhooks')
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.TENANT_MANAGE)
   @ApiOperation({
     summary: 'List webhooks',
@@ -135,7 +134,7 @@ export class IntegrationsController {
   }
 
   @Delete('webhooks/:webhookId')
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.TENANT_MANAGE)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -156,7 +155,7 @@ export class IntegrationsController {
   }
 
   @Get('webhooks/:webhookId/deliveries')
-  @UseGuards(TenantGuard, AbilitiesGuard)
+  @UseGuards(AccessGuard)
   @Permissions(PERMISSIONS.TENANT_MANAGE)
   @ApiOperation({
     summary: 'List webhook deliveries',
