@@ -163,6 +163,13 @@ const SUNSHINE_USER: SeedUser = {
   platformRole: 'COMPANY_ADMIN',
 };
 
+const SUNSHINE_STAFF: SeedUser = {
+  email: 'obi.sunshine@demo.com',
+  firstName: 'Obi',
+  lastName: 'Okeke',
+  platformRole: 'USER',
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -215,7 +222,7 @@ async function repairExistingDemoLogins(
   sunshineSlug: string,
 ) {
   const demoUsers = [...PLATFORM_USERS, ...DEMO_USERS];
-  const allUsers = [...demoUsers, SUNSHINE_USER];
+  const allUsers = [...demoUsers, SUNSHINE_USER, SUNSHINE_STAFF];
   const userMap: Record<string, string> = {};
 
   for (const user of allUsers) {
@@ -281,6 +288,70 @@ async function repairExistingDemoLogins(
         userId: userMap[SUNSHINE_USER.email],
       },
     });
+
+    // Second Sunshine staff member (for chat/calls demos).
+    await prisma.tenantUser.upsert({
+      where: {
+        tenantId_userId: {
+          tenantId: sunshineTenant.id,
+          userId: userMap[SUNSHINE_STAFF.email],
+        },
+      },
+      update: {},
+      create: {
+        tenantId: sunshineTenant.id,
+        userId: userMap[SUNSHINE_STAFF.email],
+      },
+    });
+
+    const sunshineRole = await prisma.companyRole.findFirst({
+      where: { tenantId: sunshineTenant.id, name: 'COMPANY_ADMIN' },
+    });
+    const sunshineBranch = await prisma.branch.findFirst({
+      where: { tenantId: sunshineTenant.id, name: 'Sunshine HQ' },
+    });
+    const sunshineDept = await prisma.department.findFirst({
+      where: { tenantId: sunshineTenant.id, name: 'General' },
+    });
+    if (sunshineRole && sunshineBranch) {
+      const existingAssignment = await prisma.roleAssignment.findFirst({
+        where: {
+          tenantId: sunshineTenant.id,
+          userId: userMap[SUNSHINE_STAFF.email],
+        },
+      });
+      if (!existingAssignment) {
+        await prisma.roleAssignment.create({
+          data: {
+            tenantId: sunshineTenant.id,
+            userId: userMap[SUNSHINE_STAFF.email],
+            companyRoleId: sunshineRole.id,
+            branchId: sunshineBranch.id,
+            assignedByUserId: userMap[SUNSHINE_USER.email],
+          },
+        });
+      }
+      const existingStaff = await prisma.staffRecord.findFirst({
+        where: {
+          tenantId: sunshineTenant.id,
+          userId: userMap[SUNSHINE_STAFF.email],
+          branchId: sunshineBranch.id,
+        },
+      });
+      if (!existingStaff) {
+        await prisma.staffRecord.create({
+          data: {
+            tenantId: sunshineTenant.id,
+            userId: userMap[SUNSHINE_STAFF.email],
+            branchId: sunshineBranch.id,
+            departmentId: sunshineDept?.id,
+            jobTitle: 'Field Technician',
+            employeeCode: 'SUN002',
+            isActive: true,
+          },
+        });
+      }
+    }
   }
 
   console.log('  Demo login accounts repaired (password: password123).');
@@ -324,7 +395,12 @@ async function seedDemoOrg(prisma: PrismaClient) {
   return prisma.$transaction(
     async (tx) => {
       // ── 1. Users ────────────────────────────────────────────────────────
-      const allUsers = [...PLATFORM_USERS, ...DEMO_USERS, SUNSHINE_USER];
+      const allUsers = [
+        ...PLATFORM_USERS,
+        ...DEMO_USERS,
+        SUNSHINE_USER,
+        SUNSHINE_STAFF,
+      ];
       const userMap: Record<string, string> = {}; // email → id
 
       for (const u of allUsers) {
@@ -394,6 +470,11 @@ async function seedDemoOrg(prisma: PrismaClient) {
       demoTenantUserLinks.push({
         tenantId: sunshineTenant.id,
         userId: userMap[SUNSHINE_USER.email],
+      });
+      // Sunshine second staff user
+      demoTenantUserLinks.push({
+        tenantId: sunshineTenant.id,
+        userId: userMap[SUNSHINE_STAFF.email],
       });
 
       await tx.tenantUser.createMany({ data: demoTenantUserLinks });
@@ -904,6 +985,13 @@ async function seedDemoOrg(prisma: PrismaClient) {
         companyRoleId: sunAdminRole.id,
         assignedByUserId: userMap['sunshine@demo.com'],
       });
+      roleAssignments.push({
+        tenantId: sunshineTenant.id,
+        userId: userMap['obi.sunshine@demo.com'],
+        companyRoleId: sunAdminRole.id,
+        branchId: sunshineHq.id,
+        assignedByUserId: userMap['sunshine@demo.com'],
+      });
 
       await tx.roleAssignment.createMany({ data: roleAssignments });
       console.log(`    ✓ ${roleAssignments.length} role assignments`);
@@ -1033,6 +1121,15 @@ async function seedDemoOrg(prisma: PrismaClient) {
           departmentId: sunGen.id,
           jobTitle: 'Director',
           employeeCode: 'SUN001',
+          isActive: true,
+        },
+        {
+          tenantId: sunshineTenant.id,
+          userId: userMap['obi.sunshine@demo.com'],
+          branchId: sunshineHq.id,
+          departmentId: sunGen.id,
+          jobTitle: 'Field Technician',
+          employeeCode: 'SUN002',
           isActive: true,
         },
       ];
