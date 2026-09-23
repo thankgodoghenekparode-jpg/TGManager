@@ -85,11 +85,6 @@ export function CompanyDashboardPage() {
 
   return (
     <Box>
-      {tenant?.onboardingStatus && tenant.onboardingStatus !== 'COMPLETED' && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          Onboarding in progress (stage: {tenant.onboardingStatus}).
-        </Alert>
-      )}
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 3, flexWrap: 'wrap', gap: 1.5 }}>
         <Box>
           <Typography variant="h5" fontWeight={800} gutterBottom>
