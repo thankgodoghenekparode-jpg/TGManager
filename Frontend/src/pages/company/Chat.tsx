@@ -1666,6 +1666,7 @@ function NewConversationDialog({ onClose, onCreated }: { onClose: () => void; on
   const [name, setName] = useState('')
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [error, setError] = useState('')
+  const me = useAuthStore((s) => s.user)
 
   const staff = useQuery({ queryKey: ['staff'], queryFn: () => staffApi.list() })
 
@@ -1680,11 +1681,13 @@ function NewConversationDialog({ onClose, onCreated }: { onClose: () => void; on
     onError: (e) => setError(apiErrorMessage(e)),
   })
 
-  const users = (staff.data ?? []).map((s) => ({
-    id: s.user.id,
-    name: `${s.user.firstName} ${s.user.lastName}`,
-    email: s.user.email,
-  }))
+  const users = (staff.data ?? [])
+    .map((s) => ({
+      id: s.user.id,
+      name: `${s.user.firstName} ${s.user.lastName}`,
+      email: s.user.email,
+    }))
+    .filter((u) => u.id !== me?.id)
 
   return (
     <Dialog open onClose={onClose} fullWidth maxWidth="sm">
@@ -1726,6 +1729,11 @@ function NewConversationDialog({ onClose, onCreated }: { onClose: () => void; on
             </>
           )}
           {error && <Alert severity="error">{error}</Alert>}
+          {users.length === 0 && (
+            <Alert severity="info">
+              There’s no one else in your company to message yet. Add more members from the Staff page first.
+            </Alert>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, flexWrap: 'wrap' }}>
@@ -1734,6 +1742,7 @@ function NewConversationDialog({ onClose, onCreated }: { onClose: () => void; on
           variant="contained"
           disabled={
             create.isPending ||
+            users.length === 0 ||
             (type === 'DIRECT' && !otherUserId) ||
             (type === 'GROUP' && (!name || memberIds.length === 0))
           }
