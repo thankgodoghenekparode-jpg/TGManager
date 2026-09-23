@@ -4,6 +4,7 @@ import { getAccessToken, getAccessTokenCookie, getTenantId } from '../api/client
 let socket: Socket | null = null
 const listeners = new Set<(event: string, payload: unknown) => void>()
 const chatListeners = new Set<(event: string, payload: unknown) => void>()
+const connectListeners = new Set<() => void>()
 
 /** Websocket origin: strip the /api/v1 prefix, fall back to the current origin in dev. */
 function socketOrigin(): string {
@@ -28,6 +29,14 @@ export function subscribeChatEvents(
   chatListeners.add(handler)
   return () => {
     chatListeners.delete(handler)
+  }
+}
+
+/** Subscribe to socket (re)connect events. Use to refresh state that depends on live presence. */
+export function subscribeSocketConnect(handler: () => void): () => void {
+  connectListeners.add(handler)
+  return () => {
+    connectListeners.delete(handler)
   }
 }
 
@@ -66,6 +75,9 @@ export function connectNotificationsSocket(): void {
       if (event.startsWith('chat:') && chatListeners.size > 0) {
         for (const l of chatListeners) l(event, payload)
       }
+    })
+    socket.on('connect', () => {
+      for (const l of connectListeners) l()
     })
     socket.on('connect_error', () => {
       // Realtime is optional; keep polling as the source of truth.

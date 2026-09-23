@@ -131,6 +131,7 @@ interface UseCallResult {
   status: CallStatus
   session: CallSession | null
   reason: EndReason | null
+  failMessage: string | null
   localStream: MediaStream | null
   remoteStream: MediaStream | null
   micMuted: boolean
@@ -152,6 +153,7 @@ function useCall(): UseCallResult {
   const [status, setStatus] = useState<CallStatus>('idle')
   const [session, setSession] = useState<CallSession | null>(null)
   const [reason, setReason] = useState<EndReason | null>(null)
+  const [failMessage, setFailMessage] = useState<string | null>(null)
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const [micMuted, setMicMuted] = useState(false)
@@ -208,8 +210,9 @@ function useCall(): UseCallResult {
     setSpeakerOn(true)
     setElapsed(0)
     setActiveSince(0)
+    setFailMessage(null)
     setBoth('idle')
-  }, [closePeer, setBoth, stopLocalStream])
+  }, [closePeer, setBoth, stopLocalStream, setFailMessage])
 
   const ensurePeer = useCallback(async (): Promise<RTCPeerConnection> => {
     if (pcRef.current) return pcRef.current
@@ -320,6 +323,7 @@ function useCall(): UseCallResult {
       }
       setSessionBoth(s)
       setReason(null)
+      setFailMessage(null)
       setBoth('ringing')
       startRingtone()
       void attachLocal(opts.kind).catch(() => {
@@ -335,6 +339,7 @@ function useCall(): UseCallResult {
         (res) => {
           const ack = res as { ok?: boolean; callId?: string; error?: string }
           if (!ack.ok || !ack.callId) {
+            if (ack?.error) setFailMessage(ack.error)
             if (sessionRef.current === s && statusRef.current === 'ringing') {
               teardownToEnded('failed')
             }
@@ -350,7 +355,7 @@ function useCall(): UseCallResult {
         },
       )
     },
-    [attachLocal, outgoingTimedOut, reset, setBoth, setSessionBoth, teardownToEnded],
+    [attachLocal, outgoingTimedOut, reset, setBoth, setSessionBoth, teardownToEnded, setFailMessage],
   )
 
   const accept = useCallback(() => {
@@ -570,6 +575,7 @@ function useCall(): UseCallResult {
       speakerOn,
       elapsed,
       busy: status !== 'idle',
+      failMessage,
       placeCall,
       accept,
       decline,
@@ -589,6 +595,7 @@ function useCall(): UseCallResult {
       videoOff,
       speakerOn,
       elapsed,
+      failMessage,
       placeCall,
       accept,
       decline,
@@ -616,7 +623,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
 }
 
 function CallOverlay({ call }: { call: UseCallResult }) {
-  const { status, session, reason, localStream, remoteStream, micMuted, videoOff, speakerOn, elapsed } = call
+  const { status, session, reason, failMessage, localStream, remoteStream, micMuted, videoOff, speakerOn, elapsed } = call
   const localVideoRef = useRef<HTMLVideoElement | null>(null)
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null)
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -726,7 +733,7 @@ function CallOverlay({ call }: { call: UseCallResult }) {
                     ? 'Call cancelled'
                     : reason === 'disconnected'
                       ? 'Call disconnected'
-                      : 'Call ended'}
+                      : failMessage ?? 'Call ended'}
             </Typography>
           </>
         )}

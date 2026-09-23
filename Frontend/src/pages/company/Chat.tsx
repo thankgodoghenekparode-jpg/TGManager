@@ -81,6 +81,7 @@ import {
   connectNotificationsSocket,
   emitChatEvent,
   subscribeChatEvents,
+  subscribeSocketConnect,
 } from '../../lib/notificationsSocket'
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
@@ -105,7 +106,7 @@ export function ChatPage() {
   const presence = useQuery({
     queryKey: ['chat-presence'],
     queryFn: () => chatApi.presence(),
-    refetchInterval: 30_000,
+    refetchInterval: 12_000,
   })
   const onlineIds = useMemo(() => {
     const merged = new Set(presence.data?.onlineUserIds ?? [])
@@ -122,6 +123,9 @@ export function ChatPage() {
 
   useEffect(() => {
     connectNotificationsSocket()
+    const unsubConnect = subscribeSocketConnect(() => {
+      qc.invalidateQueries({ queryKey: ['chat-presence'] })
+    })
     const unsub = subscribeChatEvents((event, payload) => {
       if (event === 'chat:presence' && payload && typeof payload === 'object') {
         const p = payload as { userId: string; status: string }
@@ -183,7 +187,10 @@ export function ChatPage() {
         qc.invalidateQueries({ queryKey: ['conversations'] })
       }
     })
-    return unsub
+    return () => {
+      unsub()
+      unsubConnect()
+    }
   }, [qc, me?.id, selectedId])
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ['conversations'] })
@@ -427,16 +434,16 @@ function ConversationItem({
           sx={{ ml: 0.5, flexShrink: 0 }}
           onClick={(e) => e.stopPropagation()}
         >
-          <Tooltip title={online ? `Voice call ${other.user.firstName}` : 'Peer offline — calls unavailable'}>
+          <Tooltip title={`Voice call ${other.user.firstName}`}>
             <span>
-              <IconButton size="small" onClick={() => call('VOICE')} disabled={!online || callApi.busy} aria-label={`Voice call ${other.user.firstName}`}>
+              <IconButton size="small" onClick={() => call('VOICE')} disabled={callApi.busy} aria-label={`Voice call ${other.user.firstName}`}>
                 <CallIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title={online ? `Video call ${other.user.firstName}` : 'Peer offline — calls unavailable'}>
+          <Tooltip title={`Video call ${other.user.firstName}`}>
             <span>
-              <IconButton size="small" onClick={() => call('VIDEO')} disabled={!online || callApi.busy} aria-label={`Video call ${other.user.firstName}`}>
+              <IconButton size="small" onClick={() => call('VIDEO')} disabled={callApi.busy} aria-label={`Video call ${other.user.firstName}`}>
                 <VideocamIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </span>
@@ -671,7 +678,6 @@ function Thread({
             conversationId={conversation.data.id}
             other={other}
             online={onlineHere}
-            onError={setError}
           />
         )}
         {conversation.data && (
@@ -808,12 +814,10 @@ function CallActions({
   conversationId,
   other,
   online,
-  onError,
 }: {
   conversationId: string
   other: ConversationMember | undefined
   online: boolean
-  onError: (msg: string) => void
 }) {
   const callApi = useCallApi()
   const peerUser = other?.user
@@ -828,23 +832,19 @@ function CallActions({
 
   const start = (kind: 'VOICE' | 'VIDEO') => {
     if (callApi.busy) return
-    if (!online) {
-      onError(`${peerUser.firstName} is offline right now. Calls need both members online.`)
-      return
-    }
     callApi.placeCall({ conversationId, kind, peer })
   }
 
   return (
     <Stack direction="row" spacing={0.5} sx={{ mr: { xs: 0, sm: 0.5 } }}>
-      <Tooltip title={online ? `Voice call ${peerUser.firstName}` : 'Offline — calls unavailable'}>
+      <Tooltip title={online ? `Voice call ${peerUser.firstName}` : `${peerUser.firstName} may be offline`}>
         <span>
           <IconButton size="small" onClick={() => start('VOICE')} disabled={callApi.busy} aria-label={`Voice call ${peerUser.firstName}`}>
             <CallIcon fontSize="small" />
           </IconButton>
         </span>
       </Tooltip>
-      <Tooltip title={online ? `Video call ${peerUser.firstName}` : 'Offline — calls unavailable'}>
+      <Tooltip title={online ? `Video call ${peerUser.firstName}` : `${peerUser.firstName} may be offline`}>
         <span>
           <IconButton size="small" onClick={() => start('VIDEO')} disabled={callApi.busy} aria-label={`Video call ${peerUser.firstName}`}>
             <VideocamIcon fontSize="small" />
