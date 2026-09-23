@@ -25,6 +25,7 @@ import {
   subscribeNotifications,
 } from '../lib/notificationsSocket'
 import { ensurePushSubscription } from '../lib/push'
+import { listenForNativeMessages, syncAuthToNative } from '../lib/mobileBridge'
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -59,6 +60,7 @@ export function NotificationsMenu() {
     if (!hasTenant) return
     connectNotificationsSocket()
     ensurePushSubscription()
+    syncAuthToNative()
     const unsubscribe = subscribeNotifications(() => {
       qc.invalidateQueries({ queryKey: ['notifications'] })
       qc.invalidateQueries({ queryKey: ['notifications-unread'] })
@@ -68,6 +70,14 @@ export function NotificationsMenu() {
       disconnectNotificationsSocket()
     }
   }, [hasTenant, qc])
+
+  useEffect(() => {
+    return listenForNativeMessages((message) => {
+      if (message.type === 'navigate' && typeof message.url === 'string') {
+        navigate(message.url)
+      }
+    })
+  }, [navigate])
 
   const markOne = useMutation({
     mutationFn: notificationsApi.markRead,

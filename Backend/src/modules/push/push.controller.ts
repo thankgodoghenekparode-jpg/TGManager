@@ -20,6 +20,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import type { JwtPayload } from '../../common/types/authenticated-request.interface';
 import {
+  isExpoToken,
   endpointSchema,
   subscriptionSchema,
   type EndpointDto,
@@ -55,8 +56,9 @@ export class PushController {
       tenantId,
       {
         endpoint: dto.subscription.endpoint,
-        p256dh: dto.subscription.keys.p256dh,
-        auth: dto.subscription.keys.auth,
+        p256dh: dto.subscription.keys?.p256dh,
+        auth: dto.subscription.keys?.auth,
+        provider: isExpoToken(dto.subscription.endpoint) ? 'expo' : 'web',
       },
       req.headers['user-agent'],
     );
