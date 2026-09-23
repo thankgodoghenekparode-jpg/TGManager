@@ -109,7 +109,7 @@ export function AppShell({
               <ListItemIcon sx={{ minWidth: 38 }}>
                 <Icon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 14, fontWeight: active ? 700 : 500 }} />
+              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 15, fontWeight: active ? 700 : 600 }} />
             </ListItemButton>
           )
         })}
@@ -175,7 +175,7 @@ export function AppShell({
             onClick={onNavigateHome}
           >
             <Logo variant="mark" size={32} />
-            <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1, fontWeight: 800 }}>
+            <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1, fontWeight: 800, fontSize: { xs: '1.0625rem', sm: '1.25rem' } }}>
               {subtitle ?? title}
             </Typography>
           </Box>
