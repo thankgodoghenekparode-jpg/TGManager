@@ -362,6 +362,22 @@ function ConversationItem({
 }) {
   const title = conversationTitle(c, meId)
   const other = otherMember(c, meId)
+  const callApi = useCallApi()
+
+  const call = (kind: 'VOICE' | 'VIDEO') => {
+    if (!other?.user || callApi.busy) return
+    callApi.placeCall({
+      conversationId: c.id,
+      kind,
+      peer: {
+        id: other.user.id,
+        firstName: other.user.firstName,
+        lastName: other.user.lastName,
+        avatarUrl: other.user.avatarUrl,
+      },
+    })
+  }
+
   return (
     <ListItemButton
       selected={selected}
@@ -404,10 +420,28 @@ function ConversationItem({
           </Stack>
         }
       />
-      {other?.user && c.type === 'DIRECT' && online && (
-        <Typography variant="caption" color="success.main" sx={{ ml: 1, flexShrink: 0 }}>
-          online
-        </Typography>
+      {other?.user && c.type === 'DIRECT' && (
+        <Stack
+          direction="row"
+          spacing={0.25}
+          sx={{ ml: 0.5, flexShrink: 0 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Tooltip title={online ? `Voice call ${other.user.firstName}` : 'Peer offline — calls unavailable'}>
+            <span>
+              <IconButton size="small" onClick={() => call('VOICE')} disabled={!online || callApi.busy} aria-label={`Voice call ${other.user.firstName}`}>
+                <CallIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title={online ? `Video call ${other.user.firstName}` : 'Peer offline — calls unavailable'}>
+            <span>
+              <IconButton size="small" onClick={() => call('VIDEO')} disabled={!online || callApi.busy} aria-label={`Video call ${other.user.firstName}`}>
+                <VideocamIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
       )}
     </ListItemButton>
   )
