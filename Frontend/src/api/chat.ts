@@ -118,6 +118,12 @@ export interface ReactionState {
   }>
 }
 
+export interface IceServer {
+  urls: string | string[]
+  username?: string
+  credential?: string
+}
+
 export const chatApi = {
   listConversations() {
     return api.get<Conversation[]>('/chat/conversations').then((r) => r.data)
@@ -193,6 +199,9 @@ export const chatApi = {
   },
   presence() {
     return api.get<{ onlineUserIds: string[] }>('/chat/presence').then((r) => r.data)
+  },
+  getCallConfig() {
+    return api.get<{ iceServers: IceServer[] }>('/chat/call-config').then((r) => r.data)
   },
   markRead(conversationId: string) {
     return api

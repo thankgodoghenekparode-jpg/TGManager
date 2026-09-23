@@ -583,6 +583,18 @@ export class ChatController {
     return result;
   }
 
+  @Get('call-config')
+  @Permissions(PERMISSIONS.CHAT_VIEW)
+  @ApiOperation({
+    summary: 'WebRTC call configuration',
+    description:
+      'Returns ICE server configuration for live voice/video calls. Configure CALL_ICE_SERVERS (JSON) for TURN; defaults to public STUN.',
+  })
+  @ApiOkResponse({ description: 'ICE server configuration.' })
+  callConfig() {
+    return this.chat.getCallConfig();
+  }
+
   private async conversationIdFor(tenantId: string, messageId: string) {
     const message = await this.chat.messageConversationId(tenantId, messageId);
     return message.conversationId;

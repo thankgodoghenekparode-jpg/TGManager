@@ -31,9 +31,21 @@ export function subscribeChatEvents(
   }
 }
 
-/** Emit a chat event (e.g. `chat:typing`, `chat:read`, `chat:join`) if connected. */
-export function emitChatEvent(event: string, payload: unknown): void {
-  socket?.emit(event, payload)
+/**
+ * Emit a chat event (e.g. `chat:typing`, `chat:read`, `chat:join`) if connected.
+ * Pass an `ack` callback to receive the server's acknowledgement (returns void only if disconnected).
+ */
+export function emitChatEvent(
+  event: string,
+  payload: unknown,
+  ack?: (response: unknown) => void,
+): void {
+  if (!socket) {
+    ack?.({ error: 'Socket not connected' })
+    return
+  }
+  if (ack) socket.emit(event, payload, ack)
+  else socket.emit(event, payload)
 }
 
 /** Connect (once) to the realtime gateway. Best-effort: polling is the fallback. */

@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { basename } from 'path';
 import {
@@ -43,6 +44,7 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly planLimits: PlanLimitsService,
     private readonly storage: StorageService,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -54,6 +56,26 @@ export class ChatService {
     string,
     { createdAt: number; message: ReturnType<ChatService['messagePayload']> }
   >();
+
+  /**
+   * WebRTC ICE server configuration for live calls. Set CALL_ICE_SERVERS to a
+   * JSON array of servers (e.g. TURN credentials); otherwise falls back to a
+   * public Google STUN server for host/reflexive candidates.
+   */
+  getCallConfig(): { iceServers: unknown[] } {
+    const raw = this.config.get<string>('CALL_ICE_SERVERS');
+    if (raw) {
+      try {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) return { iceServers: parsed as unknown[] };
+      } catch {
+        // fall through to the default below
+      }
+    }
+    return {
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    };
+  }
 
   async createConversation(
     tenantId: string,

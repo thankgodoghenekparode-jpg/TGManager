@@ -220,3 +220,42 @@ export const socketTypingSchema = z.object({
 });
 
 export type SocketTypingDto = z.infer<typeof socketTypingSchema>;
+
+export const callKindSchema = z.enum(['VOICE', 'VIDEO']);
+
+export type CallKind = z.infer<typeof callKindSchema>;
+
+export const socketCallRingSchema = z.object({
+  conversationId: z
+    .string()
+    .trim()
+    .min(1)
+    .describe('Direct conversation to call in'),
+  kind: callKindSchema.describe('VOICE or VIDEO call'),
+});
+
+export type SocketCallRingDto = z.infer<typeof socketCallRingSchema>;
+
+export const socketCallAckSchema = z.object({
+  callId: z.string().trim().min(1).describe('Call ID to acknowledge'),
+});
+
+export type SocketCallAckDto = z.infer<typeof socketCallAckSchema>;
+
+export const socketCallSdpSchema = z.object({
+  callId: z.string().trim().min(1).describe('Call ID'),
+  sdp: z.string().min(1).describe('SDP offer or answer'),
+});
+
+export type SocketCallSdpDto = z.infer<typeof socketCallSdpSchema>;
+
+export const socketCallIceSchema = z.object({
+  callId: z.string().trim().min(1).describe('Call ID'),
+  candidate: z
+    .string()
+    .min(1)
+    .nullish()
+    .describe('ICE candidate JSON string (null signals end of candidates)'),
+});
+
+export type SocketCallIceDto = z.infer<typeof socketCallIceSchema>;

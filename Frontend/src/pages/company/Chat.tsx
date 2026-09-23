@@ -38,6 +38,7 @@ import AddCommentIcon from '@mui/icons-material/AddComment'
 import CloudOffIcon from '@mui/icons-material/CloudOff'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera'
 import MicIcon from '@mui/icons-material/Mic'
 import StopCircleIcon from '@mui/icons-material/StopCircle'
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
@@ -56,14 +57,16 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
 import DownloadIcon from '@mui/icons-material/Download'
-import PlayCircleIcon from '@mui/icons-material/PlayCircle'
 import VoiceIcon from '@mui/icons-material/RecordVoiceOver'
+import CallIcon from '@mui/icons-material/Call'
+import VideocamIcon from '@mui/icons-material/Videocam'
 import CloseIcon from '@mui/icons-material/Close'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import {
   chatApi,
   type ChatMessage,
   type Conversation,
+  type ConversationMember,
   type MessageKind,
   type MessageReaction,
 } from '../../api/chat'
@@ -73,6 +76,7 @@ import { useAuthStore } from '../../store/auth'
 import { useBlobUrl } from '../../hooks/useBlobUrl'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { Can } from '../../components/PermissionGate'
+import { useCallApi } from '../../components/chat/callContext'
 import {
   connectNotificationsSocket,
   emitChatEvent,
@@ -628,6 +632,14 @@ function Thread({
             {subtitle}
           </Typography>
         </Box>
+        {conversation.data && conversation.data.type === 'DIRECT' && (
+          <CallActions
+            conversationId={conversation.data.id}
+            other={other}
+            online={onlineHere}
+            onError={setError}
+          />
+        )}
         {conversation.data && (
           <ChatHeaderActions
             c={conversation.data}
@@ -755,6 +767,57 @@ qc.setQueryData<Paged<ChatMessage>>(['messages', conversationId], (prev) =>
         onError={setError}
       />
     </>
+  )
+}
+
+function CallActions({
+  conversationId,
+  other,
+  online,
+  onError,
+}: {
+  conversationId: string
+  other: ConversationMember | undefined
+  online: boolean
+  onError: (msg: string) => void
+}) {
+  const callApi = useCallApi()
+  const peerUser = other?.user
+  if (!peerUser) return null
+
+  const peer = {
+    id: peerUser.id,
+    firstName: peerUser.firstName,
+    lastName: peerUser.lastName,
+    avatarUrl: peerUser.avatarUrl,
+  }
+
+  const start = (kind: 'VOICE' | 'VIDEO') => {
+    if (callApi.busy) return
+    if (!online) {
+      onError(`${peerUser.firstName} is offline right now. Calls need both members online.`)
+      return
+    }
+    callApi.placeCall({ conversationId, kind, peer })
+  }
+
+  return (
+    <Stack direction="row" spacing={0.5} sx={{ mr: { xs: 0, sm: 0.5 } }}>
+      <Tooltip title={online ? `Voice call ${peerUser.firstName}` : 'Offline — calls unavailable'}>
+        <span>
+          <IconButton size="small" onClick={() => start('VOICE')} disabled={callApi.busy} aria-label={`Voice call ${peerUser.firstName}`}>
+            <CallIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+      <Tooltip title={online ? `Video call ${peerUser.firstName}` : 'Offline — calls unavailable'}>
+        <span>
+          <IconButton size="small" onClick={() => start('VIDEO')} disabled={callApi.busy} aria-label={`Video call ${peerUser.firstName}`}>
+            <VideocamIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+    </Stack>
   )
 }
 
@@ -1035,11 +1098,21 @@ function Composer({
   onError: (msg: string) => void
 }) {
   const fileRef = useRef<HTMLInputElement | null>(null)
+  const cameraRef = useRef<HTMLInputElement | null>(null)
   const [recording, setRecording] = useState(false)
+  const [recordingElapsed, setRecordingElapsed] = useState(0)
   const recRef = useRef<MediaRecorder | null>(null)
+  const recTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const cancelRecRef = useRef(false)
   const [uploading, setUploading] = useState(false)
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null)
   const others = members.filter((m) => m.userId !== meId && m.user)
+
+  const clearRecTimer = () => {
+    if (recTimerRef.current) clearInterval(recTimerRef.current)
+    recTimerRef.current = null
+    setRecordingElapsed(0)
+  }
 
   const { mentionMode, mentionQuery } = useMemo(() => {
     const text = draft
@@ -1070,6 +1143,11 @@ function Composer({
   const uploadAndSend = async (files: File[] | null) => {
     if (!files || files.length === 0) return
     if (uploading || pending) return
+    const oversize = files.find((f) => f.size > 25 * 1024 * 1024)
+    if (oversize) {
+      onError(`"${oversize.name}" is larger than the 25 MB attachment limit. Try a smaller file.`)
+      return
+    }
     setUploading(true)
     try {
       const caption = draft.trim()
@@ -1092,10 +1170,21 @@ function Composer({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const chunks: Blob[] = []
       const rec = new MediaRecorder(stream)
+      cancelRecRef.current = false
       rec.ondataavailable = (e) => chunks.push(e.data)
+      rec.onerror = () => {
+        stream.getTracks().forEach((t) => t.stop())
+        clearRecTimer()
+        setRecording(false)
+        onError('Recording failed — please try again.')
+      }
       rec.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop())
+        clearRecTimer()
+        setRecording(false)
+        if (cancelRecRef.current) return
         const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' })
+        if (blob.size === 0) return
         setUploading(true)
         try {
           const doc = await chatApi.uploadAttachment(conversationId, blob, 'voice.webm')
@@ -1109,10 +1198,25 @@ function Composer({
       recRef.current = rec
       rec.start()
       setRecording(true)
+      setRecordingElapsed(0)
+      recTimerRef.current = setInterval(() => setRecordingElapsed((s) => s + 1), 1000)
     } catch {
       setRecording(false)
+      clearRecTimer()
+      onError('Microphone access denied — allow the microphone to send voice notes.')
     }
   }
+
+  const cancelRecording = () => {
+    cancelRecRef.current = true
+    recRef.current?.stop()
+  }
+
+  const finishRecording = () => {
+    recRef.current?.stop()
+  }
+
+  const recTimeLabel = `${Math.floor(recordingElapsed / 60)}:${String(recordingElapsed % 60).padStart(2, '0')}`
 
   return (
     <Box sx={{ p: { xs: 1, sm: 1.5 }, pb: { xs: 'calc(8px + env(safe-area-inset-bottom, 0px))', sm: 1.5 }, borderTop: 1, borderColor: 'divider' }}>
@@ -1140,9 +1244,28 @@ function Composer({
             if (picked.length > 0) void uploadAndSend(picked)
           }}
         />
-        <IconButton size="small" onClick={() => fileRef.current?.click()} disabled={uploading || recording} sx={{ mb: 0.25 }}>
-          <AttachFileIcon fontSize="small" />
-        </IconButton>
+        <input
+          ref={cameraRef}
+          hidden
+          type="file"
+          accept="image/*,video/*"
+          capture="environment"
+          onChange={(e) => {
+            const picked = Array.from(e.target.files ?? [])
+            e.currentTarget.value = ''
+            if (picked.length > 0) void uploadAndSend(picked)
+          }}
+        />
+        <Tooltip title="Attach files">
+          <IconButton size="small" onClick={() => fileRef.current?.click()} disabled={uploading || recording} sx={{ mb: 0.25 }}>
+            <AttachFileIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Photo or video">
+          <IconButton size="small" onClick={() => cameraRef.current?.click()} disabled={uploading || recording} sx={{ mb: 0.25, display: { xs: 'inline-flex', sm: 'none' } }}>
+            <PhotoCameraIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <IconButton size="small" onClick={(e) => setEmojiAnchor(e.currentTarget)} disabled={recording} sx={{ mb: 0.25, display: { xs: 'none', sm: 'inline-flex' } }}>
           <EmojiEmotionsIcon fontSize="small" />
         </IconButton>
@@ -1171,13 +1294,30 @@ function Composer({
           }}
         />
         {recording ? (
-          <IconButton onClick={() => { recRef.current?.stop(); setRecording(false) }} color="error" sx={{ mb: 0.25 }}>
-            <StopCircleIcon />
-          </IconButton>
+          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 0.25 }}>
+            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'error.main', pr: 0.5 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'error.main' }} />
+              <Typography variant="caption" fontWeight={700} sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                {recTimeLabel}
+              </Typography>
+            </Stack>
+            <Tooltip title="Discard">
+              <IconButton onClick={cancelRecording} size="small">
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Send voice note">
+              <IconButton onClick={finishRecording} color="error">
+                <StopCircleIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         ) : (
-          <IconButton onClick={() => void startRecording()} disabled={uploading} sx={{ mb: 0.25 }}>
-            <MicIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="Voice note">
+            <IconButton onClick={() => void startRecording()} disabled={uploading} sx={{ mb: 0.25 }}>
+              <MicIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
         <IconButton
           color="primary"
@@ -1541,16 +1681,21 @@ function MessageMedia({ message, mine }: { message: ChatMessage; mine: boolean }
     )
   }
   if (message.kind === 'VOICE') {
-    return (
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0, width: '100%' }}>
-        <IconButton size="small" disabled={!url} onClick={() => void new Audio(url as string).play()} sx={{ color: 'inherit' }}>
-          <PlayCircleIcon />
-        </IconButton>
-        <audio src={url ?? undefined} controls style={{ display: 'none' }} />
-        <Box sx={{ flex: 1, height: 28, borderRadius: 2, bgcolor: 'rgba(128,128,128,0.25)', display: 'flex', alignItems: 'center', px: 1 }}>
+    if (!url) {
+      return (
+        <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'rgba(128,128,128,0.2)', width: '100%' }}>
           <Typography variant="caption">Voice message</Typography>
         </Box>
-      </Stack>
+      )
+    }
+    return (
+      <Box sx={{ width: '100%', minWidth: 220 }}>
+        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 0.5 }}>
+          <VoiceIcon sx={{ fontSize: 16, opacity: 0.85 }} />
+          <Typography variant="caption" sx={{ opacity: 0.85 }}>Voice message</Typography>
+        </Stack>
+        <audio src={url} controls preload="metadata" style={{ width: '100%', height: 36 }} />
+      </Box>
     )
   }
   if (message.kind === 'AUDIO') {

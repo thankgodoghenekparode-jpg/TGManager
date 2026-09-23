@@ -33,6 +33,7 @@ import { NotificationsMenu } from '../NotificationsMenu'
 import { ThemeToggle } from '../ThemeToggle'
 import { ChangePasswordDialog } from '../account/ChangePasswordDialog'
 import { Logo } from '../brand/Logo'
+import { CallProvider } from '../chat/CallOverlay'
 
 export interface NavItem {
   label: string
@@ -280,7 +281,7 @@ export function AppShell({
             overflowX: 'hidden',
           }}
         >
-          {children}
+          <CallProvider>{children}</CallProvider>
         </Box>
       </Box>
 
