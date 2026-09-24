@@ -57,7 +57,7 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
           html: {
             WebkitTextSizeAdjust: '100%',
             textSizeAdjust: '100%',
-            fontSize: '16px',
+            fontSize: '18px',
           },
           '::selection': { backgroundColor: 'rgba(236, 6, 24, 0.35)', color: '#FFFFFF' },
           '& *::-webkit-scrollbar': { width: 8, height: 8 },
