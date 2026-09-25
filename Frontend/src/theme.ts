@@ -49,7 +49,7 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
       body1: { fontWeight: 500, color: isDark ? '#FFFFFF' : '#0F172A', letterSpacing: '-0.005em', fontSize: '1.0625rem' },
       body2: { fontWeight: 500, color: isDark ? '#94A3B8' : '#1E293B', letterSpacing: '-0.005em', fontSize: '0.9375rem' },
       button: { fontWeight: 700, textTransform: 'none', letterSpacing: '0.01em', fontSize: '0.9375rem' },
-      caption: { fontWeight: 600, color: isDark ? '#94A3B8' : '#475569', fontSize: '0.8125rem' },
+      caption: { fontWeight: 600, color: isDark ? '#94A3B8' : '#475569', fontSize: '0.875rem' },
     },
     components: {
       MuiCssBaseline: {
@@ -57,7 +57,7 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
           html: {
             WebkitTextSizeAdjust: '100%',
             textSizeAdjust: '100%',
-            fontSize: '18px',
+            fontSize: '20px',
           },
           '::selection': { backgroundColor: 'rgba(236, 6, 24, 0.35)', color: '#FFFFFF' },
           '& *::-webkit-scrollbar': { width: 8, height: 8 },
@@ -187,7 +187,7 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
       },
       MuiChip: {
         styleOverrides: {
-          root: { borderRadius: 12, fontWeight: 700, fontSize: '0.875rem' },
+          root: { borderRadius: 12, fontWeight: 700, fontSize: '0.9375rem' },
           colorPrimary: {
             backgroundColor: isDark ? softRedBgDark : softRedBgLight,
             color: isDark ? '#FF6B7A' : '#B80010',
@@ -278,8 +278,8 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
       },
       MuiListItemText: {
         styleOverrides: {
-          primary: { fontSize: '0.9375rem', fontWeight: 600, lineHeight: 1.35 },
-          secondary: { fontSize: '0.8125rem' },
+          primary: { fontSize: '1.0625rem', fontWeight: 600, lineHeight: 1.35 },
+          secondary: { fontSize: '0.9375rem' },
         },
       },
       MuiTooltip: {
@@ -290,7 +290,7 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
             color: '#FFFFFF',
             border: isDark ? '1px solid #2D3035' : 'none',
             fontWeight: 600,
-            fontSize: '0.8125rem',
+            fontSize: '0.875rem',
           },
         },
       },
@@ -333,7 +333,7 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
         styleOverrides: {
           head: {
             fontWeight: 800,
-            fontSize: '0.8125rem',
+            fontSize: '0.875rem',
             letterSpacing: '0.02em',
             color: isDark ? '#94A3B8' : '#090A0F',
             backgroundColor: isDark ? '#17191C' : '#F1F5F9',
