@@ -1,10 +1,23 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PlansService } from '../plans/plans.service';
+import { StorageService } from '../storage/storage.service';
 import {
   SYSTEM_ROLE_DEFS,
   SYSTEM_ROLE_NAMES,
 } from '../rbac/system-roles/system-roles.constants';
+
+/** Accepted image MIME types for tenant logos. */
+const LOGO_MIME_TYPES: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+};
 
 export interface CreateTenantWithAdminParams {
   firstName: string;
@@ -22,6 +35,7 @@ export class TenantsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly plansService: PlansService,
+    private readonly storage: StorageService,
   ) {}
 
   /**
@@ -148,6 +162,7 @@ export class TenantsService {
             id: true,
             name: true,
             slug: true,
+            logoKey: true,
             status: true,
             onboardingStatus: true,
             plan: { select: { code: true, name: true } },
@@ -173,6 +188,7 @@ export class TenantsService {
       id: m.tenant.id,
       name: m.tenant.name,
       slug: m.tenant.slug,
+      logoKey: m.tenant.logoKey,
       status: m.tenant.status,
       onboardingStatus: m.tenant.onboardingStatus,
       plan: m.tenant.plan,
@@ -243,6 +259,7 @@ export class TenantsService {
       id: tenant.id,
       name: tenant.name,
       slug: tenant.slug,
+      logoKey: tenant.logoKey,
       status: tenant.status,
       onboardingStatus: tenant.onboardingStatus,
       timezone: tenant.timezone,
@@ -261,6 +278,88 @@ export class TenantsService {
         permissions: a.companyRole.permissions,
       })),
     };
+  }
+
+  /**
+   * Stores a tenant logo and returns the new storage key. Rejects anything but
+   * PNG/JPEG/WebP and removes the previous logo to avoid orphaned files.
+   */
+  async uploadLogo(tenantId: string, file: Express.Multer.File | undefined) {
+    if (!file) {
+      throw new BadRequestException('A logo file is required');
+    }
+    const ext = LOGO_MIME_TYPES[file.mimetype];
+    if (!ext) {
+      throw new BadRequestException('Logo must be a PNG, JPEG or WebP image');
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      throw new BadRequestException('Logo must be smaller than 2 MB');
+    }
+
+    const existing = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { logoKey: true },
+    });
+    if (!existing) {
+      throw new BadRequestException('Tenant not found');
+    }
+
+    const key = `logos/${tenantId}/${randomUUID()}.${ext}`;
+    await this.storage.putObject(key, file.buffer, file.mimetype);
+
+    const tenant = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { logoKey: key },
+      select: { logoKey: true },
+    });
+
+    if (existing.logoKey && existing.logoKey !== key) {
+      await this.storage.deleteObject(existing.logoKey).catch(() => {
+        // Ignore a missing old logo at cleanup time.
+      });
+    }
+
+    return tenant;
+  }
+
+  /** Removes the tenant logo and its stored file, reverting to the default brand. */
+  async deleteLogo(tenantId: string) {
+    const existing = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { logoKey: true },
+    });
+    if (!existing) {
+      throw new BadRequestException('Tenant not found');
+    }
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { logoKey: null },
+    });
+    if (existing.logoKey) {
+      await this.storage.deleteObject(existing.logoKey).catch(() => {
+        // Ignore a missing old logo at cleanup time.
+      });
+    }
+  }
+
+  /** Streams the tenant logo bytes and its MIME type, or null when unset. */
+  async getLogo(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { logoKey: true },
+    });
+    if (!tenant?.logoKey) {
+      return null;
+    }
+    const buffer = await this.storage.getObject(tenant.logoKey);
+    const ext = tenant.logoKey.split('.').pop()?.toLowerCase();
+    const mimeType =
+      ext === 'png'
+        ? 'image/png'
+        : ext === 'webp'
+          ? 'image/webp'
+          : 'image/jpeg';
+    return { buffer, mimeType };
   }
 
   private async generateUniqueSlug(name: string): Promise<string> {

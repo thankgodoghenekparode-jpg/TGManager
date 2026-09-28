@@ -15,7 +15,7 @@ import BusinessIcon from '@mui/icons-material/Business'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { useAuthStore } from '../store/auth'
 import { useTenantStore } from '../store/tenant'
-import { setTenantId } from '../api/client'
+import { setTenantId, tenantLogoUrl } from '../api/client'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useColorMode } from '../contexts/ThemeContext'
 import { Logo } from '../components/brand/Logo'
@@ -142,15 +142,20 @@ export function SelectCompanyPage() {
                           width: 40,
                           height: 40,
                           borderRadius: 2.5,
-                          bgcolor: 'rgba(236, 6, 24, 0.15)',
+                          bgcolor: m.logoKey ? 'transparent' : 'rgba(236, 6, 24, 0.15)',
                           color: '#EC0618',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
+                          overflow: 'hidden',
                         }}
                       >
-                        <BusinessIcon fontSize="small" />
+                        {m.logoKey ? (
+                          <Logo variant="mark" size={40} src={tenantLogoUrl(m.id, m.logoKey) ?? undefined} />
+                        ) : (
+                          <BusinessIcon fontSize="small" />
+                        )}
                       </Box>
                       <Box sx={{ minWidth: 0 }}>
                         <Typography variant="subtitle1" fontWeight={800} noWrap>

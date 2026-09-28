@@ -9,6 +9,12 @@ export interface LogoProps extends Omit<BoxProps, 'height'> {
   size?: number | string
   height?: number | string
   mode?: 'light' | 'dark'
+  /**
+   * Optional custom image to render instead of the bundled brand (e.g. a
+   * tenant's uploaded logo). When provided, `mode`/color mode adaptation is
+   * skipped and this URL is used as-is.
+   */
+  src?: string
 }
 
 /**
@@ -22,12 +28,36 @@ export function Logo({
   size = 40,
   height,
   mode,
+  src,
   sx,
   ...props
 }: LogoProps) {
   const { mode: currentMode } = useColorMode()
   const activeMode = mode || currentMode
   const isDark = activeMode === 'dark'
+
+  if (src) {
+    const customHeight = variant === 'full' ? (height || size || 36) : (size || height || 36)
+    return (
+      <Box
+        component="img"
+        src={src}
+        alt="Company logo"
+        sx={{
+          display: 'block',
+          height: customHeight,
+          width: 'auto',
+          maxWidth: '100%',
+          objectFit: 'contain',
+          userSelect: 'none',
+          pointerEvents: 'none',
+          transition: 'opacity 0.2s ease',
+          ...sx,
+        }}
+        {...props}
+      />
+    )
+  }
 
   if (variant === 'full') {
     const effectiveHeight = height || size || 36

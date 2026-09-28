@@ -226,6 +226,7 @@ export interface TenantMembership {
   id: string
   name: string
   slug: string
+  logoKey: string | null
   status: string
   onboardingStatus: string
   plan: { code: string; name: string } | null
@@ -242,6 +243,7 @@ export interface CurrentTenant {
   id: string
   name: string
   slug: string
+  logoKey: string | null
   status: string
   onboardingStatus: string
   timezone: string
@@ -269,4 +271,16 @@ export interface Paginated<T> {
 export interface Paged<T> {
   items: T[]
   nextCursor: string | null
+}
+
+/**
+ * Public URL for a tenant's uploaded logo, or null when the tenant has none.
+ * The logoKey is used as a cache-buster so a fresh upload is fetched immediately.
+ */
+export function tenantLogoUrl(
+  tenantId: string | null | undefined,
+  logoKey: string | null | undefined,
+): string | null {
+  if (!tenantId || !logoKey) return null
+  return `${API_BASE_URL.replace(/\/$/, '')}/tenants/${encodeURIComponent(tenantId)}/logo?v=${encodeURIComponent(logoKey)}`
 }

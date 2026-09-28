@@ -19,8 +19,14 @@ import {
 import SaveIcon from '@mui/icons-material/Save'
 import ScheduleIcon from '@mui/icons-material/Schedule'
 import PlaceIcon from '@mui/icons-material/Place'
+import ImageIcon from '@mui/icons-material/Image'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { settingsApi, type TenantSettings } from '../../api/settings'
-import { apiErrorMessage } from '../../api/client'
+import { apiErrorMessage, tenantLogoUrl } from '../../api/client'
+import { tenantsApi } from '../../api/tenants'
+import { useTenantStore } from '../../store/tenant'
+import { Logo } from '../../components/brand/Logo'
 import { Can } from '../../components/PermissionGate'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -111,6 +117,120 @@ function SectionHeader({
         <Typography variant="body2" color="text.secondary">{description}</Typography>
       </Box>
     </Stack>
+  )
+}
+
+const LOGO_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+
+function BrandingCard() {
+  const tenant = useTenantStore((s) => s.current)
+  const [logoError, setLogoError] = useState('')
+  const logoUrl = tenantLogoUrl(tenant?.id, tenant?.logoKey)
+
+  const upload = useMutation({
+    mutationFn: (file: File) => tenantsApi.uploadLogo(file),
+    onSuccess: () => {
+      setLogoError('')
+      void useTenantStore.getState().load()
+    },
+    onError: (e) => setLogoError(apiErrorMessage(e)),
+  })
+
+  const remove = useMutation({
+    mutationFn: () => tenantsApi.removeLogo(),
+    onSuccess: () => {
+      setLogoError('')
+      void useTenantStore.getState().load()
+    },
+    onError: (e) => setLogoError(apiErrorMessage(e)),
+  })
+
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!LOGO_MIME_TYPES.includes(file.type)) {
+      setLogoError('Please choose a PNG, JPEG or WebP image.')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError('The logo must be smaller than 2 MB.')
+      return
+    }
+    upload.mutate(file)
+  }
+
+  return (
+    <Card variant="outlined" sx={{ mb: 2.5 }}>
+      <CardContent>
+        <SectionHeader
+          icon={<ImageIcon fontSize="small" />}
+          title="Branding"
+          description="Upload your company logo. It replaces the TGManager logo across the app for everyone in this company."
+        />
+        {logoError && <Alert severity="error" sx={{ mb: 2 }}>{logoError}</Alert>}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="center" flexWrap="wrap" useFlexGap>
+          <Box
+            sx={{
+              width: 96,
+              height: 96,
+              borderRadius: 3,
+              border: '1px dashed',
+              borderColor: 'divider',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'background.default',
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            {logoUrl ? (
+              <Logo variant="mark" size={80} src={logoUrl} />
+            ) : (
+              <Logo variant="mark" size={48} />
+            )}
+          </Box>
+          <Stack spacing={1} sx={{ minWidth: 0 }}>
+            <Can permissions={['tenant.manage']}>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                <label htmlFor="tenant-logo-input">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<CloudUploadIcon />}
+                    disabled={upload.isPending || remove.isPending}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    {upload.isPending ? 'Uploading…' : 'Upload logo'}
+                  </Button>
+                </label>
+                <input
+                  id="tenant-logo-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  hidden
+                  onChange={handleFile}
+                />
+                {tenant?.logoKey && (
+                  <Button
+                    variant="text"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    disabled={upload.isPending || remove.isPending}
+                    onClick={() => remove.mutate()}
+                  >
+                    {remove.isPending ? 'Removing…' : 'Remove logo'}
+                  </Button>
+                )}
+              </Stack>
+            </Can>
+            <Typography variant="body2" color="text.secondary">
+              PNG, JPEG or WebP. Max 2 MB. Shown in the sidebar, header and company picker.
+            </Typography>
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -317,6 +437,8 @@ function SettingsForm({
           </Stack>
         </CardContent>
       </Card>
+
+      <BrandingCard />
 
       <Stack direction="row" alignItems="center" spacing={2}>
         <Can permissions={['tenant.manage']}>

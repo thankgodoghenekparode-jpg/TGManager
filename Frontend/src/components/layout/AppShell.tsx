@@ -34,6 +34,8 @@ import { ThemeToggle } from '../ThemeToggle'
 import { ChangePasswordDialog } from '../account/ChangePasswordDialog'
 import { Logo } from '../brand/Logo'
 import { CallProvider } from '../chat/CallOverlay'
+import { useTenantStore } from '../../store/tenant'
+import { tenantLogoUrl } from '../../api/client'
 
 export interface NavItem {
   label: string
@@ -75,6 +77,8 @@ export function AppShell({
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
+  const tenant = useTenantStore((s) => s.current)
+  const tenantLogo = tenantLogoUrl(tenant?.id, tenant?.logoKey)
 
   const isPlatform =
     user?.role === 'SUPER_ADMIN' || user?.role === 'PLATFORM_SUPPORT'
@@ -82,7 +86,7 @@ export function AppShell({
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 2.5, py: 2.75, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={onNavigateHome}>
-        <Logo variant="mark" size={38} />
+        <Logo variant="mark" size={38} src={tenantLogo ?? undefined} />
         <Box>
           <Typography variant="h6" sx={{ lineHeight: 1.1 }}>{title}</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ letterSpacing: 0.4 }}>
@@ -175,7 +179,7 @@ export function AppShell({
             }}
             onClick={onNavigateHome}
           >
-            <Logo variant="mark" size={32} />
+            <Logo variant="mark" size={32} src={tenantLogo ?? undefined} />
             <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1, fontWeight: 800, fontSize: { xs: '1.0625rem', sm: '1.25rem' } }}>
               {subtitle ?? title}
             </Typography>
