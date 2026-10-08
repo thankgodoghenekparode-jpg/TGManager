@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Badge, Fab } from '@mui/material'
 import ChatIcon from '@mui/icons-material/Chat'
 import { chatApi } from '../api/chat'
+import { useTenantStore } from '../store/tenant'
 
 const STORAGE_KEY = 'tgmanager:floating-chat-pos'
 const SIZE = 56
@@ -50,6 +51,8 @@ function clamp(value: number, min: number, max: number) {
 export function FloatingChatButton() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const tenant = useTenantStore((s) => s.current)
+  const chatPath = tenant?.type === 'SCHOOL' ? '/school/chat' : '/app/chat'
   const [pos, setPos] = useState<Pos | null>(() => loadPos())
   const latestPos = useRef<Pos | null>(pos)
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null)
@@ -61,7 +64,7 @@ export function FloatingChatButton() {
     refetchInterval: 30_000,
   })
 
-  if (pathname.startsWith('/app/chat')) return null
+  if (pathname.startsWith('/app/chat') || pathname.startsWith('/school/chat')) return null
 
   return createPortal(
     <Fab
@@ -102,7 +105,7 @@ export function FloatingChatButton() {
           wasDragged.current = false
           return
         }
-        navigate('/app/chat')
+        navigate(chatPath)
       }}
       sx={{
         position: 'fixed',

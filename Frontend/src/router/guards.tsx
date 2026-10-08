@@ -33,11 +33,17 @@ export function CompanyGuard({ children }: { children?: ReactNode }) {
   const user = useAuthStore((s) => s.user)
   const tenant = useTenantStore((s) => s.current)
   const loading = useTenantStore((s) => s.loading)
+  const location = useLocation()
 
   if (!user) return <Navigate to="/login" replace />
   if (loading) return null
   if (!tenant?.id) return <Navigate to="/select-company" replace />
-  if (tenant.type === 'SCHOOL') return <Navigate to="/school" replace />
+  if (tenant.type === 'SCHOOL') {
+    if (location.pathname.startsWith('/app/staff')) return <Navigate to="/school/staff" replace />
+    if (location.pathname.startsWith('/app/chat')) return <Navigate to="/school/chat" replace />
+    if (location.pathname.startsWith('/app/memos')) return <Navigate to="/school/memos" replace />
+    return <Navigate to="/school" replace />
+  }
   return <>{children ?? <Outlet />}</>
 }
 

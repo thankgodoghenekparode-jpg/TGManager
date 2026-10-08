@@ -27,6 +27,9 @@ import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PeopleIcon from '@mui/icons-material/People';
+import ChatIcon from '@mui/icons-material/Chat';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import { useTenantStore } from '../../store/tenant';
 import { schoolApi } from '../../api/school';
 
@@ -264,6 +267,30 @@ export function SchoolDashboardPage() {
           size="medium"
         >
           Collect Fees & Issue Receipt
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<PeopleIcon />}
+          onClick={() => navigate('/school/staff')}
+          size="medium"
+        >
+          Staff & Teachers
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<ChatIcon />}
+          onClick={() => navigate('/school/chat')}
+          size="medium"
+        >
+          Staff Chat
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<CampaignIcon />}
+          onClick={() => navigate('/school/memos')}
+          size="medium"
+        >
+          Announcements
         </Button>
       </Stack>
 

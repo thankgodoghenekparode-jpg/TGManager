@@ -28,9 +28,9 @@ export function SchoolLayout() {
     { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon },
     { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon },
     { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon },
-    { label: 'Staff & Teachers', path: '/app/staff', icon: PeopleIcon },
-    { label: 'Staff Chat', path: '/app/chat', icon: ChatIcon },
-    { label: 'Announcements', path: '/app/memos', icon: CampaignIcon },
+    { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon },
+    { label: 'Staff Chat', path: '/school/chat', icon: ChatIcon },
+    { label: 'Announcements', path: '/school/memos', icon: CampaignIcon },
     { label: 'School Settings', path: '/school/settings', icon: SettingsIcon },
   ];
 
