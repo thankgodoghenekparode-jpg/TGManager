@@ -83,15 +83,59 @@ export function AppShell({
   const isPlatform =
     user?.role === 'SUPER_ADMIN' || user?.role === 'PLATFORM_SUPPORT'
 
+  const renderBrandMark = (size: number) => {
+    if (tenantLogo) {
+      return (
+        <Box
+          component="img"
+          src={tenantLogo}
+          alt={tenant?.name ?? title}
+          sx={{
+            display: 'block',
+            height: size,
+            maxWidth: size * 2.5,
+            objectFit: 'contain',
+            borderRadius: 1,
+            userSelect: 'none',
+            flexShrink: 0,
+          }}
+        />
+      )
+    }
+    if (!isPlatform && tenant?.name) {
+      return (
+        <Avatar
+          variant="rounded"
+          sx={{
+            width: size,
+            height: size,
+            bgcolor: tenant.type === 'SCHOOL' ? 'primary.main' : '#EC0618',
+            color: '#fff',
+            fontWeight: 800,
+            fontSize: Math.max(12, Math.floor(size * 0.42)),
+            letterSpacing: 0.5,
+            flexShrink: 0,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+          }}
+        >
+          {initials(tenant.name)}
+        </Avatar>
+      )
+    }
+    return <Logo variant="mark" size={size} />
+  }
+
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 2.5, py: 2.75, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={onNavigateHome}>
-        <Logo variant="mark" size={38} src={tenantLogo ?? undefined} />
-        <Box>
-          <Typography variant="h6" sx={{ lineHeight: 1.1 }}>{title}</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ letterSpacing: 0.4 }}>
-            {subtitle ?? ''}
-          </Typography>
+        {renderBrandMark(38)}
+        <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
+          <Typography variant="h6" noWrap sx={{ lineHeight: 1.15, fontWeight: 800 }}>{title}</Typography>
+          {subtitle && (
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', letterSpacing: 0.4 }}>
+              {subtitle}
+            </Typography>
+          )}
         </Box>
       </Box>
       <Divider />
@@ -179,10 +223,22 @@ export function AppShell({
             }}
             onClick={onNavigateHome}
           >
-            <Logo variant="mark" size={32} src={tenantLogo ?? undefined} />
-            <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1, fontWeight: 800, fontSize: { xs: '1.0625rem', sm: '1.25rem' } }}>
-              {subtitle ?? title}
-            </Typography>
+            {renderBrandMark(32)}
+            <Box sx={{ minWidth: 0, overflow: 'hidden', display: 'flex', alignItems: 'baseline', gap: 1 }}>
+              <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1, fontWeight: 800, fontSize: { xs: '1.0625rem', sm: '1.25rem' } }}>
+                {title}
+              </Typography>
+              {subtitle && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  noWrap
+                  sx={{ display: { xs: 'none', md: 'inline-block' }, fontWeight: 500 }}
+                >
+                  • {subtitle}
+                </Typography>
+              )}
+            </Box>
           </Box>
           <Box
             sx={{

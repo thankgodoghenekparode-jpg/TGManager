@@ -34,10 +34,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import BadgeIcon from '@mui/icons-material/Badge';
 import { schoolApi, type Student } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
+import { tenantLogoUrl } from '../../api/client';
 
 export function StudentsPage() {
   const qc = useQueryClient();
   const tenant = useTenantStore((s) => s.current);
+  const tenantLogo = tenantLogoUrl(tenant?.id, tenant?.logoKey);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('ALL');
@@ -323,8 +325,26 @@ export function StudentsPage() {
             >
               {/* Card Header */}
               <Box sx={{ pt: 2, pb: 1, px: 2, color: 'white' }}>
+                {tenantLogo ? (
+                  <Box
+                    component="img"
+                    src={tenantLogo}
+                    alt={tenant?.name ?? 'School'}
+                    sx={{
+                      maxHeight: 32,
+                      maxWidth: 130,
+                      objectFit: 'contain',
+                      mx: 'auto',
+                      mb: 0.75,
+                      display: 'block',
+                      bgcolor: 'rgba(255, 255, 255, 0.95)',
+                      p: 0.35,
+                      borderRadius: 1,
+                    }}
+                  />
+                ) : null}
                 <Typography variant="subtitle2" fontWeight={800} sx={{ letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                  {tenant?.name ?? 'TGEasy Model College'}
+                  {tenant?.name ?? 'School Workspace'}
                 </Typography>
                 <Typography variant="caption" sx={{ opacity: 0.9, fontSize: 10 }}>
                   STUDENT IDENTITY CARD

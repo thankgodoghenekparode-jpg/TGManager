@@ -31,10 +31,12 @@ import PrintIcon from '@mui/icons-material/Print';
 import CloseIcon from '@mui/icons-material/Close';
 import { schoolApi, type StudentInvoice } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
+import { tenantLogoUrl } from '../../api/client';
 
 export function FeesPage() {
   const qc = useQueryClient();
   const tenant = useTenantStore((s) => s.current);
+  const tenantLogo = tenantLogoUrl(tenant?.id, tenant?.logoKey);
 
   const [activeTab, setActiveTab] = useState(0);
   const [selectedInvoice, setSelectedInvoice] = useState<StudentInvoice | null>(null);
@@ -387,16 +389,26 @@ export function FeesPage() {
             >
               {/* Receipt Header */}
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2, borderBottom: '2px solid #0f172a', pb: 2 }}>
-                <Box>
-                  <Typography variant="h6" fontWeight={800} sx={{ textTransform: 'uppercase' }}>
-                    {tenant?.name ?? 'TGEasy Model College'}
-                  </Typography>
-                  <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
-                    Plot 14, Commercial Avenue, Ikeja, Lagos
-                  </Typography>
-                  <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
-                    Email: bursar@tgeasymodel.edu.ng • Phone: +234 802 345 6789
-                  </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  {tenantLogo ? (
+                    <Box
+                      component="img"
+                      src={tenantLogo}
+                      alt={tenant?.name ?? 'School'}
+                      sx={{ maxHeight: 48, maxWidth: 120, objectFit: 'contain' }}
+                    />
+                  ) : null}
+                  <Box>
+                    <Typography variant="h6" fontWeight={800} sx={{ textTransform: 'uppercase' }}>
+                      {tenant?.name ?? 'School Workspace'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                      Plot 14, Commercial Avenue, Ikeja, Lagos
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
+                      Email: bursar@{tenant?.slug ?? 'school'}.tgmanager.app • Official Billing Receipt
+                    </Typography>
+                  </Box>
                 </Box>
                 <Box sx={{ textAlign: 'right' }}>
                   <Typography variant="subtitle2" fontWeight={800} color="primary.main">

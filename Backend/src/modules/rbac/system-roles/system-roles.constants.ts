@@ -137,6 +137,8 @@ export const SYSTEM_ROLE_DEFS: Record<
     description:
       'School principal / head of school with full administrative and academic oversight.',
     permissions: [
+      PERMISSIONS.TENANT_VIEW,
+      PERMISSIONS.TENANT_MANAGE,
       PERMISSIONS.SCHOOL_VIEW,
       PERMISSIONS.SCHOOL_MANAGE,
       PERMISSIONS.STUDENT_VIEW,

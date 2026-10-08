@@ -30,9 +30,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import { schoolApi } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
+import { tenantLogoUrl } from '../../api/client';
 
 export function GradingPage() {
   const tenant = useTenantStore((s) => s.current);
+  const tenantLogo = tenantLogoUrl(tenant?.id, tenant?.logoKey);
 
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
@@ -254,12 +256,16 @@ export function GradingPage() {
             >
               {/* Report Header */}
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2, borderBottom: '2px solid #0f172a', pb: 2 }}>
-                <Avatar sx={{ width: 64, height: 64, bgcolor: '#0284c7' }}>
+                <Avatar
+                  src={tenantLogo ?? undefined}
+                  variant="rounded"
+                  sx={{ width: 64, height: 64, bgcolor: '#0284c7', p: tenantLogo ? 0.5 : 0 }}
+                >
                   <AssessmentIcon sx={{ fontSize: 36 }} />
                 </Avatar>
                 <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
                   <Typography variant="h5" fontWeight={800} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    {tenant?.name ?? 'TGEasy Model College'}
+                    {tenant?.name ?? 'School Workspace'}
                   </Typography>
                   <Typography variant="caption" sx={{ fontStyle: 'italic', display: 'block' }}>
                     Motto: {tenant?.schoolProfile?.motto ?? 'Excellence, Character and Innovation'}

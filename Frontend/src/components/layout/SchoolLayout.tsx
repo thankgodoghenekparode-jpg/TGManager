@@ -38,8 +38,8 @@ export function SchoolLayout() {
 
   return (
     <AppShell
-      title="TGManager School"
-      subtitle={tenant?.name ?? 'School Management'}
+      title={tenant?.name ?? 'School Workspace'}
+      subtitle={tenant?.schoolProfile?.schoolType ? `${tenant.schoolProfile.schoolType} School` : 'School Portal'}
       nav={nav}
       onNavigateHome={() => navigate('/school')}
       onLogout={async () => {

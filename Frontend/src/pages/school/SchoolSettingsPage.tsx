@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
@@ -14,7 +14,12 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SchoolIcon from '@mui/icons-material/School';
 import { schoolApi } from '../../api/school';
+import { tenantsApi } from '../../api/tenants';
+import { tenantLogoUrl, apiErrorMessage } from '../../api/client';
 import { useTenantStore } from '../../store/tenant';
 
 export function SchoolSettingsPage() {
@@ -101,6 +106,9 @@ export function SchoolSettingsPage() {
           School configuration and operational parameters updated successfully!
         </Alert>
       )}
+
+      {/* School Crest & Branding */}
+      <SchoolBrandingCard />
 
       {/* Institution Identity */}
       <Card>
@@ -277,5 +285,136 @@ export function SchoolSettingsPage() {
         </CardContent>
       </Card>
     </Box>
+  );
+}
+
+function SchoolBrandingCard() {
+  const tenant = useTenantStore((s) => s.current);
+  const [logoError, setLogoError] = useState('');
+  const logoUrl = tenantLogoUrl(tenant?.id, tenant?.logoKey);
+
+  const upload = useMutation({
+    mutationFn: (file: File) => tenantsApi.uploadLogo(file),
+    onSuccess: () => {
+      setLogoError('');
+      void useTenantStore.getState().load();
+    },
+    onError: (e) => setLogoError(apiErrorMessage(e)),
+  });
+
+  const remove = useMutation({
+    mutationFn: () => tenantsApi.removeLogo(),
+    onSuccess: () => {
+      setLogoError('');
+      void useTenantStore.getState().load();
+    },
+    onError: (e) => setLogoError(apiErrorMessage(e)),
+  });
+
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowed = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      setLogoError('Please choose a PNG, JPEG or WebP image.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError('The logo must be smaller than 2 MB.');
+      return;
+    }
+    upload.mutate(file);
+  };
+
+  return (
+    <Card variant="outlined">
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" fontWeight={700} gutterBottom>
+          School Crest & Official Logo
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+          Upload your official institution crest or emblem. It automatically replaces the default logo across the school portal, navigation bar, printable student ID cards, official fee receipts, and terminal report sheets.
+        </Typography>
+
+        {logoError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {logoError}
+          </Alert>
+        )}
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} alignItems="center">
+          <Box
+            sx={{
+              width: 104,
+              height: 104,
+              borderRadius: 3,
+              border: '2px dashed',
+              borderColor: 'primary.main',
+              bgcolor: 'background.default',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              flexShrink: 0,
+              p: 1,
+            }}
+          >
+            {logoUrl ? (
+              <Box
+                component="img"
+                src={logoUrl}
+                alt="School crest"
+                sx={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                }}
+              />
+            ) : (
+              <Stack alignItems="center" spacing={0.5}>
+                <SchoolIcon sx={{ fontSize: 40, color: 'text.secondary' }} />
+                <Typography variant="caption" sx={{ fontSize: 10, color: 'text.secondary' }}>No Crest</Typography>
+              </Stack>
+            )}
+          </Box>
+
+          <Stack spacing={1.5} sx={{ flex: 1, minWidth: 0 }}>
+            <Stack direction="row" spacing={1.5} flexWrap="wrap">
+              <label htmlFor="school-logo-input">
+                <Button
+                  variant="contained"
+                  component="span"
+                  startIcon={<CloudUploadIcon />}
+                  disabled={upload.isPending || remove.isPending}
+                >
+                  {upload.isPending ? 'Uploading Crest...' : 'Upload School Crest'}
+                </Button>
+              </label>
+              <input
+                id="school-logo-input"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+                onChange={handleFile}
+              />
+              {tenant?.logoKey && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  disabled={upload.isPending || remove.isPending}
+                  onClick={() => remove.mutate()}
+                >
+                  {remove.isPending ? 'Removing...' : 'Remove Crest'}
+                </Button>
+              )}
+            </Stack>
+            <Typography variant="caption" color="text.secondary">
+              Accepted formats: PNG, JPEG, WebP. Maximum size: 2 MB. High-resolution square or transparent PNG recommended.
+            </Typography>
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
   );
 }

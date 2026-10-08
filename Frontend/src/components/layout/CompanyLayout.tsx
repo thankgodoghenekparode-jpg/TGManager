@@ -76,8 +76,8 @@ export function CompanyLayout() {
 
   return (
     <AppShell
-      title="TGManager"
-      subtitle={tenant?.name ?? 'Company'}
+      title={tenant?.name ?? 'Company Workspace'}
+      subtitle="Corporate Workspace"
       nav={nav}
       onNavigateHome={() => navigate('/app')}
       onLogout={async () => {
