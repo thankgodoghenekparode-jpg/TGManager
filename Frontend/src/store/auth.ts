@@ -11,6 +11,14 @@ interface AuthState {
   setUser: (user: AuthUser | null) => void
   setMemberships: (memberships: TenantMembership[]) => void
   login: (email: string, password: string) => Promise<void>
+  register: (payload: {
+    organizationName: string
+    type: 'COMPANY' | 'SCHOOL'
+    firstName: string
+    lastName: string
+    email: string
+    password: string
+  }) => Promise<{ user: AuthUser; tenant: { id: string; name: string; slug: string; type: 'COMPANY' | 'SCHOOL' }; memberships: TenantMembership[] }>
   bootstrap: () => Promise<void>
   logout: () => Promise<void>
 }
@@ -39,6 +47,21 @@ export const useAuthStore = create<AuthState>((set) => ({
         useTenantStore.getState().clear()
       }
       set({ user: res.user, memberships: res.memberships, initialized: true })
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  async register(payload) {
+    set({ loading: true })
+    try {
+      const res = await authApi.register(payload)
+      setAccessToken(null)
+      setTenantId(res.tenant.id)
+      const { useTenantStore } = await import('./tenant')
+      await useTenantStore.getState().load()
+      set({ user: res.user, memberships: res.memberships, initialized: true })
+      return res
     } finally {
       set({ loading: false })
     }

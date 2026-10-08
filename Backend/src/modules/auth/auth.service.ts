@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { createHash } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { User } from '../../generated/prisma/client';
@@ -9,6 +13,7 @@ import { JwtTokenService, TokenContext } from './jwt-token.service';
 import { PasswordResetService } from './password-reset.service';
 import { AccountRequestsService } from '../account-requests/account-requests.service';
 import { LoginDto } from './dto/login.dto';
+import type { RegisterDto } from './dto/register.dto';
 import type {
   ChangePasswordDto,
   ForgotPasswordDto,
@@ -52,6 +57,42 @@ export class AuthService {
 
     return {
       user: this.sanitizeUser(user),
+      memberships,
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async register(dto: RegisterDto, ctx: TokenContext) {
+    const existing = await this.usersService.findByEmail(dto.email);
+    if (existing) {
+      throw new ConflictException('An account with this email address already exists');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+
+    const { user, tenant } = await this.tenantsService.createTenantWithAdmin({
+      companyName: dto.organizationName,
+      type: dto.type,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      email: dto.email,
+      passwordHash,
+    });
+
+    const accessToken = await this.tokens.issueAccessToken(user);
+    const refreshToken = await this.tokens.issueRefreshToken(user, ctx);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const memberships = await this.tenantsService.getMyTenants(user.id);
+
+    return {
+      user: this.sanitizeUser(user),
+      tenant,
       memberships,
       accessToken,
       refreshToken,

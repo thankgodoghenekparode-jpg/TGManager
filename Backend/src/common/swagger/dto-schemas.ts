@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { checkoutSchema } from '../../modules/billing/dto/billing.dto';
 import { loginSchema } from '../../modules/auth/dto/login.dto';
+import { registerSchema } from '../../modules/auth/dto/register.dto';
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -134,6 +135,7 @@ import {
  */
 export const DTO_SCHEMAS: Record<string, z.ZodTypeAny> = {
   LoginDto: loginSchema,
+  RegisterDto: registerSchema,
   ChangePasswordDto: changePasswordSchema,
   ForgotPasswordDto: forgotPasswordSchema,
   ResetPasswordDto: resetPasswordSchema,

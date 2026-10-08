@@ -7,7 +7,15 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { ThemeToggle } from '../../components/ThemeToggle'
 import { Logo } from '../../components/brand/Logo'
 
-export function AuthShell({ title, children }: { title: string; children: ReactNode }) {
+export function AuthShell({
+  title,
+  headline = 'Welcome back',
+  children,
+}: {
+  title: string
+  headline?: string
+  children: ReactNode
+}) {
   return (
     <Box
       sx={{
@@ -360,7 +368,7 @@ export function AuthShell({ title, children }: { title: string; children: ReactN
             </Stack>
 
             <Typography variant="h5" fontWeight={900} sx={{ color: '#FFFFFF', letterSpacing: '-0.02em', mb: 0.5 }}>
-              Welcome back
+              {headline}
             </Typography>
             <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3.5 }}>
               {title}

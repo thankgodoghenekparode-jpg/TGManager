@@ -5,6 +5,12 @@ export interface LoginResponse {
   memberships: TenantMembership[]
 }
 
+export interface RegisterResponse {
+  user: AuthUser
+  tenant: { id: string; name: string; slug: string; type: 'COMPANY' | 'SCHOOL' }
+  memberships: TenantMembership[]
+}
+
 export interface MeResponse {
   user: AuthUser
   memberships: TenantMembership[]
@@ -17,6 +23,16 @@ interface SessionResponse {
 export const authApi = {
   login(email: string, password: string): Promise<LoginResponse> {
     return api.post('/auth/login', { email, password }).then((r) => r.data)
+  },
+  register(body: {
+    organizationName: string
+    type: 'COMPANY' | 'SCHOOL'
+    firstName: string
+    lastName: string
+    email: string
+    password: string
+  }): Promise<RegisterResponse> {
+    return api.post('/auth/register', body).then((r) => r.data)
   },
   me(): Promise<MeResponse> {
     return api.get('/auth/me').then((r) => r.data)

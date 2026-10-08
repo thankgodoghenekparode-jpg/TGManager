@@ -20,6 +20,7 @@ export interface PlatformTenant {
   id: string
   name: string
   slug: string
+  type?: 'COMPANY' | 'SCHOOL'
   status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL_ENDED'
   onboardingStatus: string
   timezone: string
@@ -81,6 +82,7 @@ export const platformApi = {
   createTenant(body: {
     companyName: string
     planCode?: string
+    type?: 'COMPANY' | 'SCHOOL'
     adminFirstName: string
     adminLastName: string
     adminEmail: string

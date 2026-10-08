@@ -4,17 +4,20 @@ import {
   Alert,
   Button,
   CircularProgress,
+  Divider,
   IconButton,
   InputAdornment,
   Link,
   Stack,
   TextField,
+  Typography,
 } from '@mui/material'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined'
 import { useAuthStore } from '../../store/auth'
 import { apiErrorMessage, getTenantId } from '../../api/client'
 import { isPlatformAdmin } from '../../store/tenant'
@@ -143,7 +146,40 @@ export function LoginPage() {
             </Link>
           </Stack>
 
-          <Stack direction="row" justifyContent="center" sx={{ textAlign: 'center', pt: 1 }}>
+          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.12)', my: 0.5 }}>
+            <Typography variant="caption" sx={{ color: '#8A8F99', px: 1, fontWeight: 700, letterSpacing: '0.04em' }}>
+              NEW TO TGMANAGER?
+            </Typography>
+          </Divider>
+
+          <Button
+            variant="outlined"
+            size="large"
+            fullWidth
+            onClick={() => navigate('/register')}
+            startIcon={<PersonAddAltOutlinedIcon />}
+            sx={{
+              py: 1.3,
+              fontWeight: 800,
+              fontSize: '0.95rem',
+              borderColor: 'rgba(236, 6, 24, 0.5)',
+              color: '#FFFFFF',
+              bgcolor: 'rgba(236, 6, 24, 0.08)',
+              borderRadius: 2,
+              '&:hover': {
+                borderColor: '#EC0618',
+                bgcolor: 'rgba(236, 6, 24, 0.18)',
+              },
+            }}
+          >
+            Create account with us
+          </Button>
+
+          <Typography variant="caption" align="center" sx={{ color: '#8A8F99', display: 'block', mt: -1.5 }}>
+            Choose either <strong>School</strong> or <strong>Company</strong> workspace
+          </Typography>
+
+          <Stack direction="row" justifyContent="center" sx={{ textAlign: 'center', pt: 0.5 }}>
             <Link href="/password-reset-request" variant="body2" sx={{ color: '#9CA3AF', '&:hover': { color: '#FFFFFF' } }}>
               Request an admin password reset
             </Link>

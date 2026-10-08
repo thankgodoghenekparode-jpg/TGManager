@@ -23,12 +23,15 @@ import {
   TableRow,
   TextField,
   Typography,
+  Grid,
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PauseCircleIcon from '@mui/icons-material/PauseCircle'
 import PlayCircleIcon from '@mui/icons-material/PlayCircle'
+import SchoolIcon from '@mui/icons-material/School'
+import BusinessIcon from '@mui/icons-material/Business'
 import { platformApi, type PlatformPlan, type PlatformTenant } from '../../api/platform'
 import { apiErrorMessage } from '../../api/client'
 
@@ -72,6 +75,7 @@ export function TenantsPage() {
     mutationFn: (body: {
       companyName: string
       planCode: string
+      type: 'COMPANY' | 'SCHOOL'
       adminFirstName: string
       adminLastName: string
       adminEmail: string
@@ -121,7 +125,7 @@ export function TenantsPage() {
             startIcon={<AddIcon />}
             onClick={() => { setEditing(null); setCreating(true) }}
           >
-            New company
+            New tenant
           </Button>
         </Stack>
       </Stack>
@@ -134,7 +138,7 @@ export function TenantsPage() {
 
       {tempPassword && (
         <Alert severity="info" sx={{ mb: 2 }} onClose={() => setTempPassword('')}>
-          Company created. Temporary admin password (share once): <strong>{tempPassword}</strong>
+          Tenant created. Temporary admin password (share once): <strong>{tempPassword}</strong>
         </Alert>
       )}
 
@@ -142,7 +146,8 @@ export function TenantsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Company</TableCell>
+              <TableCell>Tenant</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>Plan</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Onboarding</TableCell>
@@ -160,6 +165,15 @@ export function TenantsPage() {
                       {t.adminEmail}
                     </Typography>
                   )}
+                </TableCell>
+                <TableCell>
+                  <Chip
+                    icon={t.type === 'SCHOOL' ? <SchoolIcon sx={{ '&&': { fontSize: 16 } }} /> : <BusinessIcon sx={{ '&&': { fontSize: 16 } }} />}
+                    label={t.type === 'SCHOOL' ? 'School' : 'Company'}
+                    size="small"
+                    color={t.type === 'SCHOOL' ? 'primary' : 'default'}
+                    variant={t.type === 'SCHOOL' ? 'filled' : 'outlined'}
+                  />
                 </TableCell>
                 <TableCell>{t.plan?.name ?? ''}</TableCell>
                 <TableCell><StatusChip status={t.status} /></TableCell>
@@ -282,6 +296,7 @@ function TenantDialog({
   onCreate: (body: {
     companyName: string
     planCode: string
+    type: 'COMPANY' | 'SCHOOL'
     adminFirstName: string
     adminLastName: string
     adminEmail: string
@@ -290,6 +305,7 @@ function TenantDialog({
   busy: boolean
 }) {
   const creating = !tenant
+  const [type, setType] = useState<'COMPANY' | 'SCHOOL'>('COMPANY')
   const [companyName, setCompanyName] = useState(tenant?.name ?? '')
   const [adminFirstName, setAdminFirstName] = useState('')
   const [adminLastName, setAdminLastName] = useState('')
@@ -301,20 +317,103 @@ function TenantDialog({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{creating ? 'New company' : `Edit ${tenant?.name}`}</DialogTitle>
+      <DialogTitle>
+        {creating
+          ? type === 'SCHOOL' ? 'New School Tenant' : 'New Company Tenant'
+          : `Edit ${tenant?.name}`}
+      </DialogTitle>
       <DialogContent sx={{ px: { xs: 2, sm: 3 }, pt: { xs: 1.5, sm: 2 } }}>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {creating ? (
             <>
-              <TextField label="Company name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} fullWidth />
+              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Organization Type
+              </Typography>
+              <Grid container spacing={1.5}>
+                <Grid item xs={6}>
+                  <Paper
+                    variant="outlined"
+                    onClick={() => setType('COMPANY')}
+                    sx={{
+                      p: 1.5,
+                      cursor: 'pointer',
+                      borderRadius: 2,
+                      borderWidth: type === 'COMPANY' ? 2 : 1,
+                      borderColor: type === 'COMPANY' ? 'primary.main' : 'divider',
+                      bgcolor: type === 'COMPANY' ? 'action.selected' : 'background.paper',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.2,
+                      transition: 'all 0.15s ease-in-out',
+                    }}
+                  >
+                    <BusinessIcon color={type === 'COMPANY' ? 'primary' : 'action'} />
+                    <Box>
+                      <Typography variant="body2" fontWeight={700}>Company</Typography>
+                      <Typography variant="caption" color="text.secondary">Corporate office</Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+                <Grid item xs={6}>
+                  <Paper
+                    variant="outlined"
+                    onClick={() => setType('SCHOOL')}
+                    sx={{
+                      p: 1.5,
+                      cursor: 'pointer',
+                      borderRadius: 2,
+                      borderWidth: type === 'SCHOOL' ? 2 : 1,
+                      borderColor: type === 'SCHOOL' ? 'primary.main' : 'divider',
+                      bgcolor: type === 'SCHOOL' ? 'action.selected' : 'background.paper',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.2,
+                      transition: 'all 0.15s ease-in-out',
+                    }}
+                  >
+                    <SchoolIcon color={type === 'SCHOOL' ? 'primary' : 'action'} />
+                    <Box>
+                      <Typography variant="body2" fontWeight={700}>School</Typography>
+                      <Typography variant="caption" color="text.secondary">Educational institute</Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              </Grid>
+
+              <TextField
+                label={type === 'SCHOOL' ? 'School / Institution name' : 'Company name'}
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                fullWidth
+                required
+              />
               <TextField select label="Plan" value={planCode} onChange={(e) => setPlanCode(e.target.value)} fullWidth>
                 {plans.map((p) => (
                   <MenuItem key={p.id} value={p.code}>{p.name}</MenuItem>
                 ))}
               </TextField>
-              <TextField label="Company admin first name" value={adminFirstName} onChange={(e) => setAdminFirstName(e.target.value)} fullWidth />
-              <TextField label="Company admin last name" value={adminLastName} onChange={(e) => setAdminLastName(e.target.value)} fullWidth />
-              <TextField label="Company admin email" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} fullWidth />
+              <TextField
+                label={type === 'SCHOOL' ? 'Principal / Admin first name' : 'Company admin first name'}
+                value={adminFirstName}
+                onChange={(e) => setAdminFirstName(e.target.value)}
+                fullWidth
+                required
+              />
+              <TextField
+                label={type === 'SCHOOL' ? 'Principal / Admin last name' : 'Company admin last name'}
+                value={adminLastName}
+                onChange={(e) => setAdminLastName(e.target.value)}
+                fullWidth
+                required
+              />
+              <TextField
+                label={type === 'SCHOOL' ? 'School admin email' : 'Company admin email'}
+                type="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                fullWidth
+                required
+              />
             </>
           ) : (
             <>
@@ -345,11 +444,11 @@ function TenantDialog({
           }
           onClick={() =>
             creating
-              ? onCreate({ companyName, planCode, adminFirstName, adminLastName, adminEmail })
+              ? onCreate({ companyName, planCode, type, adminFirstName, adminLastName, adminEmail })
               : onUpdate({ planId, status, timezone })
           }
         >
-          {creating ? 'Create company' : 'Save'}
+          {creating ? (type === 'SCHOOL' ? 'Create school' : 'Create company') : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>

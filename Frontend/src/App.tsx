@@ -20,6 +20,7 @@ import { FeesPage } from './pages/school/FeesPage'
 import { SchoolSettingsPage } from './pages/school/SchoolSettingsPage'
 import { PortfolioPage } from './pages/Portfolio'
 import { LoginPage } from './pages/auth/Login'
+import { RegisterPage } from './pages/auth/Register'
 import { ForgotPasswordPage } from './pages/auth/ForgotPassword'
 import { ResetPasswordPage } from './pages/auth/ResetPassword'
 import { PasswordResetRequestPage } from './pages/auth/PasswordResetRequest'
@@ -62,6 +63,7 @@ const router = createBrowserRouter([
     element: <GuestGuard />,
     children: [
       { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
       { path: '/forgot-password', element: <ForgotPasswordPage /> },
       { path: '/reset-password', element: <ResetPasswordPage /> },
       { path: '/password-reset-request', element: <PasswordResetRequestPage /> },

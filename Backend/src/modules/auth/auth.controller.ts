@@ -1,5 +1,6 @@
 import {
   ApiBody,
+  ApiCreatedResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -34,6 +35,8 @@ import { ttlToMs } from '../../common/utils/ttl.util';
 import { AuthService } from './auth.service';
 import { loginSchema } from './dto/login.dto';
 import type { LoginDto } from './dto/login.dto';
+import { registerSchema } from './dto/register.dto';
+import type { RegisterDto } from './dto/register.dto';
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -81,6 +84,30 @@ export class AuthController {
     const result = await this.authService.login(dto, this.context(req));
     this.setAuthCookies(res, result);
     return { user: result.user, memberships: result.memberships };
+  }
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Register a new organization workspace',
+    description:
+      'Creates a new tenant workspace (COMPANY or SCHOOL), default roles, admin user, and sets auth cookies.',
+  })
+  @ApiBody({ schema: schemaRef('RegisterDto') })
+  @ApiCreatedResponse({ description: 'Organization registered; auth cookies set.' })
+  async register(
+    @Body(new ZodValidationPipe(registerSchema)) dto: RegisterDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.register(dto, this.context(req));
+    this.setAuthCookies(res, result);
+    return {
+      user: result.user,
+      tenant: result.tenant,
+      memberships: result.memberships,
+    };
   }
 
   @Public()
