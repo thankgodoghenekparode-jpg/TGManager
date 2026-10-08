@@ -70,6 +70,17 @@ export const PERMISSIONS = {
   CHAT_CREATE: 'chat.create',
   CHAT_VIEW: 'chat.view',
 
+  SCHOOL_VIEW: 'school.view',
+  SCHOOL_MANAGE: 'school.manage',
+  STUDENT_VIEW: 'student.view',
+  STUDENT_MANAGE: 'student.manage',
+  ACADEMIC_VIEW: 'academic.view',
+  ACADEMIC_MANAGE: 'academic.manage',
+  SCHOOL_FEE_VIEW: 'school_fee.view',
+  SCHOOL_FEE_MANAGE: 'school_fee.manage',
+  SCHOOL_ATTENDANCE_VIEW: 'school_attendance.view',
+  SCHOOL_ATTENDANCE_MANAGE: 'school_attendance.manage',
+
   INTEGRATION_MANAGE: 'integration.manage',
 
   AUDIT_VIEW: 'audit.view',

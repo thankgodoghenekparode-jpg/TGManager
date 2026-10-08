@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keyframes } from '@emotion/react'
 import dayjs from 'dayjs'
 import {
   Alert,
@@ -86,6 +87,63 @@ import {
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏']
 
+const bounce = keyframes`
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+`
+
+function TypingDots() {
+  return (
+    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.35, mr: 0.5, verticalAlign: 'middle' }}>
+      {[0, 1, 2].map((i) => (
+        <Box
+          key={i}
+          sx={{
+            width: 4,
+            height: 4,
+            borderRadius: '50%',
+            bgcolor: 'primary.main',
+            animation: `${bounce} 1.2s ${i * 0.15}s infinite ease-in-out`,
+          }}
+        />
+      ))}
+    </Box>
+  )
+}
+
+const MENTION_ESCAPE = /[.*+?^${}()|[\]\\\s]/g
+
+export function richText(text: string, names: string[]) {
+  const parts: Array<{ text: string; mention: boolean; url: boolean }> = []
+  const esc = (s: string) => s.replace(MENTION_ESCAPE, '\\$&')
+  const urlRe = /(https?:\/\/[^\s<>"']+)/g
+  const mentionRe = names.some(Boolean)
+    ? new RegExp(`@(${names.filter(Boolean).map(esc).join('|')})(?=[\\s.,!?;:]|$)`, 'g')
+    : null
+  if (!mentionRe) {
+    let last = 0
+    let m: RegExpExecArray | null
+    while ((m = urlRe.exec(text))) {
+      if (m.index > last) parts.push({ text: text.slice(last, m.index), mention: false, url: false })
+      parts.push({ text: m[0], mention: false, url: true })
+      last = urlRe.lastIndex
+    }
+    if (last < text.length) parts.push({ text: text.slice(last), mention: false, url: false })
+    return parts.length ? parts : [{ text, mention: false, url: false }]
+  }
+  const combined = new RegExp(`(${names.filter(Boolean).map((n) => `@${esc(n)}`).join('|')})|(${urlRe.source})`, 'g')
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = combined.exec(text))) {
+    if (m.index > last) parts.push({ text: text.slice(last, m.index), mention: false, url: false })
+    const token = m[0]
+    parts.push({ text: token, mention: token.startsWith('@'), url: /^https?:\/\//.test(token) })
+    last = combined.lastIndex
+  }
+  if (last < text.length) parts.push({ text: text.slice(last), mention: false, url: false })
+  return parts.length ? parts : [{ text, mention: false, url: false }]
+}
+
 export function ChatPage() {
   const qc = useQueryClient()
   const me = useAuthStore((s) => s.user)
@@ -93,9 +151,15 @@ export function ChatPage() {
   const [creating, setCreating] = useState(false)
   const [forward, setForward] = useState<ChatMessage | null>(null)
   const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [liveOnline, setLiveOnline] = useState<Set<string>>(new Set())
   const [offline, setOffline] = useState<Set<string>>(new Set())
   const online = useOnlineStatus()
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 250)
+    return () => clearTimeout(t)
+  }, [query])
 
   const conversations = useQuery({
     queryKey: ['conversations'],
@@ -116,9 +180,9 @@ export function ChatPage() {
   }, [presence.data, liveOnline, offline])
 
   const search = useQuery({
-    queryKey: ['chat-search', query.trim()],
-    queryFn: () => chatApi.search(query.trim()),
-    enabled: query.trim().length >= 2,
+    queryKey: ['chat-search', debouncedQuery],
+    queryFn: () => chatApi.search(debouncedQuery),
+    enabled: debouncedQuery.length >= 2,
   })
 
   useEffect(() => {
@@ -301,7 +365,7 @@ export function ChatPage() {
             </Stack>
           )}
         </List>
-        {search.data && query.trim().length >= 2 && (
+        {search.data && debouncedQuery.length >= 2 && (
           <SearchResultsBox
             results={search.data}
             onPickConv={(id) => selectConversation(id)}
@@ -455,6 +519,10 @@ function ConversationItem({
 }
 
 function ConversationAvatar({ c, meId }: { c: Conversation; meId: string }) {
+  const groupIconUrl = useBlobUrl(
+    c.type === 'GROUP' ? c.imageDocumentId : null,
+    () => chatApi.getAttachment(c.imageDocumentId ?? ''),
+  )
   if (c.type === 'GROUP' || !otherMember(c, meId)?.user) {
     const names = c.members
       .filter((m) => m.userId !== meId)
@@ -462,7 +530,9 @@ function ConversationAvatar({ c, meId }: { c: Conversation; meId: string }) {
       .map((m) => `${m.user?.firstName ?? ''} ${m.user?.lastName ?? ''}`)
     const label = c.name || names.join(', ') || '?'
     return (
-      <Avatar sx={{ bgcolor: 'primary.main', fontSize: 14 }}>{initials(label)}</Avatar>
+      <Avatar src={groupIconUrl ?? undefined} sx={{ bgcolor: 'primary.main', fontSize: 14 }}>
+        {!groupIconUrl ? initials(label) : undefined}
+      </Avatar>
     )
   }
   const u = otherMember(c, meId)?.user
@@ -497,6 +567,8 @@ function Thread({
   const [typingUsers, setTypingUsers] = useState<Record<string, string>>({})
   const endRef = useRef<HTMLDivElement | null>(null)
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const expireRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const newestRef = useRef('')
 
   const conversation = useQuery({
     queryKey: ['conversation', conversationId],
@@ -514,8 +586,12 @@ function Thread({
   }, [messages.data])
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: ordered.length ? 'smooth' : 'auto' })
-  }, [ordered.length])
+    const newest = ordered[ordered.length - 1]?.id ?? ''
+    if (newest && newest !== newestRef.current) {
+      newestRef.current = newest
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [ordered])
 
   const markRead = () => {
     void chatApi.markRead(conversationId)
@@ -585,8 +661,25 @@ function Thread({
         const name = member?.user ? `${member.user.firstName} ${member.user.lastName}` : 'Someone'
         setTypingUsers((prev) => {
           const next = { ...prev }
-          if (t.isTyping) next[t.userId] = name
-          else delete next[t.userId]
+          if (t.isTyping) {
+            next[t.userId] = name
+            if (expireRefs.current[t.userId]) clearTimeout(expireRefs.current[t.userId])
+            expireRefs.current[t.userId] = setTimeout(() => {
+              setTypingUsers((p2) => {
+                if (!p2[t.userId]) return p2
+                const n2 = { ...p2 }
+                delete n2[t.userId]
+                return n2
+              })
+              delete expireRefs.current[t.userId]
+            }, 3200)
+          } else {
+            delete next[t.userId]
+            if (expireRefs.current[t.userId]) {
+              clearTimeout(expireRefs.current[t.userId])
+              delete expireRefs.current[t.userId]
+            }
+          }
           return next
         })
       } else if (event === 'chat:member_left') {
@@ -601,6 +694,8 @@ function Thread({
     return () => {
       unsub()
       if (typingTimer.current) clearTimeout(typingTimer.current)
+      Object.values(expireRefs.current).forEach((to) => clearTimeout(to))
+      expireRefs.current = {}
     }
   }, [conversationId, qc, meId, conversation.data]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -670,6 +765,7 @@ function Thread({
             {conversation.data ? conversationTitle(conversation.data, meId) : 'Loading…'}
           </Typography>
           <Typography variant="caption" color={typingList.length ? 'primary.main' : 'text.secondary'} noWrap>
+            {typingList.length ? <TypingDots /> : null}
             {subtitle}
           </Typography>
         </Box>
@@ -1221,7 +1317,7 @@ function Composer({
         if (blob.size === 0) return
         setUploading(true)
         try {
-          const doc = await chatApi.uploadAttachment(conversationId, blob, 'voice.webm')
+          const doc = await chatApi.uploadAttachment(conversationId, blob, 'voice.webm', true)
           onSend('', [doc.id])
         } catch (e) {
           onError(apiErrorMessage(e))

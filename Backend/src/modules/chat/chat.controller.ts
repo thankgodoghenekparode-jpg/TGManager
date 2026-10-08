@@ -43,6 +43,7 @@ import {
   reactionSchema,
   searchChatSchema,
   sendMessageSchema,
+  setMemberRoleSchema,
   updateConversationSchema,
   type AddMembersDto,
   type CreateConversationDto,
@@ -51,6 +52,7 @@ import {
   type ReactionDto,
   type SearchChatDto,
   type SendMessageDto,
+  type SetMemberRoleDto,
   type UpdateConversationDto,
 } from './dto/chat.dto';
 
@@ -199,6 +201,12 @@ export class ChatController {
     type: String,
     description: 'Opaque pagination cursor',
   })
+  @ApiQuery({
+    name: 'attachmentsOnly',
+    required: false,
+    enum: ['true', 'false'],
+    description: 'When true, only return messages with an attachment',
+  })
   @ApiOkResponse({ description: 'Message history.' })
   async messageHistory(
     @Req() req: PermissionRequest,
@@ -265,11 +273,18 @@ export class ChatController {
     @Req() req: PermissionRequest,
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File | undefined,
+    @Body('voice') voice?: string,
   ) {
     if (!file) {
       throw new NotFoundException('File is required');
     }
-    return this.chat.uploadAttachment(req.tenant.id, req.user.sub, id, file);
+    return this.chat.uploadAttachment(
+      req.tenant.id,
+      req.user.sub,
+      id,
+      file,
+      voice === 'true',
+    );
   }
 
   @Get('attachments/:documentId')
@@ -547,6 +562,110 @@ export class ChatController {
       req.user.sub,
       id,
       userId,
+    );
+    for (const member of conversation.members ?? []) {
+      if (member.userId !== req.user.sub) {
+        this.gateway.emitToUser(
+          member.userId,
+          'chat:conversation',
+          conversation,
+        );
+      }
+    }
+    return conversation;
+  }
+
+  @Post('conversations/:id/image')
+  @Permissions(PERMISSIONS.CHAT_CREATE)
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: FILE_LIMIT } }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Set a group icon',
+    description:
+      'Uploads a group avatar image and replaces any existing one (admins only).',
+  })
+  @ApiParam({ name: 'id', type: String, description: 'Conversation ID' })
+  @ApiOkResponse({ description: 'Group icon updated.' })
+  async setGroupImage(
+    @Req() req: PermissionRequest,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) {
+      throw new NotFoundException('File is required');
+    }
+    const conversation = await this.chat.setGroupImage(
+      req.tenant.id,
+      req.user.sub,
+      id,
+      file,
+    );
+    for (const member of conversation.members ?? []) {
+      if (member.userId !== req.user.sub) {
+        this.gateway.emitToUser(
+          member.userId,
+          'chat:conversation',
+          conversation,
+        );
+      }
+    }
+    return conversation;
+  }
+
+  @Delete('conversations/:id/image')
+  @Permissions(PERMISSIONS.CHAT_CREATE)
+  @ApiOperation({
+    summary: 'Remove a group icon',
+    description: 'Removes the group avatar image (admins only).',
+  })
+  @ApiParam({ name: 'id', type: String, description: 'Conversation ID' })
+  @ApiOkResponse({ description: 'Group icon removed.' })
+  async clearGroupImage(
+    @Req() req: PermissionRequest,
+    @Param('id') id: string,
+  ) {
+    const conversation = await this.chat.clearGroupImage(
+      req.tenant.id,
+      req.user.sub,
+      id,
+    );
+    for (const member of conversation.members ?? []) {
+      if (member.userId !== req.user.sub) {
+        this.gateway.emitToUser(
+          member.userId,
+          'chat:conversation',
+          conversation,
+        );
+      }
+    }
+    return conversation;
+  }
+
+  @Patch('conversations/:id/members/:userId')
+  @Permissions(PERMISSIONS.CHAT_CREATE)
+  @ApiOperation({
+    summary: 'Change a group member role',
+    description:
+      'Promotes a member to admin or demotes them back to member (admins only).',
+  })
+  @ApiParam({ name: 'id', type: String, description: 'Conversation ID' })
+  @ApiParam({ name: 'userId', type: String, description: 'User ID' })
+  @ApiBody({ schema: schemaRef('SetMemberRoleDto') })
+  @ApiOkResponse({ description: 'Member role updated.' })
+  async setMemberRole(
+    @Req() req: PermissionRequest,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @Body(new ZodValidationPipe(setMemberRoleSchema)) dto: SetMemberRoleDto,
+  ) {
+    const conversation = await this.chat.setMemberRole(
+      req.tenant.id,
+      req.user.sub,
+      id,
+      userId,
+      dto.role,
     );
     for (const member of conversation.members ?? []) {
       if (member.userId !== req.user.sub) {

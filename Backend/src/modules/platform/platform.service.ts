@@ -319,6 +319,7 @@ export class PlatformService {
       passwordHash,
       companyName: dto.companyName,
       planCode: dto.planCode,
+      type: dto.type,
     });
 
     return {

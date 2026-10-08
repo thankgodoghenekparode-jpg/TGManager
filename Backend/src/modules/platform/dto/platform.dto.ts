@@ -200,6 +200,10 @@ export const createTenantSchema = z.object({
     .max(50)
     .optional()
     .describe('Pricing plan code (defaults to "free")'),
+  type: z
+    .enum(['COMPANY', 'SCHOOL'])
+    .optional()
+    .describe('Operating mode/type: COMPANY or SCHOOL (defaults to "COMPANY")'),
   adminFirstName: z
     .string()
     .trim()

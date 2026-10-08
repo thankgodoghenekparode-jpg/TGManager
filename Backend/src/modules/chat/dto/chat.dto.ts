@@ -94,6 +94,10 @@ export const messageHistorySchema = z.object({
     .min(1)
     .optional()
     .describe('Opaque pagination cursor'),
+  attachmentsOnly: z
+    .enum(['true', 'false'])
+    .optional()
+    .describe('When true, only return messages with an attachment'),
 });
 
 export type MessageHistoryDto = z.infer<typeof messageHistorySchema>;
@@ -198,6 +202,14 @@ export const addMembersSchema = z.object({
 });
 
 export type AddMembersDto = z.infer<typeof addMembersSchema>;
+
+export const setMemberRoleSchema = z.object({
+  role: z
+    .enum(['ADMIN', 'MEMBER'])
+    .describe('New role for the group member (ADMIN or MEMBER)'),
+});
+
+export type SetMemberRoleDto = z.infer<typeof setMemberRoleSchema>;
 
 export const searchChatSchema = z.object({
   q: z

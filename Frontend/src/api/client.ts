@@ -226,6 +226,7 @@ export interface TenantMembership {
   id: string
   name: string
   slug: string
+  type?: 'COMPANY' | 'SCHOOL'
   logoKey: string | null
   status: string
   onboardingStatus: string
@@ -243,11 +244,27 @@ export interface CurrentTenant {
   id: string
   name: string
   slug: string
+  type?: 'COMPANY' | 'SCHOOL'
   logoKey: string | null
   status: string
   onboardingStatus: string
   timezone: string
   settings?: Record<string, unknown>
+  schoolProfile?: {
+    id: string
+    motto?: string
+    principalName?: string
+    schoolType: string
+    ownershipType: string
+    currency: string
+    openingTime: string
+    lateThreshold: string
+    address?: string
+    city?: string
+    state?: string
+    phone?: string
+    email?: string
+  } | null
   featureFlags?: Record<string, boolean>
   plan: {
     code: string

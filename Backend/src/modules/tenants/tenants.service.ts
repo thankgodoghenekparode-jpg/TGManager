@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PlansService } from '../plans/plans.service';
@@ -26,6 +22,7 @@ export interface CreateTenantWithAdminParams {
   passwordHash: string;
   companyName: string;
   planCode?: string;
+  type?: 'COMPANY' | 'SCHOOL';
 }
 
 @Injectable()
@@ -64,7 +61,12 @@ export class TenantsService {
       });
 
       const tenant = await tx.tenant.create({
-        data: { name: params.companyName, slug, planId: plan.id },
+        data: {
+          name: params.companyName,
+          slug,
+          planId: plan.id,
+          type: params.type ?? 'COMPANY',
+        },
       });
 
       await tx.tenantUser.create({
@@ -115,6 +117,37 @@ export class TenantsService {
         },
       });
 
+      if (params.type === 'SCHOOL') {
+        const schoolRoles = [
+          SYSTEM_ROLE_DEFS.PRINCIPAL,
+          SYSTEM_ROLE_DEFS.TEACHER,
+          SYSTEM_ROLE_DEFS.ACCOUNTANT,
+          SYSTEM_ROLE_DEFS.GATE_OFFICER,
+        ];
+        for (const r of schoolRoles) {
+          await tx.companyRole.create({
+            data: {
+              tenantId: tenant.id,
+              name: r.name,
+              description: r.description,
+              isSystem: true,
+              permissions: [...r.permissions],
+              createdByUserId: user.id,
+            },
+          });
+        }
+
+        await tx.schoolProfile.create({
+          data: {
+            tenantId: tenant.id,
+            principalName: `${params.firstName} ${params.lastName}`,
+            schoolType: 'SECONDARY',
+            currency: 'NGN',
+            address: 'Main Campus',
+          },
+        });
+      }
+
       await tx.roleAssignment.create({
         data: {
           tenantId: tenant.id,
@@ -162,6 +195,7 @@ export class TenantsService {
             id: true,
             name: true,
             slug: true,
+            type: true,
             logoKey: true,
             status: true,
             onboardingStatus: true,
@@ -188,6 +222,7 @@ export class TenantsService {
       id: m.tenant.id,
       name: m.tenant.name,
       slug: m.tenant.slug,
+      type: m.tenant.type,
       logoKey: m.tenant.logoKey,
       status: m.tenant.status,
       onboardingStatus: m.tenant.onboardingStatus,
@@ -207,6 +242,7 @@ export class TenantsService {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       include: {
+        schoolProfile: true,
         plan: {
           select: {
             code: true,
@@ -259,12 +295,14 @@ export class TenantsService {
       id: tenant.id,
       name: tenant.name,
       slug: tenant.slug,
+      type: tenant.type,
       logoKey: tenant.logoKey,
       status: tenant.status,
       onboardingStatus: tenant.onboardingStatus,
       timezone: tenant.timezone,
       plan: tenant.plan,
       settings: tenant.settings,
+      schoolProfile: tenant.schoolProfile,
       featureFlags: { ...planFlags, ...customFlags },
       permissions: [...permissionSet],
       isCompanyAdmin: assignments.some(

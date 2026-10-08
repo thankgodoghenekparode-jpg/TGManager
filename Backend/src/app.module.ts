@@ -38,6 +38,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { AccountRequestsModule } from './modules/account-requests/account-requests.module';
 import { WeeklyReportsModule } from './modules/weekly-reports/weekly-reports.module';
+import { SchoolModule } from './modules/school/school.module';
 import { SeedModule } from './seed/seed.module';
 
 @Module({
@@ -79,6 +80,7 @@ import { SeedModule } from './seed/seed.module';
     BillingModule,
     AccountRequestsModule,
     WeeklyReportsModule,
+    SchoolModule,
     SeedModule,
   ],
   controllers: [AppController],

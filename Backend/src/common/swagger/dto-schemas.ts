@@ -93,6 +93,40 @@ import {
   submitWeeklyReportSchema,
   updateWeeklyReportSchema,
 } from '../../modules/weekly-reports/dto/weekly-report.dto';
+import {
+  assignClassSubjectSchema,
+  createAcademicSessionSchema,
+  createClassRoomSchema,
+  createSubjectSchema,
+  createTermSchema,
+  schoolProfileSchema,
+  updateAcademicSessionSchema,
+  updateClassRoomSchema,
+  updateSubjectSchema,
+  updateTermSchema,
+} from '../../modules/school/dto/classes.dto';
+import {
+  createGuardianSchema,
+  createStudentSchema,
+  linkGuardianSchema,
+  updateStudentSchema,
+} from '../../modules/school/dto/students.dto';
+import {
+  markSchoolAttendanceSchema,
+  scanAttendanceSchema,
+} from '../../modules/school/dto/attendance.dto';
+import {
+  approveResultsSchema,
+  createAssessmentComponentSchema,
+  createGradingScaleSchema,
+  recordClassResultsSchema,
+} from '../../modules/school/dto/grading.dto';
+import {
+  createFeeStructureSchema,
+  createStudentInvoiceSchema,
+  generateClassInvoicesSchema,
+  recordSchoolPaymentSchema,
+} from '../../modules/school/dto/invoices.dto';
 
 /**
  * Registry of all request-body DTO schemas, keyed by the name used both in
@@ -155,8 +189,31 @@ export const DTO_SCHEMAS: Record<string, z.ZodTypeAny> = {
   IntegrationStepDataDto: integrationStepDataSchema,
   SubmitWeeklyReportDto: submitWeeklyReportSchema,
   UpdateWeeklyReportDto: updateWeeklyReportSchema,
-  ReviewWeeklyReportDto: reviewWeeklyReportSchema,
   StartCheckoutDto: checkoutSchema,
+  SchoolProfileDto: schoolProfileSchema,
+  CreateAcademicSessionDto: createAcademicSessionSchema,
+  UpdateAcademicSessionDto: updateAcademicSessionSchema,
+  CreateTermDto: createTermSchema,
+  UpdateTermDto: updateTermSchema,
+  CreateClassRoomDto: createClassRoomSchema,
+  UpdateClassRoomDto: updateClassRoomSchema,
+  CreateSubjectDto: createSubjectSchema,
+  UpdateSubjectDto: updateSubjectSchema,
+  AssignClassSubjectDto: assignClassSubjectSchema,
+  CreateStudentDto: createStudentSchema,
+  UpdateStudentDto: updateStudentSchema,
+  CreateGuardianDto: createGuardianSchema,
+  LinkGuardianDto: linkGuardianSchema,
+  MarkSchoolAttendanceDto: markSchoolAttendanceSchema,
+  ScanAttendanceDto: scanAttendanceSchema,
+  CreateGradingScaleDto: createGradingScaleSchema,
+  CreateAssessmentComponentDto: createAssessmentComponentSchema,
+  RecordClassResultsDto: recordClassResultsSchema,
+  ApproveResultsDto: approveResultsSchema,
+  CreateFeeStructureDto: createFeeStructureSchema,
+  CreateStudentInvoiceDto: createStudentInvoiceSchema,
+  GenerateClassInvoicesDto: generateClassInvoicesSchema,
+  RecordSchoolPaymentDto: recordSchoolPaymentSchema,
 };
 
 /**

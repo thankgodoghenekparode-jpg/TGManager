@@ -42,7 +42,12 @@ export function SelectCompanyPage() {
     setTenantId(tenantId)
     try {
       await loadTenant()
-      navigate(`/app`, { replace: true })
+      const current = useTenantStore.getState().current
+      if (current?.type === 'SCHOOL') {
+        navigate('/school', { replace: true })
+      } else {
+        navigate('/app', { replace: true })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to open company')
     } finally {
@@ -158,9 +163,16 @@ export function SelectCompanyPage() {
                         )}
                       </Box>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="subtitle1" fontWeight={800} noWrap>
-                          {m.name}
-                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="subtitle1" fontWeight={800} noWrap>
+                            {m.name}
+                          </Typography>
+                          {m.type === 'SCHOOL' && (
+                            <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: '#0284c7', color: 'white', fontWeight: 700 }}>
+                              School
+                            </span>
+                          )}
+                        </Stack>
                         <Typography variant="caption" color="text.secondary" noWrap display="block">
                           {m.plan?.name ?? 'Standard Plan'} · <span style={{ color: '#10B981', fontWeight: 700 }}>{m.status}</span>
                         </Typography>

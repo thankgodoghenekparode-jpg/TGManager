@@ -233,7 +233,9 @@ export class ChatService {
       });
       if (!doc) throw new BadRequestException('Document not found');
       documentId = docId;
-      if (doc.mimeType?.startsWith('image/')) kind = 'IMAGE';
+      const meta = (doc.metadata ?? {}) as { voice?: boolean };
+      if (meta.voice === true) kind = 'VOICE';
+      else if (doc.mimeType?.startsWith('image/')) kind = 'IMAGE';
       else if (doc.mimeType?.startsWith('video/')) kind = 'VIDEO';
       else if (doc.mimeType?.startsWith('audio/')) kind = 'AUDIO';
       else kind = 'FILE';
@@ -284,6 +286,7 @@ export class ChatService {
     userId: string,
     conversationId: string,
     file: Express.Multer.File,
+    voice = false,
   ) {
     await this.assertConversation(tenantId, conversationId);
     await this.assertMember(conversationId, userId);
@@ -309,7 +312,11 @@ export class ChatService {
         storageKey: key,
         mimeType: file.mimetype,
         sizeBytes,
-        metadata: { source: 'chat', conversationId },
+        metadata: {
+          source: 'chat',
+          conversationId,
+          ...(voice ? { voice: true } : {}),
+        },
       },
     });
 
@@ -339,6 +346,7 @@ export class ChatService {
         title: true,
         storageKey: true,
         mimeType: true,
+        metadata: true,
         createdByUserId: true,
       },
     });
@@ -355,9 +363,22 @@ export class ChatService {
         select: { id: true },
       });
       if (!inConversation) {
-        throw new ForbiddenException(
-          'You do not have access to this attachment',
-        );
+        const meta = (doc.metadata ?? {}) as { conversationId?: string };
+        const groupImage = meta.conversationId
+          ? await this.prisma.conversation.findFirst({
+              where: {
+                id: meta.conversationId,
+                imageDocumentId: documentId,
+                members: { some: { userId } },
+              },
+              select: { id: true },
+            })
+          : null;
+        if (!groupImage) {
+          throw new ForbiddenException(
+            'You do not have access to this attachment',
+          );
+        }
       }
     }
     const buffer = await this.storage.getObject(doc.storageKey);
@@ -390,6 +411,9 @@ export class ChatService {
       where: {
         conversationId,
         NOT: { senderId: userId, deletedForSender: true },
+        ...(query.attachmentsOnly === 'true'
+          ? { documentId: { not: null } }
+          : {}),
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: query.limit + 1,
@@ -766,6 +790,166 @@ export class ChatService {
     return this.getConversation(tenantId, userId, conversationId);
   }
 
+  async setGroupImage(
+    tenantId: string,
+    userId: string,
+    conversationId: string,
+    file: Express.Multer.File,
+  ) {
+    const conversation = await this.assertConversationReturn(
+      tenantId,
+      conversationId,
+    );
+    if (conversation.type !== 'GROUP') {
+      throw new BadRequestException('Only groups can have an icon');
+    }
+    await this.assertCanManage(userId, conversation);
+
+    const safeName =
+      basename(file.originalname).replace(/[^\w.-]+/g, '_') || 'group.png';
+    const key = `chat/${tenantId}/${conversationId}/icon/${randomUUID()}/${safeName}`;
+    await this.storage.putObject(key, file.buffer, file.mimetype);
+
+    const sizeBytes = BigInt(file.size);
+    let doc: { id: string };
+    try {
+      doc = await this.createGroupImage(
+        tenantId,
+        conversationId,
+        userId,
+        file,
+        key,
+        sizeBytes,
+      );
+    } catch (err) {
+      await this.storage.deleteObject(key);
+      throw err;
+    }
+
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { imageDocumentId: doc.id },
+    });
+
+    const prev = conversation.imageDocumentId
+      ? await this.prisma.document.findFirst({
+          where: { id: conversation.imageDocumentId, tenantId },
+        })
+      : null;
+    if (prev?.storageKey) {
+      try {
+        await this.storage.deleteObject(prev.storageKey);
+      } catch {
+        // best effort cleanup of old icon object
+      }
+    }
+    if (prev) {
+      await this.prisma.document
+        .delete({ where: { id: prev.id } })
+        .catch(() => undefined);
+    }
+    return this.getConversation(tenantId, userId, conversationId);
+  }
+
+  async clearGroupImage(
+    tenantId: string,
+    userId: string,
+    conversationId: string,
+  ) {
+    const conversation = await this.assertConversationReturn(
+      tenantId,
+      conversationId,
+    );
+    if (conversation.type !== 'GROUP') {
+      throw new BadRequestException('Only groups can have an icon');
+    }
+    await this.assertCanManage(userId, conversation);
+
+    if (!conversation.imageDocumentId) {
+      return this.getConversation(tenantId, userId, conversationId);
+    }
+    const prev = await this.prisma.document.findFirst({
+      where: { id: conversation.imageDocumentId, tenantId },
+    });
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { imageDocumentId: null },
+    });
+    if (prev?.storageKey) {
+      try {
+        await this.storage.deleteObject(prev.storageKey);
+      } catch {
+        // best effort cleanup of old icon object
+      }
+    }
+    if (prev) {
+      await this.prisma.document
+        .delete({ where: { id: prev.id } })
+        .catch(() => undefined);
+    }
+    return this.getConversation(tenantId, userId, conversationId);
+  }
+
+  async setMemberRole(
+    tenantId: string,
+    userId: string,
+    conversationId: string,
+    targetUserId: string,
+    role: 'ADMIN' | 'MEMBER',
+  ) {
+    const conversation = await this.assertConversationReturn(
+      tenantId,
+      conversationId,
+    );
+    if (conversation.type !== 'GROUP') {
+      throw new BadRequestException('Roles only apply to group members');
+    }
+    await this.assertCanManage(userId, conversation);
+    if (conversation.createdByUserId === targetUserId) {
+      throw new BadRequestException('The group owner role cannot be changed');
+    }
+
+    const target = await this.prisma.conversationMember.findUnique({
+      where: {
+        conversationId_userId: { conversationId, userId: targetUserId },
+      },
+    });
+    if (!target) {
+      throw new NotFoundException('Member not found in this group');
+    }
+    await this.prisma.conversationMember.update({
+      where: {
+        conversationId_userId: { conversationId, userId: targetUserId },
+      },
+      data: { role },
+    });
+    return this.getConversation(tenantId, userId, conversationId);
+  }
+
+  private async createGroupImage(
+    tenantId: string,
+    conversationId: string,
+    userId: string,
+    file: Express.Multer.File,
+    storageKey: string,
+    sizeBytes: bigint,
+  ) {
+    await this.planLimits.enforceStorageLimit(tenantId, sizeBytes);
+    return this.prisma.document.create({
+      data: {
+        tenantId,
+        branchId: null,
+        createdByUserId: userId,
+        type: 'GENERAL',
+        title: 'Group icon',
+        storageKey,
+        mimeType: file.mimetype,
+        sizeBytes,
+        metadata: { source: 'chat', conversationId, groupImage: true },
+      },
+    });
+  }
+
   /**
    * Creates in-app notifications for a newly sent message: mention targets
    * (including @everyone) and the other non-muted members. Returns the created
@@ -871,7 +1055,13 @@ export class ChatService {
   ) {
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: conversationId, tenantId },
-      select: { id: true, type: true, createdByUserId: true, tenantId: true },
+      select: {
+        id: true,
+        type: true,
+        createdByUserId: true,
+        tenantId: true,
+        imageDocumentId: true,
+      },
     });
     if (!conversation) throw new NotFoundException('Conversation not found');
     return conversation;

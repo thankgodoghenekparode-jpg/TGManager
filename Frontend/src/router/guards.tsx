@@ -31,26 +31,43 @@ export function PlatformGuard({ children }: { children?: ReactNode }) {
 /** Requires an authenticated company user with an active tenant context. */
 export function CompanyGuard({ children }: { children?: ReactNode }) {
   const user = useAuthStore((s) => s.user)
-  const tenantId = useTenantStore((s) => s.current?.id)
+  const tenant = useTenantStore((s) => s.current)
   const loading = useTenantStore((s) => s.loading)
 
   if (!user) return <Navigate to="/login" replace />
   if (loading) return null
-  if (!tenantId) return <Navigate to="/select-company" replace />
+  if (!tenant?.id) return <Navigate to="/select-company" replace />
+  if (tenant.type === 'SCHOOL') return <Navigate to="/school" replace />
+  return <>{children ?? <Outlet />}</>
+}
+
+/** Requires an authenticated school user with an active school tenant context. */
+export function SchoolGuard({ children }: { children?: ReactNode }) {
+  const user = useAuthStore((s) => s.user)
+  const tenant = useTenantStore((s) => s.current)
+  const loading = useTenantStore((s) => s.loading)
+
+  if (!user) return <Navigate to="/login" replace />
+  if (loading) return null
+  if (!tenant?.id) return <Navigate to="/select-company" replace />
+  if (tenant.type === 'COMPANY') return <Navigate to="/app" replace />
   return <>{children ?? <Outlet />}</>
 }
 
 /** Redirects authenticated users away from guest-only pages. */
 export function GuestGuard({ children }: { children?: ReactNode }) {
   const user = useAuthStore((s) => s.user)
-  const tenantId = useTenantStore((s) => s.current?.id)
+  const tenant = useTenantStore((s) => s.current)
   const initialized = useAuthStore((s) => s.initialized)
   if (!initialized) return null
   if (user) {
     if (isPlatformAdmin(user.role)) {
       return <Navigate to="/admin" replace />
     }
-    return <Navigate to={tenantId ? '/app' : '/select-company'} replace />
+    if (!tenant?.id) {
+      return <Navigate to="/select-company" replace />
+    }
+    return <Navigate to={tenant.type === 'SCHOOL' ? '/school' : '/app'} replace />
   }
   return <>{children ?? <Outlet />}</>
 }

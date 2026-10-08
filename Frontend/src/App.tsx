@@ -7,9 +7,17 @@ import { queryClient } from './lib/query'
 import { useAuthStore } from './store/auth'
 import { useTenantStore } from './store/tenant'
 import { getTenantId, setTenantId } from './api/client'
-import { AuthGuard, GuestGuard, PlatformGuard, CompanyGuard } from './router/guards'
+import { AuthGuard, GuestGuard, PlatformGuard, CompanyGuard, SchoolGuard } from './router/guards'
 import { PlatformLayout } from './components/layout/PlatformLayout'
 import { CompanyLayout } from './components/layout/CompanyLayout'
+import { SchoolLayout } from './components/layout/SchoolLayout'
+import { SchoolDashboardPage } from './pages/school/SchoolDashboard'
+import { StudentsPage } from './pages/school/StudentsPage'
+import { ClassesPage } from './pages/school/ClassesPage'
+import { AttendancePage as SchoolAttendancePage } from './pages/school/AttendancePage'
+import { GradingPage } from './pages/school/GradingPage'
+import { FeesPage } from './pages/school/FeesPage'
+import { SchoolSettingsPage } from './pages/school/SchoolSettingsPage'
 import { PortfolioPage } from './pages/Portfolio'
 import { LoginPage } from './pages/auth/Login'
 import { ForgotPasswordPage } from './pages/auth/ForgotPassword'
@@ -112,6 +120,23 @@ const router = createBrowserRouter([
           },
         ],
       },
+      {
+        element: <SchoolGuard />,
+        children: [
+          {
+            element: <SchoolLayout />,
+            children: [
+              { path: '/school', element: <SchoolDashboardPage /> },
+              { path: '/school/students', element: <StudentsPage /> },
+              { path: '/school/classes', element: <ClassesPage /> },
+              { path: '/school/attendance', element: <SchoolAttendancePage /> },
+              { path: '/school/grading', element: <GradingPage /> },
+              { path: '/school/fees', element: <FeesPage /> },
+              { path: '/school/settings', element: <SchoolSettingsPage /> },
+            ],
+          },
+        ],
+      },
     ],
   },
   { path: '*', element: <RootRedirect /> },
@@ -136,14 +161,15 @@ function RootRedirect() {
       return
     }
     const storedTenantId = getTenantId()
+    const activeMembership = memberships.find((m) => m.id === storedTenantId)
     // A stored tenant id that the current user no longer belongs to is stale
     // (e.g. left over from a previous account), so clear it to force a clean
     // 'Choose a company' selection and avoid 'You are not a member of this tenant'.
-    if (storedTenantId && !memberships.some((m) => m.id === storedTenantId)) {
+    if (storedTenantId && !activeMembership) {
       setTenantId(null)
       navigate('/select-company', { replace: true })
     } else if (storedTenantId) {
-      navigate('/app', { replace: true })
+      navigate(activeMembership?.type === 'SCHOOL' ? '/school' : '/app', { replace: true })
     } else {
       navigate('/select-company', { replace: true })
     }

@@ -86,6 +86,7 @@ export interface Conversation {
   type: ConversationType
   name: string | null
   createdByUserId: string
+  imageDocumentId: string | null
   createdAt: string
   updatedAt: string
   lastMessageAt: string | null
@@ -144,7 +145,7 @@ export const chatApi = {
   },
   listMessages(
     conversationId: string,
-    query?: { limit?: number; cursor?: string },
+    query?: { limit?: number; cursor?: string; attachmentsOnly?: boolean },
   ) {
     return api
       .get<Paged<ChatMessage>>(`/chat/conversations/${conversationId}/messages`, {
@@ -160,9 +161,15 @@ export const chatApi = {
       .post<ChatMessage>(`/chat/conversations/${conversationId}/messages`, body)
       .then((r) => r.data)
   },
-  uploadAttachment(conversationId: string, file: Blob, filename?: string) {
+  uploadAttachment(
+    conversationId: string,
+    file: Blob,
+    filename?: string,
+    voice = false,
+  ) {
     const fd = new FormData()
     fd.append('file', file, filename ?? 'file')
+    if (voice) fd.append('voice', 'true')
     return api
       .post<ChatAttachment>(
         `/chat/conversations/${conversationId}/attachments`,
@@ -226,6 +233,25 @@ export const chatApi = {
   removeMember(conversationId: string, userId: string) {
     return api
       .delete<Conversation>(`/chat/conversations/${conversationId}/members/${userId}`)
+      .then((r) => r.data)
+  },
+  setMemberRole(conversationId: string, userId: string, role: 'ADMIN' | 'MEMBER') {
+    return api
+      .patch<Conversation>(`/chat/conversations/${conversationId}/members/${userId}`, { role })
+      .then((r) => r.data)
+  },
+  setGroupImage(conversationId: string, file: Blob, filename?: string) {
+    const fd = new FormData()
+    fd.append('file', file, filename ?? 'group.png')
+    return api
+      .post<Conversation>(`/chat/conversations/${conversationId}/image`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((r) => r.data)
+  },
+  clearGroupImage(conversationId: string) {
+    return api
+      .delete<Conversation>(`/chat/conversations/${conversationId}/image`)
       .then((r) => r.data)
   },
 }

@@ -4,6 +4,7 @@ import {
   PERMISSIONS,
   ALL_PERMISSIONS,
 } from '../modules/rbac/permissions/permissions.constants';
+import { seedSchoolDemo } from './school-seed';
 
 const DEFAULT_PASSWORD = 'password123';
 const BCRYPT_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
@@ -2256,6 +2257,7 @@ async function seedDemoOrg(prisma: PrismaClient) {
 export interface SeedRun {
   plansSeeded: boolean;
   demoSeeded: boolean;
+  schoolDemoSeeded: boolean;
 }
 
 /**
@@ -2263,9 +2265,11 @@ export interface SeedRun {
  * - Plans are always upserted (idempotent).
  * - The demo organisation is skipped in production unless SEED_DEMO=true,
  *   and skipped entirely if the demo tenant already exists.
+ * - The demo school is seeded if it does not already exist.
  */
 export async function runSeed(prisma: PrismaClient): Promise<SeedRun> {
   await seedPlans(prisma);
   const demoSeeded = await seedDemoOrg(prisma);
-  return { plansSeeded: true, demoSeeded };
+  const schoolDemoSeeded = await seedSchoolDemo(prisma);
+  return { plansSeeded: true, demoSeeded, schoolDemoSeeded };
 }
