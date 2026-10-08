@@ -69,6 +69,12 @@ export function GradingPage() {
     enabled: Boolean(defaultClassId),
   });
 
+  const resultsList = Array.isArray(results)
+    ? results
+    : Array.isArray((results as any)?.items)
+    ? (results as any).items
+    : [];
+
   const { data: reportCardData } = useQuery({
     queryKey: ['school', 'report-card', reportCardStudentId, currentSession?.id, activeTerm?.id],
     queryFn: () =>
@@ -159,14 +165,14 @@ export function GradingPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {(results || []).map((res) => (
+              {resultsList.map((res: any) => (
                 <TableRow key={res.id} hover>
                   <TableCell>
                     <Typography variant="body2" fontWeight={700}>
-                      {res.student.firstName} {res.student.lastName}
+                      {res.student?.firstName ?? 'Student'} {res.student?.lastName ?? ''}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {res.student.admissionNumber}
+                      {res.student?.admissionNumber ?? '—'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">

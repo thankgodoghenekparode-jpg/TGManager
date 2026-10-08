@@ -306,7 +306,11 @@ export const schoolApi = {
 
   // Attendance
   getAttendance: (params: { date?: string; classId?: string; status?: string }) =>
-    api.get<SchoolAttendanceRecord[]>('/school/attendance', { params }).then((r) => r.data),
+    api.get<{ items: SchoolAttendanceRecord[]; total: number } | SchoolAttendanceRecord[]>('/school/attendance', { params }).then((r) => {
+      if (Array.isArray(r.data)) return r.data;
+      if (r.data && Array.isArray((r.data as any).items)) return (r.data as any).items as SchoolAttendanceRecord[];
+      return [] as SchoolAttendanceRecord[];
+    }),
   getAttendanceStats: (date?: string) =>
     api.get<AttendanceStats>('/school/attendance/stats', { params: { date } }).then((r) => r.data),
   markAttendanceBulk: (data: { date: string; classId?: string; records: Array<{ studentId: string; status: string; notes?: string }> }) =>

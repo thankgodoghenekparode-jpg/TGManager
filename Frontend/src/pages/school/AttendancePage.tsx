@@ -54,6 +54,12 @@ export function AttendancePage() {
     queryFn: () => schoolApi.listClasses(),
   });
 
+  const recordsList = Array.isArray(attendanceRecords)
+    ? attendanceRecords
+    : Array.isArray((attendanceRecords as any)?.items)
+    ? (attendanceRecords as any).items
+    : [];
+
   const scanMutation = useMutation({
     mutationFn: (payload: string) => schoolApi.scanAttendance({ scanPayload: payload }),
     onSuccess: (data: any) => {
@@ -207,18 +213,18 @@ export function AttendancePage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {(attendanceRecords || []).map((rec) => (
+              {recordsList.map((rec: any) => (
                 <TableRow key={rec.id} hover>
                   <TableCell>
                     <Typography variant="body2" fontWeight={700}>
-                      {rec.student.firstName} {rec.student.lastName}
+                      {rec.student?.firstName ?? 'Student'} {rec.student?.lastName ?? ''}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {rec.student.admissionNumber}
+                      {rec.student?.admissionNumber ?? '—'}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip label={rec.student.currentClass?.name ?? 'Assigned'} size="small" variant="outlined" />
+                    <Chip label={rec.student?.currentClass?.name ?? 'Assigned'} size="small" variant="outlined" />
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -234,7 +240,7 @@ export function AttendancePage() {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip label={rec.method.replace('_', ' ')} size="small" />
+                    <Chip label={(rec.method ?? 'QR_SCAN').replace('_', ' ')} size="small" />
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -250,7 +256,7 @@ export function AttendancePage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {(!attendanceRecords || attendanceRecords.length === 0) && !isLoading && (
+              {recordsList.length === 0 && !isLoading && (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No attendance records for the selected date and class.

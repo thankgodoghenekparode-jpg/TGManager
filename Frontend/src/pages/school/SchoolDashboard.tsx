@@ -69,6 +69,12 @@ export function SchoolDashboardPage() {
   const attendanceRate = attendanceStats?.attendanceRate ?? 88;
   const totalClasses = classesData?.length ?? 6;
 
+  const recentLogs = Array.isArray(attendanceRecent)
+    ? attendanceRecent
+    : Array.isArray((attendanceRecent as any)?.items)
+    ? (attendanceRecent as any).items
+    : [];
+
   const totalBilled = revenueStats?.totalBilled ?? 3300000;
   const totalCollected = revenueStats?.totalCollected ?? 1700000;
   const collectionRate = revenueStats?.collectionRate ?? Math.round((totalCollected / (totalBilled || 1)) * 100);
@@ -292,19 +298,19 @@ export function SchoolDashboardPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {(attendanceRecent || []).slice(0, 7).map((rec) => (
+                    {recentLogs.slice(0, 7).map((rec: any) => (
                       <TableRow key={rec.id} hover>
                         <TableCell>
                           <Typography variant="body2" fontWeight={600}>
-                            {rec.student.firstName} {rec.student.lastName}
+                            {rec.student?.firstName ?? 'Student'} {rec.student?.lastName ?? ''}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {rec.student.admissionNumber}
+                            {rec.student?.admissionNumber ?? '—'}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            {rec.student.currentClass?.name ?? 'JSS 1 Gold'}
+                            {rec.student?.currentClass?.name ?? 'JSS 1 Gold'}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -325,7 +331,7 @@ export function SchoolDashboardPage() {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {(!attendanceRecent || attendanceRecent.length === 0) && (
+                    {recentLogs.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={4} align="center" sx={{ py: 3, color: 'text.secondary' }}>
                           No gate check-in records for today yet.
