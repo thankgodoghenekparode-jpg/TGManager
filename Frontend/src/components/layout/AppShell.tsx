@@ -127,20 +127,20 @@ export function AppShell({
 
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ px: 2.5, py: 2.75, display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={onNavigateHome}>
-        {renderBrandMark(38)}
+      <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.25, cursor: 'pointer' }} onClick={onNavigateHome}>
+        {renderBrandMark(32)}
         <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
-          <Typography variant="h6" noWrap sx={{ lineHeight: 1.15, fontWeight: 800 }}>{title}</Typography>
+          <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.15, fontWeight: 700 }}>{title}</Typography>
           {subtitle && (
-            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', letterSpacing: 0.4 }}>
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block', letterSpacing: 0.3 }}>
               {subtitle}
             </Typography>
           )}
         </Box>
       </Box>
       <Divider />
-      <List sx={{ px: 1.25, py: 1.5, flex: 1, overflow: 'auto' }}>
-        <Typography variant="caption" sx={{ px: 1, display: 'block', mb: 1, fontWeight: 700, letterSpacing: 1.5, color: 'text.secondary' }}>
+      <List sx={{ px: 1, py: 1, flex: 1, overflow: 'auto' }}>
+        <Typography variant="caption" sx={{ px: 1, display: 'block', mb: 0.75, fontWeight: 700, letterSpacing: 1.2, color: 'text.secondary', fontSize: '0.6875rem' }}>
           MENU
         </Typography>
         {nav.map((item) => {
@@ -153,22 +153,21 @@ export function AppShell({
               to={item.path}
               selected={active}
               onClick={() => setOpen(false)}
-              sx={{ py: 1 }}
             >
-              <ListItemIcon sx={{ minWidth: 38 }}>
+              <ListItemIcon sx={{ minWidth: 32 }}>
                 <Icon fontSize="small" />
               </ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 15, fontWeight: active ? 700 : 600 }} />
+              <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 700 : 500 }} />
             </ListItemButton>
           )
         })}
       </List>
       {user && (
-        <Box sx={{ m: 1.5, p: 1.25, borderRadius: 3, bgcolor: 'rgba(236, 6, 24, 0.08)', border: '1px solid rgba(236, 6, 24, 0.2)', display: 'flex', alignItems: 'center', gap: 1.25 }}>
-          <Avatar sx={{ width: 34, height: 34, fontSize: 13 }}>{initials(`${user.firstName} ${user.lastName}`)}</Avatar>
+        <Box sx={{ m: 1.25, p: 1, borderRadius: 2, bgcolor: 'rgba(236, 6, 24, 0.06)', border: '1px solid rgba(236, 6, 24, 0.16)', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Avatar sx={{ width: 30, height: 30, fontSize: 11 }}>{initials(`${user.firstName} ${user.lastName}`)}</Avatar>
           <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Typography variant="body2" fontWeight={700} noWrap>{user.firstName} {user.lastName}</Typography>
-            <Typography variant="caption" color="text.secondary" noWrap display="block">{user.email}</Typography>
+            <Typography variant="body2" fontWeight={700} noWrap sx={{ fontSize: '0.8rem' }}>{user.firstName} {user.lastName}</Typography>
+            <Typography variant="caption" color="text.secondary" noWrap display="block" sx={{ fontSize: '0.7rem' }}>{user.email}</Typography>
           </Box>
           {onLogout && (
             <Tooltip title="Logout">
@@ -223,9 +222,9 @@ export function AppShell({
             }}
             onClick={onNavigateHome}
           >
-            {renderBrandMark(32)}
+            {renderBrandMark(28)}
             <Box sx={{ minWidth: 0, overflow: 'hidden', display: 'flex', alignItems: 'baseline', gap: 1 }}>
-              <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.1, fontWeight: 800, fontSize: { xs: '1.0625rem', sm: '1.25rem' } }}>
+              <Typography variant="subtitle1" noWrap sx={{ lineHeight: 1.15, fontWeight: 700, fontSize: { xs: '0.875rem', sm: '0.95rem' } }}>
                 {title}
               </Typography>
               {subtitle && (
