@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -27,11 +27,12 @@ import {
 } from '@mui/material';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import PrintIcon from '@mui/icons-material/Print';
 import CloseIcon from '@mui/icons-material/Close';
 import { schoolApi, type StudentInvoice } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl } from '../../api/client';
+import { DocumentActions } from '../../components/documents/DocumentActions';
+import { DocumentFooter, DocumentHeader, DocumentPaper } from '../../components/documents/DocumentPaper';
 
 export function FeesPage() {
   const qc = useQueryClient();
@@ -42,6 +43,7 @@ export function FeesPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<StudentInvoice | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [receiptOpen, setReceiptOpen] = useState(false);
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   // Payment form state
   const [paymentForm, setPaymentForm] = useState({
@@ -382,50 +384,31 @@ export function FeesPage() {
         </DialogTitle>
         <DialogContent dividers sx={{ p: 3, bgcolor: '#ffffff' }}>
           {selectedInvoice && (
-            <Box
-              sx={{
-                p: 3,
-                border: '2px solid #0f172a',
-                borderRadius: 2,
-                color: '#0f172a',
-                position: 'relative',
-              }}
+            <DocumentPaper
+              id="receipt-print"
+              ref={receiptRef}
+              className="doc-sheet"
+              watermark={tenant?.name ?? undefined}
             >
               {/* Receipt Header */}
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2, borderBottom: '2px solid #0f172a', pb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  {tenantLogo ? (
-                    <Box
-                      component="img"
-                      src={tenantLogo}
-                      alt={tenant?.name ?? 'School'}
-                      sx={{ maxHeight: 48, maxWidth: 120, objectFit: 'contain' }}
-                    />
-                  ) : null}
-                  <Box>
-                    <Typography variant="h6" fontWeight={800} sx={{ textTransform: 'uppercase' }}>
-                      {tenant?.name ?? 'School Workspace'}
+              <DocumentHeader
+                logoSrc={tenantLogo ?? undefined}
+                icon={<ReceiptLongIcon sx={{ fontSize: 32 }} />}
+                orgName={tenant?.name ?? 'School Workspace'}
+                subtitle={`Bursar's Office • bursar@${tenant?.slug ?? 'school'}.tgmanager.app`}
+                title="Official Payment Receipt"
+                meta={['Plot 14, Commercial Avenue, Ikeja, Lagos']}
+                right={
+                  <>
+                    <Typography variant="body2" fontWeight={800} sx={{ fontFamily: 'monospace' }}>
+                      REC-{Date.now().toString().slice(-6)}
                     </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
-                      Plot 14, Commercial Avenue, Ikeja, Lagos
+                    <Typography variant="caption" color="text.secondary">
+                      Date: {new Date().toLocaleDateString()}
                     </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
-                      Email: bursar@{tenant?.slug ?? 'school'}.tgmanager.app • Official Billing Receipt
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="subtitle2" fontWeight={800} color="primary.main">
-                    OFFICIAL RECEIPT
-                  </Typography>
-                  <Typography variant="body2" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
-                    REC-{Date.now().toString().slice(-6)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Date: {new Date().toLocaleDateString()}
-                  </Typography>
-                </Box>
-              </Stack>
+                  </>
+                }
+              />
 
               {/* Student info */}
               <Grid container spacing={1.5} sx={{ mb: 2, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
@@ -479,26 +462,29 @@ export function FeesPage() {
                 </Table>
               </TableContainer>
 
-              {/* Watermark / Sign-off */}
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-end" sx={{ mt: 3, pt: 2, borderTop: '1px dashed #cbd5e1' }}>
-                <Box>
-                  <Chip label="PAYMENT CONFIRMED" color="success" size="small" sx={{ fontWeight: 700 }} />
-                </Box>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Box sx={{ width: 140, borderBottom: '1px solid #0f172a', mb: 0.5 }} />
-                  <Typography variant="caption" fontWeight={600}>
-                    Authorized Bursar Stamp
-                  </Typography>
-                </Box>
+              {/* Sign-off */}
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2.5 }}>
+                <Chip label="PAYMENT CONFIRMED" color="success" size="small" sx={{ fontWeight: 700 }} />
               </Stack>
-            </Box>
+
+              <DocumentFooter
+                signatureLabel="Authorized Bursar Stamp"
+                note="This receipt is computer-generated and valid without a physical signature. Retain for your records."
+                reference={selectedInvoice.invoiceNumber}
+              />
+            </DocumentPaper>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setReceiptOpen(false)}>Close</Button>
-          <Button variant="contained" startIcon={<PrintIcon />} onClick={() => window.print()}>
-            Print Receipt
-          </Button>
+          <DocumentActions
+            targetRef={receiptRef}
+            fileBaseName={`Receipt-${selectedInvoice?.invoiceNumber ?? 'invoice'}`}
+            title={`${tenant?.name ?? 'School'} — Payment Receipt`}
+            message={`${tenant?.name ?? 'School'}\nPayment receipt ${selectedInvoice?.invoiceNumber ?? ''} for ${selectedInvoice?.student.firstName ?? ''} ${selectedInvoice?.student.lastName ?? ''}.`}
+            disabled={!selectedInvoice}
+            size="small"
+          />
         </DialogActions>
       </Dialog>
     </Box>

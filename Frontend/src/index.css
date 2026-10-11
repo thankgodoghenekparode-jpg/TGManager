@@ -345,35 +345,73 @@ svg,
 }
 
 /*
- * Report-card printing: when a report card is open we hide the rest of the app
- * during print so the browser's "Save as PDF" produces a clean document.
+ * Generic single-document printing: `printElement()` adds the
+ * `printing-document` body class and marks the target node with
+ * `data-print-target`, so any generated document prints in isolation.
  */
 @media print {
-  body.printing-report-card {
+  body.printing-document {
     background: #ffffff !important;
   }
 
-  body.printing-report-card * {
-    visibility: hidden;
+  body.printing-document * {
+    visibility: hidden !important;
   }
 
-  body.printing-report-card #report-card-print,
-  body.printing-report-card #report-card-print * {
-    visibility: visible;
+  body.printing-document [data-print-target='true'],
+  body.printing-document [data-print-target='true'] * {
+    visibility: visible !important;
   }
 
-  body.printing-report-card #report-card-print {
-    position: fixed;
-    inset: 0;
+  body.printing-document [data-print-target='true'] {
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 100%;
     margin: 0;
-    padding: 24px;
-    background: #ffffff;
-    overflow: visible;
+    padding: 0;
   }
 
-  body.printing-report-card .MuiDialog-root,
-  body.printing-report-card .MuiBackdrop-root {
+  body.printing-document .MuiDialog-root,
+  body.printing-document .MuiBackdrop-root {
     position: static !important;
   }
+
+  body.printing-document .MuiDialog-paper {
+    box-shadow: none !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+/*
+ * Modern shared document sheet (report cards, receipts, ID cards). Works on
+ * screen and in print, and keeps tabular figures aligned.
+ */
+.doc-sheet {
+  font-variant-numeric: tabular-nums;
+}
+
+.doc-sheet table {
+  border-collapse: collapse;
+}
+
+.doc-sheet thead th {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 0.72rem;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+.doc-sheet tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.doc-sheet .MuiTableCell-root {
+  border-color: #e2e8f0;
 }

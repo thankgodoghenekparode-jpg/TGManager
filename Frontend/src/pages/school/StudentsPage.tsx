@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -29,12 +29,12 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { QRCodeSVG } from 'qrcode.react';
-import PrintIcon from '@mui/icons-material/Print';
 import CloseIcon from '@mui/icons-material/Close';
 import BadgeIcon from '@mui/icons-material/Badge';
 import { schoolApi, type Student } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl } from '../../api/client';
+import { DocumentActions } from '../../components/documents/DocumentActions';
 
 export function StudentsPage() {
   const qc = useQueryClient();
@@ -44,6 +44,7 @@ export function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('ALL');
   const [selectedStudentForCard, setSelectedStudentForCard] = useState<Student | null>(null);
+  const idCardRef = useRef<HTMLDivElement>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
 
   // New Student Form State
@@ -312,6 +313,8 @@ export function StudentsPage() {
         <DialogContent dividers sx={{ display: 'flex', justifyContent: 'center', p: 3, bgcolor: '#f8fafc' }}>
           {selectedStudentForCard && (
             <Card
+              ref={idCardRef}
+              className="doc-sheet"
               sx={{
                 width: 320,
                 borderRadius: 3,
@@ -450,11 +453,17 @@ export function StudentsPage() {
             </Card>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setSelectedStudentForCard(null)}>Close</Button>
-          <Button variant="contained" startIcon={<PrintIcon />} onClick={() => window.print()}>
-            Print Card
-          </Button>
+          <DocumentActions
+            targetRef={idCardRef}
+            fileBaseName={`Student-ID-${selectedStudentForCard?.admissionNumber ?? 'card'}`}
+            title={`${tenant?.name ?? 'School'} — Student ID Card`}
+            message={`${tenant?.name ?? 'School'}\nStudent ID card for ${selectedStudentForCard?.firstName ?? ''} ${selectedStudentForCard?.lastName ?? ''} (${selectedStudentForCard?.admissionNumber ?? ''}).`}
+            shareAsImage
+            disabled={!selectedStudentForCard}
+            size="small"
+          />
         </DialogActions>
       </Dialog>
 

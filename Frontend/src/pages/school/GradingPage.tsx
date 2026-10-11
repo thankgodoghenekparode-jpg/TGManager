@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
@@ -23,10 +23,8 @@ import {
   TableRow,
   TextField,
   Typography,
-  Avatar,
 } from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import PrintIcon from '@mui/icons-material/Print';
 import CloseIcon from '@mui/icons-material/Close';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import EditNoteIcon from '@mui/icons-material/EditNote';
@@ -36,6 +34,8 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 import { schoolApi } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl } from '../../api/client';
+import { DocumentActions } from '../../components/documents/DocumentActions';
+import { DocumentFooter, DocumentHeader, DocumentPaper } from '../../components/documents/DocumentPaper';
 
 interface ScoreDraft {
   caScore: string;
@@ -54,6 +54,8 @@ export function GradingPage() {
   const [classSheetOpen, setClassSheetOpen] = useState(false);
   const [scoreDraft, setScoreDraft] = useState<Record<string, ScoreDraft>>({});
   const [feedback, setFeedback] = useState<{ severity: 'success' | 'error'; text: string } | null>(null);
+  const reportCardRef = useRef<HTMLDivElement>(null);
+  const classSheetRef = useRef<HTMLDivElement>(null);
 
   const { data: classes } = useQuery({
     queryKey: ['school', 'classes'],
@@ -187,17 +189,6 @@ export function GradingPage() {
     setScoreDraft(draft);
     setFeedback(null);
     setScoreEntryOpen(true);
-  };
-
-  const handlePrint = () => {
-    document.body.classList.add('printing-report-card');
-    const cleanup = () => {
-      document.body.classList.remove('printing-report-card');
-      window.removeEventListener('afterprint', cleanup);
-    };
-    window.addEventListener('afterprint', cleanup);
-    window.print();
-    setTimeout(cleanup, 1500);
   };
 
   const studentRows = useMemo(() => studentsData?.items ?? [], [studentsData]);
@@ -504,65 +495,92 @@ export function GradingPage() {
               No results recorded for this class and term yet.
             </Typography>
           ) : (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Pos.</TableCell>
-                    <TableCell>Student</TableCell>
-                    <TableCell align="center">Subjects</TableCell>
-                    <TableCell align="center">Obtained</TableCell>
-                    <TableCell align="center">Average</TableCell>
-                    <TableCell align="center">Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {classSheet.students.map((row) => (
-                    <TableRow key={row.studentId} hover>
-                      <TableCell>
-                        <Chip label={row.position} size="small" />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={600}>
-                          {row.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {row.admissionNumber}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">{row.subjectsCount}</TableCell>
-                      <TableCell align="center">
-                        {row.obtained} / {row.possible}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={`${row.average}%`}
-                          size="small"
-                          color={row.average >= 60 ? 'success' : row.average < 40 ? 'error' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={row.status}
-                          size="small"
-                          color={
-                            row.status === 'PUBLISHED'
-                              ? 'success'
-                              : row.status === 'APPROVED'
-                                ? 'primary'
-                                : 'default'
-                          }
-                        />
-                      </TableCell>
+            <DocumentPaper id="class-sheet-print" ref={classSheetRef} className="doc-sheet" watermark={tenant?.name ?? undefined}>
+              <DocumentHeader
+                logoSrc={tenantLogo ?? undefined}
+                icon={<AssessmentIcon sx={{ fontSize: 32 }} />}
+                orgName={tenant?.name ?? 'School Workspace'}
+                title="Class Broad Sheet / Result Summary"
+                right={
+                  <>
+                    <Typography variant="body2" fontWeight={800}>{classSheet.class.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">{classSheet.session} • {classSheet.term}</Typography>
+                  </>
+                }
+              />
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Pos.</TableCell>
+                      <TableCell>Student</TableCell>
+                      <TableCell align="center">Subjects</TableCell>
+                      <TableCell align="center">Obtained</TableCell>
+                      <TableCell align="center">Average</TableCell>
+                      <TableCell align="center">Status</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {classSheet.students.map((row) => (
+                      <TableRow key={row.studentId} hover>
+                        <TableCell>
+                          <Chip label={row.position} size="small" />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            {row.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {row.admissionNumber}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">{row.subjectsCount}</TableCell>
+                        <TableCell align="center">
+                          {row.obtained} / {row.possible}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={`${row.average}%`}
+                            size="small"
+                            color={row.average >= 60 ? 'success' : row.average < 40 ? 'error' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={row.status}
+                            size="small"
+                            color={
+                              row.status === 'PUBLISHED'
+                                ? 'success'
+                                : row.status === 'APPROVED'
+                                  ? 'primary'
+                                  : 'default'
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <DocumentFooter
+                signatureLabel="Exams Officer / Principal"
+                note="Computer-generated class broad sheet. Positions are based on total marks obtained for the term."
+                reference={`${classSheet.class.name} • ${classSheet.session} ${classSheet.term}`}
+              />
+            </DocumentPaper>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setClassSheetOpen(false)}>Close</Button>
+          <DocumentActions
+            targetRef={classSheetRef}
+            fileBaseName={`Class-Sheet-${classSheet?.class.name ?? 'class'}-${classSheet?.term ?? ''}`.replace(/\s+/g, '-')}
+            title={`${tenant?.name ?? 'School'} — Class Broad Sheet`}
+            message={`${tenant?.name ?? 'School'}\nClass broad sheet for ${classSheet?.class.name ?? ''} — ${classSheet?.term ?? ''} ${classSheet?.session ?? ''}.`}
+            disabled={!classSheet || classSheet.students.length === 0}
+            size="small"
+          />
         </DialogActions>
       </Dialog>
 
@@ -583,47 +601,36 @@ export function GradingPage() {
         </DialogTitle>
         <DialogContent dividers sx={{ p: { xs: 2, md: 4 }, bgcolor: '#ffffff' }}>
           {reportCardData ? (
-            <Box
+            <DocumentPaper
               id="report-card-print"
-              sx={{
-                p: 3,
-                border: '2px solid #0f172a',
-                borderRadius: 2,
-                color: '#0f172a',
-                bgcolor: '#ffffff',
-              }}
+              ref={reportCardRef}
+              className="doc-sheet"
+              watermark={tenant?.name ?? undefined}
             >
               {/* Report Header */}
-              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2, borderBottom: '2px solid #0f172a', pb: 2 }}>
-                <Avatar
-                  src={tenantLogo ?? undefined}
-                  variant="rounded"
-                  sx={{ width: 64, height: 64, bgcolor: '#0284c7', p: tenantLogo ? 0.5 : 0 }}
-                >
-                  <AssessmentIcon sx={{ fontSize: 36 }} />
-                </Avatar>
-                <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
-                  <Typography variant="h5" fontWeight={800} sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    {tenant?.name ?? 'School Workspace'}
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontStyle: 'italic', display: 'block' }}>
-                    Motto: {tenant?.schoolProfile?.motto ?? 'Excellence, Character and Innovation'}
-                  </Typography>
-                  <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
-                    {[
-                      (tenant?.schoolProfile as any)?.address,
-                      (tenant?.schoolProfile as any)?.city,
-                      (tenant?.schoolProfile as any)?.state,
-                    ]
-                      .filter(Boolean)
-                      .join(', ') || '—'}
-                    {(tenant?.schoolProfile as any)?.phone ? ` • Phone: ${(tenant?.schoolProfile as any).phone}` : ''}
-                  </Typography>
-                  <Typography variant="subtitle2" fontWeight={800} sx={{ mt: 1, letterSpacing: 1, textTransform: 'uppercase' }}>
-                    STUDENT TERMINAL PERFORMANCE REPORT SHEET
-                  </Typography>
-                </Box>
-              </Stack>
+              <DocumentHeader
+                logoSrc={tenantLogo ?? undefined}
+                icon={<AssessmentIcon sx={{ fontSize: 34 }} />}
+                orgName={tenant?.name ?? 'School Workspace'}
+                subtitle={`Motto: ${tenant?.schoolProfile?.motto ?? 'Excellence, Character and Innovation'}`}
+                title="Student Terminal Performance Report Sheet"
+                meta={[
+                  (tenant?.schoolProfile as any)?.address,
+                  (tenant?.schoolProfile as any)?.city,
+                  (tenant?.schoolProfile as any)?.state,
+                  (tenant?.schoolProfile as any)?.phone ? `Tel: ${(tenant?.schoolProfile as any).phone}` : '',
+                ]}
+                right={
+                  <>
+                    <Typography variant="body2" fontWeight={800} sx={{ fontFamily: 'monospace' }}>
+                      {reportCardData.student.admissionNumber}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {reportCardData.session} • {reportCardData.term}
+                    </Typography>
+                  </>
+                }
+              />
 
               {/* Bio Grid */}
               <Grid container spacing={1.5} sx={{ mb: 2, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1, border: '1px solid #e2e8f0' }}>
@@ -703,18 +710,29 @@ export function GradingPage() {
                   <Typography variant="body2" sx={{ fontStyle: 'italic' }}>"{reportCardData.summary.principalRemark}"</Typography>
                 </Grid>
               </Grid>
-            </Box>
+
+              <DocumentFooter
+                signatureLabel="Principal / Authorized Signatory"
+                note="This is a computer-generated terminal report sheet. Kindly verify authenticity with the school administration."
+                reference={`${reportCardData.student.admissionNumber} • ${reportCardData.session} ${reportCardData.term}`}
+              />
+            </DocumentPaper>
           ) : (
             <Typography variant="body2" align="center" sx={{ py: 4 }}>
               Loading student report card...
             </Typography>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setReportCardStudentId(null)}>Close</Button>
-          <Button variant="contained" startIcon={<PrintIcon />} onClick={handlePrint} disabled={!reportCardData}>
-            Print / Save as PDF
-          </Button>
+          <DocumentActions
+            targetRef={reportCardRef}
+            fileBaseName={`Report-Card-${reportCardData?.student.admissionNumber ?? reportCardStudentId ?? 'student'}-${reportCardData?.term ?? ''}`.replace(/\s+/g, '-')}
+            title={`${tenant?.name ?? 'School'} — Terminal Report Card`}
+            message={`${tenant?.name ?? 'School'}\nTerminal report card for ${reportCardData?.student.fullName ?? 'student'} — ${reportCardData?.term ?? ''} ${reportCardData?.session ?? ''}.`}
+            disabled={!reportCardData}
+            size="small"
+          />
         </DialogActions>
       </Dialog>
     </Box>

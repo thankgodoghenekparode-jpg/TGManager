@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -29,13 +29,14 @@ import {
   Typography,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import PrintIcon from '@mui/icons-material/Print';
 import CloseIcon from '@mui/icons-material/Close';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import { parentApi } from '../../api/parent';
 import { schoolApi } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl, apiErrorMessage } from '../../api/client';
+import { DocumentActions } from '../../components/documents/DocumentActions';
+import { DocumentFooter, DocumentHeader, DocumentPaper } from '../../components/documents/DocumentPaper';
 
 function formatDate(value?: string | null) {
   if (!value) return '—';
@@ -60,6 +61,7 @@ export function ChildDetailPage() {
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
   const [reportOpen, setReportOpen] = useState(false);
+  const reportCardRef = useRef<HTMLDivElement>(null);
 
   const { data: child } = useQuery({
     queryKey: ['parent', 'child', id],
@@ -109,17 +111,6 @@ export function ChildDetailPage() {
     const present = attendance.filter((a) => a.status === 'PRESENT' || a.status === 'LATE').length;
     return Math.round((present / attendance.length) * 100);
   }, [attendance]);
-
-  const handlePrint = () => {
-    document.body.classList.add('printing-report-card');
-    const cleanup = () => {
-      document.body.classList.remove('printing-report-card');
-      window.removeEventListener('afterprint', cleanup);
-    };
-    window.addEventListener('afterprint', cleanup);
-    window.print();
-    setTimeout(cleanup, 1500);
-  };
 
   const outstanding = (invoices ?? []).reduce((acc, inv) => acc + (inv.balance ?? 0), 0);
 
@@ -447,23 +438,34 @@ export function ChildDetailPage() {
                 'This report card is not available yet. Results must be published by the school first.'}
             </Alert>
           ) : reportCard ? (
-            <Box
+            <DocumentPaper
               id="report-card-print"
-              sx={{ p: 3, border: '2px solid #0f172a', borderRadius: 2, color: '#0f172a', bgcolor: '#ffffff' }}
+              ref={reportCardRef}
+              className="doc-sheet"
+              watermark={tenant?.name ?? undefined}
             >
-              <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2, borderBottom: '2px solid #0f172a', pb: 2 }}>
-                <Avatar src={tenantLogo ?? undefined} variant="rounded" sx={{ width: 64, height: 64, bgcolor: '#0284c7' }}>
-                  <AssessmentIcon sx={{ fontSize: 36 }} />
-                </Avatar>
-                <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
-                  <Typography variant="h5" fontWeight={800} sx={{ textTransform: 'uppercase' }}>
-                    {tenant?.name ?? 'School'}
-                  </Typography>
-                  <Typography variant="subtitle2" fontWeight={800} sx={{ mt: 1, letterSpacing: 1 }}>
-                    STUDENT TERMINAL PERFORMANCE REPORT SHEET
-                  </Typography>
-                </Box>
-              </Stack>
+              <DocumentHeader
+                logoSrc={tenantLogo ?? undefined}
+                icon={<AssessmentIcon sx={{ fontSize: 34 }} />}
+                orgName={tenant?.name ?? 'School'}
+                subtitle={tenant?.schoolProfile?.motto ? `Motto: ${tenant.schoolProfile.motto}` : undefined}
+                title="Student Terminal Performance Report Sheet"
+                meta={[
+                  (tenant?.schoolProfile as any)?.address,
+                  (tenant?.schoolProfile as any)?.city,
+                  (tenant?.schoolProfile as any)?.state,
+                ]}
+                right={
+                  <>
+                    <Typography variant="body2" fontWeight={800} sx={{ fontFamily: 'monospace' }}>
+                      {reportCard.student.admissionNumber}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {reportCard.session} • {reportCard.term}
+                    </Typography>
+                  </>
+                }
+              />
 
               <Grid container spacing={1.5} sx={{ mb: 2, p: 1.5, bgcolor: '#f8fafc', borderRadius: 1 }}>
                 <Grid item xs={6} sm={3}>
@@ -549,18 +551,29 @@ export function ChildDetailPage() {
                   </Typography>
                 </Grid>
               </Grid>
-            </Box>
+
+              <DocumentFooter
+                signatureLabel="Principal / Authorized Signatory"
+                note="This is a computer-generated terminal report sheet. Kindly verify authenticity with the school administration."
+                reference={`${reportCard.student.admissionNumber} • ${reportCard.session} ${reportCard.term}`}
+              />
+            </DocumentPaper>
           ) : (
             <Typography variant="body2" align="center" sx={{ py: 4 }}>
               Loading report card...
             </Typography>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setReportOpen(false)}>Close</Button>
-          <Button variant="contained" startIcon={<PrintIcon />} onClick={handlePrint} disabled={!reportCard}>
-            Print / Save as PDF
-          </Button>
+          <DocumentActions
+            targetRef={reportCardRef}
+            fileBaseName={`Report-Card-${reportCard?.student.admissionNumber ?? id}-${reportCard?.term ?? ''}`.replace(/\s+/g, '-')}
+            title={`${tenant?.name ?? 'School'} — Terminal Report Card`}
+            message={`${tenant?.name ?? 'School'}\nTerminal report card for ${reportCard?.student.fullName ?? 'student'} — ${reportCard?.term ?? ''} ${reportCard?.session ?? ''}.`}
+            disabled={!reportCard}
+            size="small"
+          />
         </DialogActions>
       </Dialog>
     </Box>
