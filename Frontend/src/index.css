@@ -32,6 +32,26 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
+/*
+ * The auth screens (login / register / password) keep the smaller, compact
+ * type scale while the rest of the app uses the larger global base. Rem is
+ * always relative to the root element, so the toggle lives on <html>
+ * (the `auth-page` class is added by AuthShell while it is mounted).
+ */
+html.auth-page {
+  font-size: 15.5px;
+}
+@media (max-width: 900px) {
+  html.auth-page {
+    font-size: 15px;
+  }
+}
+@media (max-width: 600px) {
+  html.auth-page {
+    font-size: 14.5px;
+  }
+}
+
 html[data-theme='light'] body,
 body.light {
   background-color: #F8FAFC;

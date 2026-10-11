@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, type ReactNode } from 'react'
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import FingerprintIcon from '@mui/icons-material/Fingerprint'
@@ -16,6 +16,15 @@ export function AuthShell({
   headline?: string
   children: ReactNode
 }) {
+  // Auth screens keep the smaller, compact type scale: pin the root <html>
+  // font-size (the app's single rem lever) while this shell is mounted.
+  // useLayoutEffect so it applies before paint (no flash of larger text).
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    root.classList.add('auth-page')
+    return () => root.classList.remove('auth-page')
+  }, [])
+
   return (
     <Box
       sx={{
