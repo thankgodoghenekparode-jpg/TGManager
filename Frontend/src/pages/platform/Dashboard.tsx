@@ -364,7 +364,7 @@ export function PlatformDashboardPage() {
                 }}
               />
               <Chip
-                icon={<AdminPanelSettingsIcon sx={{ fontSize: '14px !important', color: '#EC0618 !important' }} />}
+                icon={<AdminPanelSettingsIcon sx={{ fontSize: '0.9rem !important', color: '#EC0618 !important' }} />}
                 label="Super Admin Authority"
                 size="small"
                 sx={{
@@ -375,7 +375,7 @@ export function PlatformDashboardPage() {
                 }}
               />
               <Chip
-                icon={<TuneIcon sx={{ fontSize: '14px !important', color: '#0284C7 !important' }} />}
+                icon={<TuneIcon sx={{ fontSize: '0.9rem !important', color: '#0284C7 !important' }} />}
                 label="Feature Entitlements Live Sync"
                 size="small"
                 sx={{
@@ -617,7 +617,7 @@ export function PlatformDashboardPage() {
                               <TableCell>
                                 <Tooltip title={`${activeCount} of ${totalCount} modules enabled`}>
                                   <Chip
-                                    icon={<CheckCircleIcon sx={{ fontSize: '13px !important', color: activeCount === totalCount ? '#10B981 !important' : '#F59E0B !important' }} />}
+                                    icon={<CheckCircleIcon sx={{ fontSize: '0.85rem !important', color: activeCount === totalCount ? '#10B981 !important' : '#F59E0B !important' }} />}
                                     label={`${activeCount} / ${totalCount} Modules`}
                                     size="small"
                                     sx={{

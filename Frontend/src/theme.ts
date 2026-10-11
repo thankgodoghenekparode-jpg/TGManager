@@ -60,11 +60,12 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
             WebkitTextSizeAdjust: '100%',
             textSizeAdjust: '100%',
             // Base scale for the entire app (all typography/bespoke sizes are
-            // rem-based). Steps down further on smaller screens so the UI stays
-            // readable yet compact on tablets and phones.
-            fontSize: '13.5px',
-            '@media (max-width:900px)': { fontSize: '13px' },
-            '@media (max-width:600px)': { fontSize: '12.5px' },
+            // rem-based, so this is the single lever for the whole UI). Steps
+            // down slightly on smaller screens so density stays comfortable on
+            // tablets and phones.
+            fontSize: '15.5px',
+            '@media (max-width:900px)': { fontSize: '15px' },
+            '@media (max-width:600px)': { fontSize: '14.5px' },
           },
           '::selection': { backgroundColor: 'rgba(236, 6, 24, 0.35)', color: '#FFFFFF' },
           '& *::-webkit-scrollbar': { width: 6, height: 6 },
