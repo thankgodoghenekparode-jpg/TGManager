@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Alert,
@@ -18,11 +18,13 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined'
+import SchoolIcon from '@mui/icons-material/School'
 import { useAuthStore } from '../../store/auth'
-import { apiErrorMessage, getTenantId } from '../../api/client'
+import { apiErrorMessage, getTenantId, setTenantId } from '../../api/client'
 import { isPlatformAdmin } from '../../store/tenant'
 import { useTenantStore } from '../../store/tenant'
 import { AuthShell } from './AuthShell'
+import { demo } from '../../config/marketing'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -33,20 +35,56 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
   const loadTenant = useTenantStore((s) => s.load)
 
   const from = (location.state as { from?: string } | null)?.from
+  const demoStarted = useRef(false)
+
+  async function performLogin(emailValue: string, passwordValue: string) {
+    setError('')
+    await login(emailValue, passwordValue)
+    const user = useAuthStore.getState().user
+    if (!user) throw new Error('Login failed')
+    const isPlatform = isPlatformAdmin(user.role)
+    const target = from ?? (isPlatform ? '/admin' : getTenantId() ? '/app' : '/select-company')
+    if (target.startsWith('/app')) {
+      await loadTenant()
+    }
+    navigate(target, { replace: true })
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setError('')
     setSubmitting(true)
     try {
-      await login(email, password)
+      await performLogin(email, password)
+    } catch (err) {
+      setError(apiErrorMessage(err))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function enterDemo() {
+    setError('')
+    setDemoLoading(true)
+    try {
+      await login(demo.email, demo.password)
       const user = useAuthStore.getState().user
       if (!user) throw new Error('Login failed')
+      // The demo account belongs to a school — drop straight into the school
+      // workspace instead of the company picker when possible.
+      const memberships = useAuthStore.getState().memberships
+      const school = memberships.find((m) => m.type === 'SCHOOL')
+      if (school) {
+        setTenantId(school.id)
+        await loadTenant()
+        navigate('/school', { replace: true })
+        return
+      }
       const isPlatform = isPlatformAdmin(user.role)
-      const target = from ?? (isPlatform ? '/admin' : getTenantId() ? '/app' : '/select-company')
+      const target = isPlatform ? '/admin' : getTenantId() ? '/app' : '/select-company'
       if (target.startsWith('/app')) {
         await loadTenant()
       }
@@ -54,9 +92,20 @@ export function LoginPage() {
     } catch (err) {
       setError(apiErrorMessage(err))
     } finally {
-      setSubmitting(false)
+      setDemoLoading(false)
     }
   }
+
+  // Allow a shareable one-click demo link: /login?demo=1
+  useEffect(() => {
+    if (!demo.enabled) return
+    const wantsDemo = new URLSearchParams(location.search).get('demo') === '1'
+    if (wantsDemo && !demoStarted.current) {
+      demoStarted.current = true
+      void enterDemo()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <AuthShell title="Sign in to your organization workspace">
@@ -142,6 +191,32 @@ export function LoginPage() {
             {submitting ? <CircularProgress size={22} color="inherit" /> : 'Enter Workspace'}
           </Button>
 
+          {demo.enabled ? (
+            <Button
+              variant="outlined"
+              size="large"
+              fullWidth
+              disabled={submitting || demoLoading}
+              onClick={enterDemo}
+              startIcon={demoLoading ? <CircularProgress size={20} color="inherit" /> : <SchoolIcon />}
+              sx={{
+                py: 1.5,
+                fontWeight: 800,
+                fontSize: '1rem',
+                borderColor: 'rgba(56, 189, 248, 0.5)',
+                color: '#E2E8F0',
+                bgcolor: 'rgba(56, 189, 248, 0.08)',
+                borderRadius: 2,
+                '&:hover': {
+                  borderColor: '#38BDF8',
+                  bgcolor: 'rgba(56, 189, 248, 0.16)',
+                },
+              }}
+            >
+              Explore a live demo school
+            </Button>
+          ) : null}
+
           <Stack direction="row" justifyContent={{ xs: 'center', sm: 'flex-end' }}>
             <Link href="/forgot-password" variant="body2" sx={{ color: '#FF4D5E', fontWeight: 600 }}>
               Forgot password?
@@ -180,6 +255,12 @@ export function LoginPage() {
           <Typography variant="caption" align="center" sx={{ color: '#8A8F99', display: 'block', mt: -1.5 }}>
             Choose either <strong>School</strong> or <strong>Company</strong> workspace
           </Typography>
+
+          <Stack direction="row" justifyContent="center" sx={{ textAlign: 'center', pt: 0.5 }}>
+            <Link href="/for-schools" variant="body2" sx={{ color: '#9CA3AF', '&:hover': { color: '#FFFFFF' } }}>
+              Why TGManager for schools?
+            </Link>
+          </Stack>
 
           <Stack direction="row" justifyContent="center" sx={{ textAlign: 'center', pt: 0.5 }}>
             <Link href="/password-reset-request" variant="body2" sx={{ color: '#9CA3AF', '&:hover': { color: '#FFFFFF' } }}>

@@ -26,12 +26,14 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DownloadIcon from '@mui/icons-material/Download'
+import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import { documentsApi, type DocRecord, type DocumentType } from '../../api/documents'
 import { branchesApi } from '../../api/branches'
 import { apiErrorMessage } from '../../api/client'
 import { Can } from '../../components/PermissionGate'
 import { saveBlob } from '../../lib/download'
+import { filenameWithExtension, shareBlobToWhatsApp } from '../../lib/documentExport'
 
 export function DocumentsPage() {
   const qc = useQueryClient()
@@ -110,6 +112,19 @@ export function DocumentsPage() {
                         void documentsApi.download(d.id).then((blob) => saveBlob(blob, d.title))
                       }}
                     ><DownloadIcon fontSize="small" /></IconButton>
+                    <IconButton
+                      title="Share to WhatsApp"
+                      color="success"
+                      onClick={() => {
+                        void documentsApi.download(d.id).then((blob) =>
+                          shareBlobToWhatsApp(blob, {
+                            filename: filenameWithExtension(d.title, d.mimeType),
+                            title: d.title,
+                            message: d.title,
+                          }),
+                        )
+                      }}
+                    ><WhatsAppIcon fontSize="small" /></IconButton>
                   </Can>
                   <Can permissions={['document.delete']}>
                     <IconButton color="error" onClick={() => setConfirm(d)}><DeleteIcon fontSize="small" /></IconButton>

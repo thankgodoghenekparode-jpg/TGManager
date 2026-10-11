@@ -62,10 +62,12 @@ import { BillingPage } from './pages/company/Billing'
 import { ChangeEmailPage } from './pages/account/ChangeEmail'
 import { MyRequestsPage } from './pages/account/MyRequests'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
+import { ForSchoolsPage } from './pages/marketing/ForSchools'
 
 const router = createBrowserRouter([
   { path: '/', element: <PortfolioPage /> },
   { path: '/portfolio', element: <PortfolioPage /> },
+  { path: '/for-schools', element: <ForSchoolsPage /> },
   {
     element: <GuestGuard />,
     children: [

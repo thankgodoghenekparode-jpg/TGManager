@@ -182,3 +182,58 @@ export async function shareNodeToWhatsApp(
   window.open(url, '_blank', 'noopener,noreferrer')
   return 'downloaded'
 }
+
+const MIME_EXTENSION: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'application/msword': 'doc',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'text/csv': 'csv',
+  'text/plain': 'txt',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/webp': 'webp',
+  'application/zip': 'zip',
+}
+
+/** Ensure a title has a sensible file extension, derived from its MIME type. */
+export function filenameWithExtension(title: string, mimeType?: string | null): string {
+  if (/\.(pdf|png|jpe?g|webp|gif|docx?|xlsx?|csv|txt|zip)$/i.test(title)) return title
+  const extension = mimeType ? MIME_EXTENSION[mimeType] : undefined
+  return extension ? `${title}.${extension}` : title
+}
+
+export interface BlobShareMeta {
+  /** Filename (with extension) for the shared attachment. */
+  filename: string
+  /** Share title / document name. */
+  title: string
+  /** Prefilled WhatsApp message body. */
+  message?: string
+}
+
+/**
+ * Share an already-fetched file (e.g. an uploaded document) to WhatsApp, using
+ * the same native-share-then-fallback strategy as `shareNodeToWhatsApp`.
+ */
+export async function shareBlobToWhatsApp(blob: Blob, meta: BlobShareMeta): Promise<ShareResult> {
+  const type = blob.type || 'application/octet-stream'
+  const file = new File([blob], meta.filename, { type })
+  const text = meta.message ?? meta.title
+  const nav = navigator as Navigator & { canShare?: (data: FileShareData) => boolean }
+  const shareData: FileShareData = { files: [file], title: meta.title, text }
+
+  if (typeof nav.share === 'function' && nav.canShare?.(shareData)) {
+    try {
+      await nav.share(shareData)
+      return 'shared'
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return 'cancelled'
+    }
+  }
+
+  saveBlob(blob, meta.filename)
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer')
+  return 'downloaded'
+}

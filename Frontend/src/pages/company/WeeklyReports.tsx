@@ -30,6 +30,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DownloadIcon from '@mui/icons-material/Download'
 import FilePresentIcon from '@mui/icons-material/FilePresent'
+import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import { weeklyReportsApi, type ReportStatus, type WeeklyReport } from '../../api/weeklyReports'
@@ -37,6 +38,7 @@ import { documentsApi, type DocRecord } from '../../api/documents'
 import { apiErrorMessage } from '../../api/client'
 import { Can, useCan } from '../../components/PermissionGate'
 import { saveBlob } from '../../lib/download'
+import { filenameWithExtension, shareBlobToWhatsApp } from '../../lib/documentExport'
 
 export function WeeklyReportsPage() {
   const qc = useQueryClient()
@@ -227,6 +229,21 @@ export function WeeklyReportsPage() {
                         }}
                       >
                         <DownloadIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        title="Share to WhatsApp"
+                        color="success"
+                        onClick={() => {
+                          void documentsApi.download(a.id).then((blob) =>
+                            shareBlobToWhatsApp(blob, {
+                              filename: filenameWithExtension(a.title, a.mimeType),
+                              title: a.title,
+                              message: a.title,
+                            }),
+                          )
+                        }}
+                      >
+                        <WhatsAppIcon fontSize="small" />
                       </IconButton>
                     </Stack>
                   ))}
