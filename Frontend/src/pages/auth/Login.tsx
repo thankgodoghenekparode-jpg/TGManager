@@ -61,7 +61,7 @@ export function LoginPage() {
   return (
     <AuthShell title="Sign in to your organization workspace">
       <form onSubmit={onSubmit}>
-        <Stack spacing={2.5}>
+        <Stack spacing={3}>
           {error && (
             <Alert
               severity="error"
@@ -84,10 +84,11 @@ export function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             fullWidth
+            sx={{ '& .MuiInputBase-input': { fontSize: '1rem' } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <EmailOutlinedIcon sx={{ color: '#8A8F99', fontSize: 20 }} />
+                  <EmailOutlinedIcon sx={{ color: '#8A8F99', fontSize: 22 }} />
                 </InputAdornment>
               ),
             }}
@@ -101,10 +102,11 @@ export function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             fullWidth
+            sx={{ '& .MuiInputBase-input': { fontSize: '1rem' } }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <LockOutlinedIcon sx={{ color: '#8A8F99', fontSize: 20 }} />
+                  <LockOutlinedIcon sx={{ color: '#8A8F99', fontSize: 22 }} />
                 </InputAdornment>
               ),
               endAdornment: (
@@ -131,9 +133,9 @@ export function LoginPage() {
             fullWidth
             endIcon={!submitting && <ArrowForwardIcon />}
             sx={{
-              py: 1.5,
+              py: 1.75,
               fontWeight: 800,
-              fontSize: '1rem',
+              fontSize: '1.05rem',
               letterSpacing: '0.01em',
             }}
           >
@@ -159,9 +161,9 @@ export function LoginPage() {
             onClick={() => navigate('/register')}
             startIcon={<PersonAddAltOutlinedIcon />}
             sx={{
-              py: 1.3,
+              py: 1.5,
               fontWeight: 800,
-              fontSize: '0.95rem',
+              fontSize: '1rem',
               borderColor: 'rgba(236, 6, 24, 0.5)',
               color: '#FFFFFF',
               bgcolor: 'rgba(236, 6, 24, 0.08)',

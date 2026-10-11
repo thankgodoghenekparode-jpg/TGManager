@@ -302,11 +302,11 @@ export function AuthShell({
         <Box
           sx={{
             position: 'absolute',
-            width: 460,
-            height: 460,
+            width: 520,
+            height: 520,
             borderRadius: '50%',
             background: 'radial-gradient(circle, rgba(236, 6, 24, 0.28) 0%, rgba(184, 0, 16, 0.12) 50%, transparent 70%)',
-            filter: 'blur(50px)',
+            filter: 'blur(55px)',
             pointerEvents: 'none',
             zIndex: -1,
           }}
@@ -325,7 +325,7 @@ export function AuthShell({
           className="auth-radiant-card"
           sx={{
             width: '100%',
-            maxWidth: 460,
+            maxWidth: 540,
             borderRadius: 4,
             position: 'relative',
             overflow: 'hidden',
@@ -345,13 +345,13 @@ export function AuthShell({
             }}
           />
 
-          <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
+          <CardContent sx={{ p: { xs: 3.5, sm: 5 } }}>
             {/* Header Badge */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
               <Box
                 sx={{
-                  width: 28,
-                  height: 28,
+                  width: 32,
+                  height: 32,
                   borderRadius: 1.5,
                   bgcolor: 'rgba(236, 6, 24, 0.18)',
                   color: '#EC0618',
@@ -360,7 +360,7 @@ export function AuthShell({
                   justifyContent: 'center',
                 }}
               >
-                <LockOutlinedIcon sx={{ fontSize: 16 }} />
+                <LockOutlinedIcon sx={{ fontSize: 18 }} />
               </Box>
               <Typography variant="caption" sx={{ color: '#FF6B7A', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Secure Access Gateway
