@@ -1,23 +1,30 @@
 import { useEffect, useState } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Box, CircularProgress } from '@mui/material'
-import { createBrowserRouter, RouterProvider, useLocation, useNavigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, RouterProvider, useLocation, useNavigate } from 'react-router-dom'
 import { AppThemeProvider } from './contexts/ThemeContext'
 import { queryClient } from './lib/query'
 import { useAuthStore } from './store/auth'
 import { useTenantStore } from './store/tenant'
 import { getTenantId, setTenantId } from './api/client'
-import { AuthGuard, GuestGuard, PlatformGuard, CompanyGuard, SchoolGuard } from './router/guards'
+import { AuthGuard, GuestGuard, PlatformGuard, CompanyGuard, SchoolGuard, ParentGuard } from './router/guards'
 import { PlatformLayout } from './components/layout/PlatformLayout'
 import { CompanyLayout } from './components/layout/CompanyLayout'
 import { SchoolLayout } from './components/layout/SchoolLayout'
+import { ParentLayout } from './components/layout/ParentLayout'
 import { SchoolDashboardPage } from './pages/school/SchoolDashboard'
 import { StudentsPage } from './pages/school/StudentsPage'
 import { ClassesPage } from './pages/school/ClassesPage'
 import { AttendancePage as SchoolAttendancePage } from './pages/school/AttendancePage'
 import { GradingPage } from './pages/school/GradingPage'
+import { TimetablePage } from './pages/school/TimetablePage'
+import { SchoolStaffPage } from './pages/school/SchoolStaffPage'
+import { SchoolParentsPage } from './pages/school/SchoolParentsPage'
+import { AnnouncementsPage } from './pages/school/AnnouncementsPage'
 import { FeesPage } from './pages/school/FeesPage'
 import { SchoolSettingsPage } from './pages/school/SchoolSettingsPage'
+import { ParentDashboard } from './pages/parent/ParentDashboard'
+import { ChildDetailPage } from './pages/parent/ChildDetailPage'
 import { PortfolioPage } from './pages/Portfolio'
 import { LoginPage } from './pages/auth/Login'
 import { RegisterPage } from './pages/auth/Register'
@@ -133,11 +140,26 @@ const router = createBrowserRouter([
               { path: '/school/classes', element: <ClassesPage /> },
               { path: '/school/attendance', element: <SchoolAttendancePage /> },
               { path: '/school/grading', element: <GradingPage /> },
+              { path: '/school/timetable', element: <TimetablePage /> },
               { path: '/school/fees', element: <FeesPage /> },
-              { path: '/school/staff', element: <StaffPage /> },
+              { path: '/school/staff', element: <SchoolStaffPage /> },
+              { path: '/school/parents', element: <SchoolParentsPage /> },
               { path: '/school/chat', element: <ChatPage /> },
-              { path: '/school/memos', element: <MemosPage /> },
+              { path: '/school/announcements', element: <AnnouncementsPage /> },
+              { path: '/school/memos', element: <Navigate to="/school/announcements" replace /> },
               { path: '/school/settings', element: <SchoolSettingsPage /> },
+            ],
+          },
+        ],
+      },
+      {
+        element: <ParentGuard />,
+        children: [
+          {
+            element: <ParentLayout />,
+            children: [
+              { path: '/parent', element: <ParentDashboard /> },
+              { path: '/parent/children/:id', element: <ChildDetailPage /> },
             ],
           },
         ],

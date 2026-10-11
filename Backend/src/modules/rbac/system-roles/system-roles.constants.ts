@@ -13,6 +13,7 @@ export const SYSTEM_ROLE_NAMES = {
   TEACHER: 'TEACHER',
   ACCOUNTANT: 'ACCOUNTANT',
   GATE_OFFICER: 'GATE_OFFICER',
+  PARENT: 'PARENT',
 } as const;
 
 interface SystemRoleDef {
@@ -210,6 +211,15 @@ export const SYSTEM_ROLE_DEFS: Record<
       PERMISSIONS.SCHOOL_ATTENDANCE_MANAGE,
       PERMISSIONS.CHAT_CREATE,
       PERMISSIONS.CHAT_VIEW,
+    ],
+  },
+  PARENT: {
+    name: SYSTEM_ROLE_NAMES.PARENT,
+    description:
+      'Parent or guardian with read-only access to their own children: attendance, results, report cards and fees.',
+    permissions: [
+      PERMISSIONS.SCHOOL_VIEW,
+      PERMISSIONS.SCHOOL_PARENT_VIEW,
     ],
   },
 };

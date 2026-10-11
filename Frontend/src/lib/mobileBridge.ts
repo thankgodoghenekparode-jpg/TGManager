@@ -1,5 +1,3 @@
-import { getAccessToken, getAccessTokenCookie, getTenantId } from '../api/client'
-
 type NativeBridge = { postMessage: (message: string) => void }
 
 interface NativeBridgeWindow {
@@ -17,16 +15,15 @@ export function isInNativeApp(): boolean {
 }
 
 /**
- * Push the current auth session to the native wrapper so it can register this
- * device for push notifications (FCM on Android, APNs on iOS via Expo).
+ * Tell the native wrapper the web app is ready for the push token. The wrapper
+ * replies with `{ type: "push-token", token }`. Sent on every login/tenant
+ * change because the wrapper may have obtained the token before the web app
+ * finished booting (or vice versa).
  */
-export function syncAuthToNative(): void {
+export function notifyNativeReady(): void {
   const bridge = nativeBridge()
   if (!bridge) return
-  const token = getAccessToken() ?? getAccessTokenCookie()
-  const tenantId = getTenantId()
-  if (!token || !tenantId) return
-  bridge.postMessage(JSON.stringify({ type: 'auth', token, tenantId }))
+  bridge.postMessage(JSON.stringify({ type: 'ready' }))
 }
 
 export interface NativeMessage {

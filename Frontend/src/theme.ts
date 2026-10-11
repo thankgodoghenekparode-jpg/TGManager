@@ -38,18 +38,20 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
         'Arial',
         'sans-serif',
       ].join(','),
-      h1: { fontWeight: 800, letterSpacing: '-0.025em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.85rem' },
-      h2: { fontWeight: 800, letterSpacing: '-0.02em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.5rem' },
-      h3: { fontWeight: 700, letterSpacing: '-0.015em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.25rem' },
-      h4: { fontWeight: 700, letterSpacing: '-0.01em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.1rem' },
-      h5: { fontWeight: 700, letterSpacing: '-0.005em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1rem' },
-      h6: { fontWeight: 700, letterSpacing: 0, color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '0.875rem' },
-      subtitle1: { fontWeight: 600, color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '0.875rem', lineHeight: 1.4 },
-      subtitle2: { fontWeight: 600, color: isDark ? '#94A3B8' : '#475569', fontSize: '0.8rem', lineHeight: 1.4 },
-      body1: { fontWeight: 400, color: isDark ? '#F1F5F9' : '#0F172A', letterSpacing: '-0.003em', fontSize: '0.875rem', lineHeight: 1.5 },
-      body2: { fontWeight: 400, color: isDark ? '#94A3B8' : '#334155', letterSpacing: '-0.003em', fontSize: '0.8125rem', lineHeight: 1.5 },
-      button: { fontWeight: 600, textTransform: 'none', letterSpacing: '0.01em', fontSize: '0.8125rem' },
-      caption: { fontWeight: 500, color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.75rem', lineHeight: 1.35 },
+      // Compact, portable scale: everything is expressed in rem so the base
+      // html font-size below is the single lever that shrinks the whole app.
+      h1: { fontWeight: 800, letterSpacing: '-0.025em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.6rem' },
+      h2: { fontWeight: 800, letterSpacing: '-0.02em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.35rem' },
+      h3: { fontWeight: 700, letterSpacing: '-0.015em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.15rem' },
+      h4: { fontWeight: 700, letterSpacing: '-0.01em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '1.05rem' },
+      h5: { fontWeight: 700, letterSpacing: '-0.005em', color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '0.95rem' },
+      h6: { fontWeight: 700, letterSpacing: 0, color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '0.85rem' },
+      subtitle1: { fontWeight: 600, color: isDark ? '#FFFFFF' : '#090A0F', fontSize: '0.85rem', lineHeight: 1.4 },
+      subtitle2: { fontWeight: 600, color: isDark ? '#94A3B8' : '#475569', fontSize: '0.775rem', lineHeight: 1.4 },
+      body1: { fontWeight: 400, color: isDark ? '#F1F5F9' : '#0F172A', letterSpacing: '-0.003em', fontSize: '0.85rem', lineHeight: 1.5 },
+      body2: { fontWeight: 400, color: isDark ? '#94A3B8' : '#334155', letterSpacing: '-0.003em', fontSize: '0.79rem', lineHeight: 1.5 },
+      button: { fontWeight: 600, textTransform: 'none', letterSpacing: '0.01em', fontSize: '0.79rem' },
+      caption: { fontWeight: 500, color: isDark ? '#94A3B8' : '#64748B', fontSize: '0.725rem', lineHeight: 1.35 },
     },
     components: {
       MuiCssBaseline: {
@@ -57,7 +59,12 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
           html: {
             WebkitTextSizeAdjust: '100%',
             textSizeAdjust: '100%',
-            fontSize: '14.5px', // High-density professional SaaS scale
+            // Base scale for the entire app (all typography/bespoke sizes are
+            // rem-based). Steps down further on smaller screens so the UI stays
+            // readable yet compact on tablets and phones.
+            fontSize: '13.5px',
+            '@media (max-width:900px)': { fontSize: '13px' },
+            '@media (max-width:600px)': { fontSize: '12.5px' },
           },
           '::selection': { backgroundColor: 'rgba(236, 6, 24, 0.35)', color: '#FFFFFF' },
           '& *::-webkit-scrollbar': { width: 6, height: 6 },

@@ -135,11 +135,13 @@ export interface SchoolAttendanceRecord {
 
 export interface AttendanceStats {
   date: string;
-  totalStudents: number;
+  totalActiveStudents: number;
   present: number;
   late: number;
   absent: number;
-  attendanceRate: number;
+  excused: number;
+  halfDay: number;
+  attendanceRatePercent: number;
 }
 
 export interface GradingScale {
@@ -157,6 +159,60 @@ export interface AssessmentComponent {
   name: string;
   weightPercent: number;
   maxScore: number;
+}
+
+export const DAYS_OF_WEEK = [
+  'MONDAY',
+  'TUESDAY',
+  'WEDNESDAY',
+  'THURSDAY',
+  'FRIDAY',
+  'SATURDAY',
+  'SUNDAY',
+] as const;
+export type DayOfWeek = (typeof DAYS_OF_WEEK)[number];
+
+export interface TimetablePeriod {
+  id: string;
+  classId: string;
+  subjectId: string;
+  teacherId?: string | null;
+  room?: string | null;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  class: { id: string; name: string; level: string };
+  subject: { id: string; name: string; code: string };
+  teacher?: { id: string; firstName: string; lastName: string; photo?: string | null } | null;
+}
+
+export const SCHOOL_STAFF_CATEGORIES = [
+  'TEACHER',
+  'ADMINISTRATOR',
+  'ACCOUNTANT',
+  'SECRETARY',
+  'GATE_OFFICER',
+  'DRIVER',
+  'SECURITY',
+  'CLEANER',
+  'OTHER',
+] as const;
+export type SchoolStaffCategory = (typeof SCHOOL_STAFF_CATEGORIES)[number];
+
+export interface SchoolStaffMember {
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  department?: string | null;
+  designation?: string | null;
+  category: SchoolStaffCategory;
+  employmentDate?: string | null;
+  photo?: string | null;
+  status: string;
 }
 
 export interface AcademicResult {
@@ -180,32 +236,69 @@ export interface AcademicResult {
 }
 
 export interface ReportCard {
-  student: Student;
-  session: AcademicSession;
-  term: Term;
-  class: ClassRoom;
+  school?: SchoolProfile | null;
+  student: {
+    id: string;
+    admissionNumber: string;
+    firstName: string;
+    lastName: string;
+    fullName: string;
+    gender?: string;
+    photo?: string | null;
+    className: string;
+  };
+  session: string;
+  term: string;
+  class: { id: string; name: string; level: string } | null;
   results: Array<{
+    subjectId: string;
     subjectName: string;
     subjectCode: string;
+    assignmentScore?: number | null;
+    testScore?: number | null;
     caScore: number;
     examScore: number;
     totalScore: number;
-    grade: string;
-    remark: string;
-    classAverage?: number;
-    highestScore?: number;
-    lowestScore?: number;
+    grade?: string | null;
+    gradePoint?: number | null;
+    remark?: string | null;
+    subjectPosition?: number | null;
+    classAverage?: number | null;
+    highestScore?: number | null;
+    lowestScore?: number | null;
+    status: string;
   }>;
   summary: {
+    totalSubjects: number;
     totalMarks: number;
     obtainedMarks: number;
+    averageScore: number;
     percentage: number;
     gpa: number;
-    position?: number;
-    totalInClass?: number;
+    position: number | null;
+    totalInClass: number;
     principalRemark: string;
     teacherRemark: string;
   };
+}
+
+export interface ClassResultsSheet {
+  class: { id: string; name: string; level: string };
+  session: string;
+  term: string;
+  subjectCount: number;
+  totalStudents: number;
+  students: Array<{
+    studentId: string;
+    admissionNumber: string;
+    name: string;
+    subjectsCount: number;
+    obtained: number;
+    possible: number;
+    average: number;
+    status: 'DRAFT' | 'APPROVED' | 'PUBLISHED';
+    position: number;
+  }>;
 }
 
 export interface FeeStructure {
@@ -252,13 +345,73 @@ export interface StudentInvoice {
 }
 
 export interface RevenueStats {
-  totalBilled: number;
+  totalInvoicesCount: number;
+  totalInvoiced: number;
   totalCollected: number;
   totalOutstanding: number;
-  collectionRate: number;
-  invoicesCount: number;
-  paidCount: number;
-  unpaidCount: number;
+  collectionRatePercent: number;
+}
+
+export type AnnouncementAudience = 'ALL' | 'STUDENTS' | 'PARENTS' | 'STAFF';
+
+export interface SchoolAnnouncement {
+  id: string;
+  tenantId: string;
+  title: string;
+  content: string;
+  audience: AnnouncementAudience;
+  publishedAt: string;
+  createdByUserId?: string | null;
+  createdBy?: { id: string; firstName: string; lastName: string } | null;
+  createdAt: string;
+}
+
+export interface SchoolAnalyticsOverview {
+  students: {
+    total: number;
+    active: number;
+    byStatus: Array<{ status: string; count: number }>;
+    byGender: Array<{ gender: string; count: number }>;
+  };
+  staff: {
+    total: number;
+    byCategory: Array<{ category: string; count: number }>;
+  };
+  academics: {
+    classes: number;
+    subjects: number;
+    guardians: number;
+    enrollmentByClass: Array<{ id: string; name: string; level: string; students: number }>;
+  };
+  attendanceToday: {
+    total: number;
+    byStatus: Array<{ status: string; count: number }>;
+  };
+  fees: {
+    totalInvoiced: number;
+    totalPaid: number;
+    outstanding: number;
+    byStatus: Array<{ status: string; count: number }>;
+  };
+  results: { approved: number; published: number };
+  currentSession?: {
+    id: string;
+    name: string;
+    isCurrent: boolean;
+    startDate?: string | null;
+    endDate?: string | null;
+  } | null;
+  currentTerm?: {
+    id: string;
+    name: string;
+    status: string;
+    isCurrent: boolean;
+    resultPublished: boolean;
+    resultEntryOpen: boolean;
+    startDate?: string | null;
+    endDate?: string | null;
+  } | null;
+  announcements: number;
 }
 
 // ==================== API Client Methods ====================
@@ -289,7 +442,39 @@ export const schoolApi = {
   createSubject: (data: { name: string; code: string; category?: string; description?: string }) =>
     api.post<Subject>('/school/subjects', data).then((r) => r.data),
   assignClassSubject: (data: { classId: string; subjectId: string; teacherId?: string }) =>
-    api.post('/school/classes/assign-subject', data).then((r) => r.data),
+    api
+      .post(`/school/classes/${data.classId}/subjects`, {
+        subjectId: data.subjectId,
+        teacherId: data.teacherId,
+      })
+      .then((r) => r.data),
+
+  // School Staff & Teachers
+  listSchoolStaff: (params?: { search?: string; category?: string; status?: string }) =>
+    api.get<SchoolStaffMember[]>('/school/staff', { params }).then((r) => r.data),
+  createSchoolStaff: (data: Partial<SchoolStaffMember>) =>
+    api.post<SchoolStaffMember>('/school/staff', data).then((r) => r.data),
+  updateSchoolStaff: (id: string, data: Partial<SchoolStaffMember>) =>
+    api.patch<SchoolStaffMember>(`/school/staff/${id}`, data).then((r) => r.data),
+  deleteSchoolStaff: (id: string) =>
+    api.delete(`/school/staff/${id}`).then((r) => r.data),
+
+  // Timetable
+  listTimetable: (params?: { classId?: string; teacherId?: string; subjectId?: string; dayOfWeek?: DayOfWeek }) =>
+    api.get<TimetablePeriod[]>('/school/timetable', { params }).then((r) => r.data),
+  createTimetablePeriod: (data: {
+    classId: string;
+    subjectId: string;
+    teacherId?: string | null;
+    room?: string | null;
+    dayOfWeek: DayOfWeek;
+    startTime: string;
+    endTime: string;
+  }) => api.post<TimetablePeriod>('/school/timetable', data).then((r) => r.data),
+  updateTimetablePeriod: (id: string, data: Partial<Omit<TimetablePeriod, 'id' | 'class' | 'subject' | 'teacher'>>) =>
+    api.patch<TimetablePeriod>(`/school/timetable/${id}`, data).then((r) => r.data),
+  deleteTimetablePeriod: (id: string) =>
+    api.delete(`/school/timetable/${id}`).then((r) => r.data),
 
   // Students & Guardians
   listStudents: (params?: { classId?: string; search?: string; status?: string; page?: number; limit?: number }) =>
@@ -327,12 +512,26 @@ export const schoolApi = {
     api.post<AssessmentComponent>('/school/grading/components', data).then((r) => r.data),
   queryResults: (params: { sessionId?: string; termId?: string; classId?: string; subjectId?: string; studentId?: string }) =>
     api.get<AcademicResult[]>('/school/grading/results', { params }).then((r) => r.data),
-  recordResults: (data: { sessionId: string; termId: string; classId: string; subjectId: string; results: Array<{ studentId: string; caScore: number; examScore: number }> }) =>
-    api.post('/school/grading/results', data).then((r) => r.data),
-  approveResults: (data: { sessionId: string; termId: string; classId?: string; action: 'APPROVE' | 'REJECT' | 'PUBLISH' }) =>
+  recordResults: (data: {
+    sessionId: string;
+    termId: string;
+    classId: string;
+    subjectId: string;
+    scores: Array<{
+      studentId: string;
+      assignmentScore?: number | null;
+      testScore?: number | null;
+      caScore?: number;
+      examScore?: number;
+      remark?: string | null;
+    }>;
+  }) => api.post('/school/grading/results', data).then((r) => r.data),
+  approveResults: (data: { sessionId: string; termId: string; classId: string; subjectId?: string; action: 'APPROVE' | 'REJECT' | 'PUBLISH'; notes?: string | null }) =>
     api.post('/school/grading/approve', data).then((r) => r.data),
   getReportCard: (studentId: string, sessionId: string, termId: string) =>
     api.get<ReportCard>(`/school/grading/report-card/${studentId}`, { params: { sessionId, termId } }).then((r) => r.data),
+  getClassResultsSheet: (params: { classId: string; sessionId: string; termId: string }) =>
+    api.get<ClassResultsSheet>('/school/grading/class-sheet', { params }).then((r) => r.data),
 
   // Fees & Invoices
   listFeeStructures: (params?: { classId?: string; sessionId?: string; termId?: string }) =>
@@ -346,8 +545,21 @@ export const schoolApi = {
     api.post<StudentInvoice>('/school/invoices', data).then((r) => r.data),
   generateClassInvoices: (data: { classId: string; sessionId: string; termId: string; dueDate?: string; feeStructureIds: string[] }) =>
     api.post('/school/invoices/generate-class', data).then((r) => r.data),
-  recordPayment: (data: { invoiceId: string; amount: number; paymentMethod: string; paymentReference?: string; notes?: string }) =>
+  recordPayment: (data: { invoiceId: string; amount: number; method: 'CASH' | 'BANK_TRANSFER' | 'POS' | 'ONLINE' | 'OTHER'; notes?: string; paymentDate?: string }) =>
     api.post('/school/payments', data).then((r) => r.data),
   getRevenueStats: (params?: { sessionId?: string; termId?: string }) =>
     api.get<RevenueStats>('/school/fees/stats', { params }).then((r) => r.data),
+
+  // Announcements
+  listAnnouncements: (params?: { audience?: AnnouncementAudience; search?: string; page?: number; limit?: number }) =>
+    api.get<{ items: SchoolAnnouncement[]; total: number; page: number; limit: number }>('/school/announcements', { params }).then((r) => r.data),
+  createAnnouncement: (data: { title: string; content: string; audience: AnnouncementAudience; publishedAt?: string | null }) =>
+    api.post<SchoolAnnouncement>('/school/announcements', data).then((r) => r.data),
+  updateAnnouncement: (id: string, data: Partial<{ title: string; content: string; audience: AnnouncementAudience; publishedAt?: string | null }>) =>
+    api.patch<SchoolAnnouncement>(`/school/announcements/${id}`, data).then((r) => r.data),
+  deleteAnnouncement: (id: string) => api.delete(`/school/announcements/${id}`).then((r) => r.data),
+
+  // Analytics
+  getSchoolAnalyticsOverview: () =>
+    api.get<SchoolAnalyticsOverview>('/school/analytics/overview').then((r) => r.data),
 };

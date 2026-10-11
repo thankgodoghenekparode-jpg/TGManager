@@ -28,6 +28,8 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PeopleIcon from '@mui/icons-material/People';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import ChatIcon from '@mui/icons-material/Chat';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import { useTenantStore } from '../../store/tenant';
@@ -62,15 +64,29 @@ export function SchoolDashboardPage() {
     queryFn: () => schoolApi.getRevenueStats(),
   });
 
+  const { data: analytics } = useQuery({
+    queryKey: ['school', 'analytics', 'overview'],
+    queryFn: () => schoolApi.getSchoolAnalyticsOverview(),
+  });
+
   const { data: sessions } = useQuery({
     queryKey: ['school', 'sessions'],
     queryFn: () => schoolApi.listSessions(),
   });
 
   const currentSession = sessions?.find((s) => s.isCurrent) ?? sessions?.[0];
-  const totalStudents = studentsData?.total ?? 30;
-  const attendanceRate = attendanceStats?.attendanceRate ?? 88;
-  const totalClasses = classesData?.length ?? 6;
+  const totalStudents = analytics?.students.total ?? studentsData?.total ?? 30;
+
+  const attendanceToday = analytics?.attendanceToday;
+  const attendancePresent =
+    attendanceToday?.byStatus.find((s) => s.status === 'PRESENT')?.count ?? 0;
+  const attendanceLate =
+    attendanceToday?.byStatus.find((s) => s.status === 'LATE')?.count ?? 0;
+  const attendanceRate = attendanceToday?.total
+    ? Math.round((attendancePresent / attendanceToday.total) * 100)
+    : attendanceStats?.attendanceRatePercent ?? 88;
+
+  const totalClasses = analytics?.academics.classes ?? classesData?.length ?? 6;
 
   const recentLogs = Array.isArray(attendanceRecent)
     ? attendanceRecent
@@ -78,9 +94,9 @@ export function SchoolDashboardPage() {
     ? (attendanceRecent as any).items
     : [];
 
-  const totalBilled = revenueStats?.totalBilled ?? 3300000;
-  const totalCollected = revenueStats?.totalCollected ?? 1700000;
-  const collectionRate = revenueStats?.collectionRate ?? Math.round((totalCollected / (totalBilled || 1)) * 100);
+  const totalBilled = analytics?.fees.totalInvoiced ?? revenueStats?.totalInvoiced ?? 3300000;
+  const totalCollected = analytics?.fees.totalPaid ?? revenueStats?.totalCollected ?? 1700000;
+  const collectionRate = revenueStats?.collectionRatePercent ?? Math.round((totalCollected / (totalBilled || 1)) * 100);
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -167,7 +183,7 @@ export function SchoolDashboardPage() {
                     {attendanceRate}%
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {attendanceStats?.present ?? 26} present • {attendanceStats?.late ?? 4} late
+                    {attendancePresent} present • {attendanceLate} late
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: 'rgba(34, 197, 94, 0.12)', color: 'success.main', width: 48, height: 48 }}>
@@ -278,6 +294,22 @@ export function SchoolDashboardPage() {
         </Button>
         <Button
           variant="outlined"
+          startIcon={<ScheduleIcon />}
+          onClick={() => navigate('/school/timetable')}
+          size="medium"
+        >
+          Class Timetable
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<FamilyRestroomIcon />}
+          onClick={() => navigate('/school/parents')}
+          size="medium"
+        >
+          Parents Portal
+        </Button>
+        <Button
+          variant="outlined"
           startIcon={<ChatIcon />}
           onClick={() => navigate('/school/chat')}
           size="medium"
@@ -287,7 +319,7 @@ export function SchoolDashboardPage() {
         <Button
           variant="outlined"
           startIcon={<CampaignIcon />}
-          onClick={() => navigate('/school/memos')}
+          onClick={() => navigate('/school/announcements')}
           size="medium"
         >
           Announcements

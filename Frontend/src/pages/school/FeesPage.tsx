@@ -74,8 +74,12 @@ export function FeesPage() {
       return schoolApi.recordPayment({
         invoiceId: selectedInvoice.id,
         amount: Number(paymentForm.amount),
-        paymentMethod: paymentForm.paymentMethod,
-        paymentReference: paymentForm.paymentReference || `TXN-${Date.now()}`,
+        method: paymentForm.paymentMethod as
+          | 'CASH'
+          | 'BANK_TRANSFER'
+          | 'POS'
+          | 'ONLINE'
+          | 'OTHER',
         notes: paymentForm.notes,
       });
     },
@@ -87,7 +91,7 @@ export function FeesPage() {
     },
   });
 
-  const totalBilled = revenueStats?.totalBilled ?? 3300000;
+  const totalBilled = revenueStats?.totalInvoiced ?? 3300000;
   const totalCollected = revenueStats?.totalCollected ?? 1700000;
   const totalOutstanding = revenueStats?.totalOutstanding ?? (totalBilled - totalCollected);
 

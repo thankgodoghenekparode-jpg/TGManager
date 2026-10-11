@@ -106,7 +106,7 @@ export function AttendancePage() {
                 ATTENDANCE RATE
               </Typography>
               <Typography variant="h4" fontWeight={700} color="primary.main">
-                {stats?.attendanceRate ?? 88}%
+                {stats?.attendanceRatePercent ?? 88}%
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 Daily completion

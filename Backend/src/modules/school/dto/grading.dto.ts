@@ -59,3 +59,13 @@ export const approveResultsSchema = z.object({
 });
 
 export type ApproveResultsDto = z.infer<typeof approveResultsSchema>;
+
+export const classResultsSheetQuerySchema = z.object({
+  classId: z.string().cuid('Class ID is required'),
+  sessionId: z.string().cuid('Session ID is required'),
+  termId: z.string().cuid('Term ID is required'),
+});
+
+export type ClassResultsSheetQueryDto = z.infer<
+  typeof classResultsSheetQuerySchema
+>;

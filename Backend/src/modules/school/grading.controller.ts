@@ -17,11 +17,13 @@ import type { PermissionRequest } from '../../common/types/permission-request.in
 import { GradingService } from './grading.service';
 import {
   approveResultsSchema,
+  classResultsSheetQuerySchema,
   createAssessmentComponentSchema,
   createGradingScaleSchema,
   queryResultsSchema,
   recordClassResultsSchema,
   type ApproveResultsDto,
+  type ClassResultsSheetQueryDto,
   type CreateAssessmentComponentDto,
   type CreateGradingScaleDto,
   type QueryResultsDto,
@@ -96,6 +98,22 @@ export class GradingController {
     @Body(new ZodValidationPipe(approveResultsSchema)) dto: ApproveResultsDto,
   ) {
     return this.gradingService.approveResults(req.tenant.id, req.user.sub, dto);
+  }
+
+  @Get('class-sheet')
+  @Permissions(PERMISSIONS.ACADEMIC_VIEW)
+  @ApiOperation({ summary: 'Class-wide results sheet with positions' })
+  async getClassSheet(
+    @Req() req: PermissionRequest,
+    @Query(new ZodValidationPipe(classResultsSheetQuerySchema))
+    query: ClassResultsSheetQueryDto,
+  ) {
+    return this.gradingService.getClassResultsSheet(
+      req.tenant.id,
+      query.classId,
+      query.sessionId,
+      query.termId,
+    );
   }
 
   @Get('report-card/:studentId')

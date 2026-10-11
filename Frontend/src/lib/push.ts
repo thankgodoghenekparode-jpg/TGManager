@@ -68,9 +68,23 @@ export async function ensurePushSubscription(): Promise<void> {
   }
 }
 
+/**
+ * Register an Expo push token forwarded by the native wrapper. Called from the
+ * WebView so the authenticated request carries the normal session cookies.
+ */
+export async function registerNativePushToken(token: string): Promise<void> {
+  if (!token) return
+  try {
+    await api.post('/push/subscriptions', {
+      subscription: { endpoint: token },
+    })
+  } catch {
+    // Push enrollment is optional; never block the app on it.
+  }
+}
+
 /** Remove the current device's push subscription (e.g. on logout). */
-export async function removePushSubscription(): Promise<void> {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+export async function removePushSubscription(): Promise<void> {  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
   try {
     const reg = await navigator.serviceWorker.ready
     const sub = await reg.pushManager.getSubscription()

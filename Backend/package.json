@@ -24,6 +24,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "prisma db seed",
     "seed": "tsx src/seed/seed.cli.ts",
+    "seed:sessions": "tsx src/seed/sessions.cli.ts",
+    "seed:sessions:cleanup": "tsx src/seed/sessions.cli.ts --cleanup",
     "db:up": "docker compose up -d"
   },
   "dependencies": {

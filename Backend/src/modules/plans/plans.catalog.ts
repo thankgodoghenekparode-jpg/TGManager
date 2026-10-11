@@ -64,6 +64,19 @@ const STARTER_PERMISSIONS = [
   B.CHAT_VIEW,
   B.REPORT_VIEW,
   B.REPORT_SUBMIT,
+  // School domain: available on every tier so school workspaces are usable
+  // from the Starter plan upward.
+  B.SCHOOL_VIEW,
+  B.SCHOOL_MANAGE,
+  B.STUDENT_VIEW,
+  B.STUDENT_MANAGE,
+  B.ACADEMIC_VIEW,
+  B.ACADEMIC_MANAGE,
+  B.SCHOOL_FEE_VIEW,
+  B.SCHOOL_FEE_MANAGE,
+  B.SCHOOL_ATTENDANCE_VIEW,
+  B.SCHOOL_ATTENDANCE_MANAGE,
+  B.SCHOOL_PARENT_VIEW,
 ] as const satisfies readonly Permission[];
 
 /** Pro: documents, inventory, workflows, audit. */

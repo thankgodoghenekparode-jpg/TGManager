@@ -171,6 +171,16 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
         },
       });
 
+      const parentRole = await tx.companyRole.create({
+        data: {
+          tenantId: schoolTenant.id,
+          name: SYSTEM_ROLE_NAMES.PARENT,
+          description: SYSTEM_ROLE_DEFS.PARENT.description,
+          isSystem: true,
+          permissions: [...SYSTEM_ROLE_DEFS.PARENT.permissions],
+        },
+      });
+
       // Helper to register staff user
       const createStaffUser = async (
         email: string,
@@ -620,6 +630,38 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
         guardians.push({ guardian, rel: g.rel });
       }
 
+      // 12b. Demo parent-portal account linked to the first guardian (Chukwudi Eze)
+      const demoGuardian = guardians[0].guardian;
+      const demoParentEmail = 'parent.demo@tgmanager.dev';
+      let demoParentUser = await tx.user.findUnique({
+        where: { email: demoParentEmail },
+      });
+      if (!demoParentUser) {
+        demoParentUser = await tx.user.create({
+          data: {
+            email: demoParentEmail,
+            firstName: demoGuardian.firstName,
+            lastName: demoGuardian.lastName,
+            passwordHash: BCRYPT_HASH,
+            role: 'USER',
+          },
+        });
+      }
+      await tx.tenantUser.create({
+        data: { tenantId: schoolTenant.id, userId: demoParentUser.id },
+      });
+      await tx.roleAssignment.create({
+        data: {
+          tenantId: schoolTenant.id,
+          userId: demoParentUser.id,
+          companyRoleId: parentRole.id,
+        },
+      });
+      await tx.guardian.update({
+        where: { id: demoGuardian.id },
+        data: { userId: demoParentUser.id },
+      });
+
       // 13. 30 Students across classes
       const studentNames = [
         { first: 'Chinedu', last: 'Eze', gender: 'MALE', dob: '2012-05-14' },
@@ -658,6 +700,15 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
       const studentGuardianData = [];
       const idCardData = [];
 
+      // Match guardians to students by surname so each linked family lines up.
+      // (The demo parent-portal account is the "Eze" guardian, which means his
+      // children in the portal are Chinedu Eze and Adaeze Eze.)
+      const guardianBySurname = new Map<string, (typeof guardians)[number]>();
+      for (const g of guardians) {
+        const key = g.guardian.lastName.trim().toLowerCase();
+        if (!guardianBySurname.has(key)) guardianBySurname.set(key, g);
+      }
+
       for (let i = 0; i < studentNames.length; i++) {
         const s = studentNames[i];
         const assignedClass = classes[i % classes.length];
@@ -685,8 +736,10 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
 
         createdStudents.push(student);
 
-        // Prep student guardian
-        const gInfo = guardians[i % guardians.length];
+        // Prep student guardian (prefer a surname match for coherent demo data)
+        const gInfo =
+          guardianBySurname.get(s.last.trim().toLowerCase()) ??
+          guardians[i % guardians.length];
         studentGuardianData.push({
           studentId: student.id,
           guardianId: gInfo.guardian.id,
@@ -836,11 +889,55 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
         }
       }
 
+      // 17. Announcements
+      await tx.schoolAnnouncement.createMany({
+        data: [
+          {
+            tenantId: schoolTenant.id,
+            title: 'Welcome to the 2025/2026 Academic Session',
+            content:
+              'Dear Parents and Guardians, welcome back! We look forward to a great session of learning and character building.\n\n- The Administration',
+            audience: 'ALL',
+            publishedAt: new Date('2025-09-08T08:00:00.000Z'),
+            createdByUserId: admin.user.id,
+          },
+          {
+            tenantId: schoolTenant.id,
+            title: '2nd Term Mid-Term Examination Timetable',
+            content:
+              'The 2nd Term mid-term examinations run from Monday 16 February to Friday 20 February 2026.\n\nStudents should revise their class notes and past continuous assessments. Parents are encouraged to monitor study time at home.',
+            audience: 'STUDENTS',
+            publishedAt: new Date('2026-02-02T09:00:00.000Z'),
+            createdByUserId: principal.user.id,
+          },
+          {
+            tenantId: schoolTenant.id,
+            title: '2nd Term Fees: Payment Deadline 28 February 2026',
+            content:
+              'This is a reminder that all 2nd Term fees (tuition, ICT levy and development levy) are due by 28 February 2026.\n\nPayments can be made via bank transfer or at the bursary. Kindly present your receipts at the gate for updates to the portal.',
+            audience: 'PARENTS',
+            publishedAt: new Date('2026-01-20T10:00:00.000Z'),
+            createdByUserId: bursar.user.id,
+          },
+          {
+            tenantId: schoolTenant.id,
+            title: 'Staff Inter-House Sports Day: Volunteers Needed',
+            content:
+              'The annual inter-house sports day holds on Friday 20 March 2026. We need teacher volunteers for the event coordination and house supervision committees.\n\nKindly register with the sports department before Friday 27 February.',
+            audience: 'STAFF',
+            publishedAt: new Date('2026-01-15T14:00:00.000Z'),
+            createdByUserId: admin.user.id,
+          },
+        ],
+      });
+      console.log('   ✓ 4 school announcements');
+
       console.log('   Demo School (TGEasy Model College) seeded successfully!');
       console.log(`   Principal: principal@tgeasymodel.edu.ng (password: password123)`);
       console.log(`   Admin: admin@tgeasymodel.edu.ng (password: password123)`);
       console.log(`   Bursar: bursar@tgeasymodel.edu.ng (password: password123)`);
       console.log(`   Teachers: teacher.math@..., teacher.eng@... (password: password123)`);
+      console.log(`   Parent Portal: parent.demo@tgmanager.dev (password: password123) — children: Chinedu Eze, Adaeze Eze`);
       console.log(`   Students: 30 students seeded with classes, attendance, grading & invoices.`);
 
       return true;

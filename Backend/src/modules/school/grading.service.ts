@@ -204,42 +204,107 @@ export class GradingService {
       ...(dto.subjectId ? { subjectId: dto.subjectId } : {}),
     };
 
-    let targetStatus: 'APPROVED' | 'DRAFT' | 'PUBLISHED';
-    let updateData: any = {};
-
+    let updateData: any;
     if (dto.action === 'APPROVE') {
-      targetStatus = 'APPROVED';
       updateData = {
-        status: targetStatus,
+        status: 'APPROVED',
         approvedAt: new Date(),
         approvedByUserId: userId,
       };
     } else if (dto.action === 'PUBLISH') {
-      targetStatus = 'PUBLISHED';
       updateData = {
-        status: targetStatus,
+        status: 'PUBLISHED',
         publishedAt: new Date(),
         locked: true,
+        approvedByUserId: userId,
       };
     } else {
-      targetStatus = 'DRAFT';
-      updateData = { status: targetStatus, locked: false };
+      updateData = { status: 'DRAFT', locked: false };
     }
 
-    const updated = await this.prisma.academicResult.updateMany({
-      where,
-      data: updateData,
+    const result = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.academicResult.updateMany({ where, data: updateData });
+
+      const affected = await tx.academicResult.findMany({
+        where,
+        select: { id: true },
+      });
+      if (affected.length > 0) {
+        await tx.resultApproval.createMany({
+          data: affected.map((r) => ({
+            tenantId,
+            resultId: r.id,
+            action: dto.action,
+            userId,
+            notes: dto.notes ?? null,
+          })),
+        });
+      }
+
+      // Keep the term's publishing flags in sync with the result lifecycle.
+      if (dto.action === 'PUBLISH') {
+        await tx.term.updateMany({
+          where: { id: dto.termId, tenantId },
+          data: { resultPublished: true, resultEntryOpen: false },
+        });
+      } else if (dto.action === 'REJECT') {
+        await tx.term.updateMany({
+          where: { id: dto.termId, tenantId },
+          data: { resultPublished: false },
+        });
+      }
+
+      return updated;
     });
 
     return {
       success: true,
       action: dto.action,
-      updatedCount: updated.count,
+      updatedCount: result.count,
     };
   }
 
   // ================= Student Term Report Card =================
-  async getStudentReportCard(tenantId: string, studentId: string, sessionId: string, termId: string) {
+  private buildRemarks(percentage: number): {
+    teacher: string;
+    principal: string;
+  } {
+    if (percentage >= 75) {
+      return {
+        teacher: 'An excellent performance. Keep up the outstanding work.',
+        principal: 'Outstanding result. Cleared for promotion.',
+      };
+    }
+    if (percentage >= 60) {
+      return {
+        teacher: 'A very good result. A little more effort will get you to the top.',
+        principal: 'Good performance. Keep improving.',
+      };
+    }
+    if (percentage >= 50) {
+      return {
+        teacher: 'A fair result. More focus is needed in the weaker subjects.',
+        principal: 'Satisfactory. Work harder next term.',
+      };
+    }
+    if (percentage >= 40) {
+      return {
+        teacher: 'Below average. Please attend extra lessons.',
+        principal: 'Needs significant improvement.',
+      };
+    }
+    return {
+      teacher: 'Poor performance. Parental attention is required.',
+      principal: 'Unsatisfactory. Placed on academic probation.',
+    };
+  }
+
+  async getStudentReportCard(
+    tenantId: string,
+    studentId: string,
+    sessionId: string,
+    termId: string,
+  ) {
     const student = await this.prisma.student.findFirst({
       where: { id: studentId, tenantId },
       include: { currentClass: true },
@@ -264,44 +329,208 @@ export class GradingService {
       }),
     ]);
 
+    // Compute per-subject class statistics and the student's class position.
+    const classStats = new Map<
+      string,
+      { sum: number; count: number; max: number; min: number }
+    >();
+    let position: number | null = null;
+    let totalInClass = 0;
+
+    if (student.currentClassId) {
+      const cohort = await this.prisma.academicResult.findMany({
+        where: {
+          tenantId,
+          classId: student.currentClassId,
+          sessionId,
+          termId,
+        },
+        select: { studentId: true, subjectId: true, totalScore: true },
+      });
+
+      const aggregate = new Map<string, number>();
+      for (const r of cohort) {
+        aggregate.set(r.studentId, (aggregate.get(r.studentId) ?? 0) + r.totalScore);
+        const stat =
+          classStats.get(r.subjectId) ??
+          { sum: 0, count: 0, max: Number.NEGATIVE_INFINITY, min: Number.POSITIVE_INFINITY };
+        stat.sum += r.totalScore;
+        stat.count += 1;
+        stat.max = Math.max(stat.max, r.totalScore);
+        stat.min = Math.min(stat.min, r.totalScore);
+        classStats.set(r.subjectId, stat);
+      }
+
+      const ranked = [...aggregate.entries()].sort((a, b) => b[1] - a[1]);
+      totalInClass = ranked.length;
+      const index = ranked.findIndex(([sid]) => sid === studentId);
+      position = index >= 0 ? index + 1 : null;
+    }
+
     const totalSubjects = results.length;
-    const totalScore = results.reduce((acc, r) => acc + r.totalScore, 0);
-    const averageScore = totalSubjects > 0 ? Math.round((totalScore / totalSubjects) * 100) / 100 : 0;
+    const obtainedMarks = results.reduce((acc, r) => acc + r.totalScore, 0);
+    const totalMarks = totalSubjects * 100;
+    const averageScore =
+      totalSubjects > 0
+        ? Math.round((obtainedMarks / totalSubjects) * 100) / 100
+        : 0;
+    const percentage =
+      totalMarks > 0
+        ? Math.round((obtainedMarks / totalMarks) * 10000) / 100
+        : 0;
     const totalGpa = results.reduce((acc, r) => acc + (r.gradePoint ?? 0), 0);
-    const gpa = totalSubjects > 0 ? Math.round((totalGpa / totalSubjects) * 100) / 100 : 0;
+    const gpa =
+      totalSubjects > 0
+        ? Math.round((totalGpa / totalSubjects) * 100) / 100
+        : 0;
+    const remarks = this.buildRemarks(percentage);
 
     return {
       school: profile,
       student: {
         id: student.id,
         admissionNumber: student.admissionNumber,
-        fullName: `${student.firstName} ${student.middleName ? student.middleName + ' ' : ''}${student.lastName}`,
-        class: student.currentClass?.name ?? 'N/A',
+        firstName: student.firstName,
+        lastName: student.lastName,
+        fullName: `${student.firstName}${
+          student.middleName ? ' ' + student.middleName : ''
+        } ${student.lastName}`,
         gender: student.gender,
         photo: student.passportPhoto,
+        className: student.currentClass?.name ?? 'N/A',
       },
       session: session?.name ?? '',
       term: term?.name ?? '',
+      class: student.currentClass
+        ? {
+            id: student.currentClass.id,
+            name: student.currentClass.name,
+            level: student.currentClass.level,
+          }
+        : null,
+      results: results.map((r) => {
+        const stat = classStats.get(r.subjectId);
+        return {
+          subjectId: r.subjectId,
+          subjectName: r.subject.name,
+          subjectCode: r.subject.code,
+          assignmentScore: r.assignmentScore,
+          testScore: r.testScore,
+          caScore: r.caScore,
+          examScore: r.examScore,
+          totalScore: r.totalScore,
+          grade: r.grade,
+          gradePoint: r.gradePoint,
+          remark: r.remark,
+          subjectPosition: r.subjectPosition,
+          classAverage: stat
+            ? Math.round((stat.sum / stat.count) * 100) / 100
+            : null,
+          highestScore: stat ? stat.max : null,
+          lowestScore: stat ? stat.min : null,
+          status: r.status,
+        };
+      }),
       summary: {
         totalSubjects,
-        totalScore,
+        totalMarks,
+        obtainedMarks: Math.round(obtainedMarks * 100) / 100,
         averageScore,
+        percentage,
         gpa,
+        position,
+        totalInClass,
+        teacherRemark: remarks.teacher,
+        principalRemark: remarks.principal,
       },
-      results: results.map((r) => ({
-        subjectId: r.subjectId,
-        subjectName: r.subject.name,
-        subjectCode: r.subject.code,
-        assignmentScore: r.assignmentScore,
-        testScore: r.testScore,
-        caScore: r.caScore,
-        examScore: r.examScore,
-        totalScore: r.totalScore,
-        grade: r.grade,
-        remark: r.remark,
-        subjectPosition: r.subjectPosition,
-        status: r.status,
-      })),
+    };
+  }
+
+  // ================= Class Results Sheet (for publishing review) =================
+  async getClassResultsSheet(
+    tenantId: string,
+    classId: string,
+    sessionId: string,
+    termId: string,
+  ) {
+    const [classroom, session, term, results] = await Promise.all([
+      this.prisma.classRoom.findFirst({ where: { id: classId, tenantId } }),
+      this.prisma.academicSession.findFirst({ where: { id: sessionId, tenantId } }),
+      this.prisma.term.findFirst({ where: { id: termId, tenantId } }),
+      this.prisma.academicResult.findMany({
+        where: { tenantId, classId, sessionId, termId },
+        include: {
+          student: {
+            select: {
+              id: true,
+              admissionNumber: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      }),
+    ]);
+    if (!classroom) throw new NotFoundException('Class not found');
+
+    const perStudent = new Map<
+      string,
+      {
+        student: {
+          id: string;
+          admissionNumber: string;
+          firstName: string;
+          lastName: string;
+        };
+        obtained: number;
+        subjects: Set<string>;
+        statuses: Set<string>;
+      }
+    >();
+
+    for (const r of results) {
+      const entry =
+        perStudent.get(r.studentId) ??
+        {
+          student: r.student,
+          obtained: 0,
+          subjects: new Set<string>(),
+          statuses: new Set<string>(),
+        };
+      entry.obtained += r.totalScore;
+      entry.subjects.add(r.subjectId);
+      entry.statuses.add(r.status);
+      perStudent.set(r.studentId, entry);
+    }
+
+    const students = [...perStudent.entries()]
+      .map(([studentId, e]) => ({
+        studentId,
+        admissionNumber: e.student.admissionNumber,
+        name: `${e.student.firstName} ${e.student.lastName}`,
+        subjectsCount: e.subjects.size,
+        obtained: Math.round(e.obtained * 100) / 100,
+        possible: e.subjects.size * 100,
+        average:
+          e.subjects.size > 0
+            ? Math.round((e.obtained / e.subjects.size) * 100) / 100
+            : 0,
+        status: e.statuses.has('PUBLISHED')
+          ? 'PUBLISHED'
+          : e.statuses.has('APPROVED')
+            ? 'APPROVED'
+            : 'DRAFT',
+      }))
+      .sort((a, b) => b.obtained - a.obtained)
+      .map((row, index) => ({ ...row, position: index + 1 }));
+
+    return {
+      class: { id: classroom.id, name: classroom.name, level: classroom.level },
+      session: session?.name ?? '',
+      term: term?.name ?? '',
+      subjectCount: new Set(results.map((r) => r.subjectId)).size,
+      totalStudents: students.length,
+      students,
     };
   }
 }

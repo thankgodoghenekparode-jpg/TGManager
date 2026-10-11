@@ -56,14 +56,28 @@ export class SchoolAttendanceService {
   }
 
   async scan(tenantId: string, dto: ScanAttendanceDto) {
-    // Locate student by QR identifier, admission number, or card number
-    const trimmed = dto.identifier.trim();
+    let raw = (dto.identifier || (dto as any).scanPayload || '').trim();
+    if (raw.startsWith('{') && raw.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(raw);
+        raw = parsed.qrIdentifier || parsed.identifier || parsed.admissionNumber || parsed.cardNumber || parsed.studentId || raw;
+      } catch {
+        // ignore json parse error
+      }
+    }
+    if (raw.includes('/') && (raw.startsWith('http://') || raw.startsWith('https://'))) {
+      const parts = raw.split('/');
+      raw = parts[parts.length - 1] || raw;
+    }
+    const trimmed = raw.trim();
+
+    // Locate student by QR identifier, admission number, or id
     let student = await this.prisma.student.findFirst({
       where: {
         tenantId,
         OR: [
-          { qrIdentifier: trimmed },
-          { admissionNumber: trimmed },
+          { qrIdentifier: { equals: trimmed, mode: 'insensitive' } },
+          { admissionNumber: { equals: trimmed, mode: 'insensitive' } },
           { id: trimmed },
         ],
       },
@@ -77,7 +91,10 @@ export class SchoolAttendanceService {
       const card = await this.prisma.studentIdCard.findFirst({
         where: {
           tenantId,
-          OR: [{ cardNumber: trimmed }, { qrPayload: trimmed }],
+          OR: [
+            { cardNumber: { equals: trimmed, mode: 'insensitive' } },
+            { qrPayload: { equals: trimmed, mode: 'insensitive' } },
+          ],
         },
         include: {
           student: {
@@ -91,7 +108,7 @@ export class SchoolAttendanceService {
     }
 
     if (!student) {
-      throw new NotFoundException('No active student found for scanned identifier');
+      throw new NotFoundException(`No active student found matching identifier "${trimmed}".`);
     }
 
     const now = new Date();
@@ -152,9 +169,12 @@ export class SchoolAttendanceService {
 
     return {
       action: actionType,
+      status: record.status,
       student: {
         id: student.id,
         admissionNumber: student.admissionNumber,
+        firstName: student.firstName,
+        lastName: student.lastName,
         fullName: `${student.firstName} ${student.lastName}`,
         class: student.currentClass?.name ?? 'Unassigned',
         photo: student.passportPhoto,
@@ -237,7 +257,6 @@ export class SchoolAttendanceService {
       LATE: 0,
       ABSENT: 0,
       EXCUSED: 0,
-      HALF_DAY: 0,
     };
 
     for (const item of statusCounts) {
@@ -254,7 +273,7 @@ export class SchoolAttendanceService {
       late: counts.LATE,
       absent: counts.ABSENT + unrecorded,
       excused: counts.EXCUSED,
-      halfDay: counts.HALF_DAY,
+      halfDay: 0,
       attendanceRatePercent: totalStudents > 0
         ? Math.round(((counts.PRESENT + counts.LATE) / totalStudents) * 100)
         : 0,

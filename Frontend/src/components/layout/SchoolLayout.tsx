@@ -4,8 +4,10 @@ import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import PeopleIcon from '@mui/icons-material/People';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import ChatIcon from '@mui/icons-material/Chat';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -27,10 +29,12 @@ export function SchoolLayout() {
     { label: 'Classes & Academics', path: '/school/classes', icon: ClassIcon },
     { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon },
     { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon },
+    { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon },
     { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon },
     { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon },
+    { label: 'Parents Portal', path: '/school/parents', icon: FamilyRestroomIcon },
     { label: 'Staff Chat', path: '/school/chat', icon: ChatIcon },
-    { label: 'Announcements', path: '/school/memos', icon: CampaignIcon },
+    { label: 'Announcements', path: '/school/announcements', icon: CampaignIcon },
     { label: 'School Settings', path: '/school/settings', icon: SettingsIcon },
   ];
 

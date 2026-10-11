@@ -47,6 +47,23 @@ export function CompanyGuard({ children }: { children?: ReactNode }) {
   return <>{children ?? <Outlet />}</>
 }
 
+/** True when the active tenant grants parent-portal access. */
+export function hasParentAccess(tenant: { permissions?: string[] } | null | undefined): boolean {
+  return Boolean(tenant?.permissions?.includes('school.parent_view'))
+}
+
+/** True when the signed-in user holds any management permission in the school. */
+function isSchoolStaff(tenant: { permissions?: string[] } | null | undefined): boolean {
+  const permissions = tenant?.permissions ?? []
+  return [
+    'school.manage',
+    'student.manage',
+    'academic.manage',
+    'school_fee.manage',
+    'school_attendance.manage',
+  ].some((p) => permissions.includes(p))
+}
+
 /** Requires an authenticated school user with an active school tenant context. */
 export function SchoolGuard({ children }: { children?: ReactNode }) {
   const user = useAuthStore((s) => s.user)
@@ -57,6 +74,23 @@ export function SchoolGuard({ children }: { children?: ReactNode }) {
   if (loading) return null
   if (!tenant?.id) return <Navigate to="/select-company" replace />
   if (tenant.type === 'COMPANY') return <Navigate to="/app" replace />
+  // Pure guardians are routed to the parent portal instead of the staff console.
+  if (hasParentAccess(tenant) && !isSchoolStaff(tenant)) {
+    return <Navigate to="/parent" replace />
+  }
+  return <>{children ?? <Outlet />}</>
+}
+
+/** Requires the active tenant to grant parent-portal access (a linked guardian). */
+export function ParentGuard({ children }: { children?: ReactNode }) {
+  const user = useAuthStore((s) => s.user)
+  const tenant = useTenantStore((s) => s.current)
+  const loading = useTenantStore((s) => s.loading)
+
+  if (!user) return <Navigate to="/login" replace />
+  if (loading) return null
+  if (!tenant?.id) return <Navigate to="/select-company" replace />
+  if (!hasParentAccess(tenant)) return <Navigate to="/school" replace />
   return <>{children ?? <Outlet />}</>
 }
 

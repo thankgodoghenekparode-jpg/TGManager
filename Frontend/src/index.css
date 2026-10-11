@@ -300,3 +300,60 @@ svg,
     font-size: 16px !important;
   }
 }
+
+/*
+ * Portable printing: shrink the base type a touch and drop dark backgrounds /
+ * app chrome so any screen (invoices, result sheets, report cards) prints
+ * cleanly on A4 without extra configuration.
+ */
+@media print {
+  html {
+    font-size: 12px !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .MuiAppBar-root,
+  .MuiDrawer-root,
+  .MuiBackdrop-root,
+  .no-print {
+    display: none !important;
+  }
+}
+
+/*
+ * Report-card printing: when a report card is open we hide the rest of the app
+ * during print so the browser's "Save as PDF" produces a clean document.
+ */
+@media print {
+  body.printing-report-card {
+    background: #ffffff !important;
+  }
+
+  body.printing-report-card * {
+    visibility: hidden;
+  }
+
+  body.printing-report-card #report-card-print,
+  body.printing-report-card #report-card-print * {
+    visibility: visible;
+  }
+
+  body.printing-report-card #report-card-print {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    padding: 24px;
+    background: #ffffff;
+    overflow: visible;
+  }
+
+  body.printing-report-card .MuiDialog-root,
+  body.printing-report-card .MuiBackdrop-root {
+    position: static !important;
+  }
+}

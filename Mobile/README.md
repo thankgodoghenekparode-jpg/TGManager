@@ -11,20 +11,32 @@ The web app and this wrapper talk over a small message bridge:
 
 | Direction | Message | What it does |
 |---|---|---|
-| Web → native | `{ type: "auth", token, tenantId }` | Registers this device with the backend (`POST /push/subscriptions`) using the Expo push token |
-| Native → web | `{ type: "navigate", url }` | Opens the given route when a notification is tapped |
+| Web → native | `{ type: "ready" }` | Signals the web app has booted (sent on every login/tenant change) so the wrapper can hand over the Expo push token |
+| Native → web | `{ type: "push-token", token }` | The web app registers this device with the backend (`POST /push/subscriptions`) using its authenticated session cookies |
+| Native → web | `{ type: "navigate", url }` | Opens the given route when a notification is tapped or a deep link (`tgmanager://…`) is opened |
 
 ## How it works
 
 1. The app loads `APP_URL` (the deployed dashboard) in a WebView.
-2. After login, the web app forwards its JWT + tenant id via the bridge
-   (`Frontend/src/lib/mobileBridge.ts`, wired from `NotificationsMenu`).
-3. This wrapper requests notification permission and obtains an Expo push
+2. This wrapper requests notification permission and obtains an Expo push
    token (`ExponentPushToken[…`).
-4. It then registers that token with the backend, which
+3. When the web app is ready (`Frontend/src/lib/mobileBridge.ts`, wired from
+   `NotificationsMenu`) it sends `{ type: "ready" }`; the wrapper replies with
+   the push token.
+4. The web app posts the token to the backend
+   (`Frontend/src/lib/push.ts` → `registerNativePushToken`), which
    `PushService.sendToUser` fans out to via the Expo push service when a chat
    notification is created.
-5. Tapping a notification routes back into the web app (`/chat`).
+
+   Sending the token the other way (native ❯ fetch with a bearer JWT) is
+   intentionally avoided: the web app authenticates with **httpOnly cookies**,
+   which a fetch outside the WebView cannot read. Registering from inside the
+   WebView keeps the JWT out of native memory and survives page reloads.
+5. Tapping a notification (or opening a `tgmanager://` deep link) routes back
+   into the web app (`/chat`).
+6. The WebView shows an offline/retry screen when the app cannot be reached,
+   supports pull-to-refresh (iOS), and `onLoad` clears any transient error.
+
 
 ## Setup
 

@@ -24,8 +24,8 @@ import {
   disconnectNotificationsSocket,
   subscribeNotifications,
 } from '../lib/notificationsSocket'
-import { ensurePushSubscription } from '../lib/push'
-import { listenForNativeMessages, syncAuthToNative } from '../lib/mobileBridge'
+import { ensurePushSubscription, registerNativePushToken } from '../lib/push'
+import { listenForNativeMessages, notifyNativeReady } from '../lib/mobileBridge'
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -60,7 +60,7 @@ export function NotificationsMenu() {
     if (!hasTenant) return
     connectNotificationsSocket()
     ensurePushSubscription()
-    syncAuthToNative()
+    notifyNativeReady()
     const unsubscribe = subscribeNotifications(() => {
       qc.invalidateQueries({ queryKey: ['notifications'] })
       qc.invalidateQueries({ queryKey: ['notifications-unread'] })
@@ -75,6 +75,11 @@ export function NotificationsMenu() {
     return listenForNativeMessages((message) => {
       if (message.type === 'navigate' && typeof message.url === 'string') {
         navigate(message.url)
+      } else if (
+        message.type === 'push-token' &&
+        typeof message.token === 'string'
+      ) {
+        void registerNativePushToken(message.token)
       }
     })
   }, [navigate])

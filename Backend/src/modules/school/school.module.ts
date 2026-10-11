@@ -10,6 +10,16 @@ import { GradingController } from './grading.controller';
 import { GradingService } from './grading.service';
 import { SchoolFeesController } from './invoices.controller';
 import { SchoolFeesService } from './invoices.service';
+import { TimetableController } from './timetable.controller';
+import { TimetableService } from './timetable.service';
+import { SchoolStaffController } from './staff.controller';
+import { SchoolStaffService } from './staff.service';
+import { ParentController } from './parent.controller';
+import { ParentService } from './parent.service';
+import { AnnouncementsController } from './announcements.controller';
+import { AnnouncementsService } from './announcements.service';
+import { SchoolAnalyticsController } from './analytics.controller';
+import { SchoolAnalyticsService } from './analytics.service';
 
 @Module({
   imports: [PrismaModule],
@@ -19,6 +29,11 @@ import { SchoolFeesService } from './invoices.service';
     SchoolAttendanceController,
     GradingController,
     SchoolFeesController,
+    TimetableController,
+    SchoolStaffController,
+    ParentController,
+    AnnouncementsController,
+    SchoolAnalyticsController,
   ],
   providers: [
     ClassesService,
@@ -26,6 +41,11 @@ import { SchoolFeesService } from './invoices.service';
     SchoolAttendanceService,
     GradingService,
     SchoolFeesService,
+    TimetableService,
+    SchoolStaffService,
+    ParentService,
+    AnnouncementsService,
+    SchoolAnalyticsService,
   ],
   exports: [
     ClassesService,
@@ -33,6 +53,10 @@ import { SchoolFeesService } from './invoices.service';
     SchoolAttendanceService,
     GradingService,
     SchoolFeesService,
+    TimetableService,
+    SchoolStaffService,
+    ParentService,
+    AnnouncementsService,
   ],
 })
 export class SchoolModule {}

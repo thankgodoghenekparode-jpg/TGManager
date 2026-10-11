@@ -55,7 +55,8 @@ export class SeedOnBootstrapService implements OnModuleInit {
         const result = await runSeed(this.prisma);
         this.logger.log(
           `Database seed completed in ${Date.now() - startedAt}ms ` +
-            `(plans=${result.plansSeeded}, demo=${result.demoSeeded}).`,
+            `(plans=${result.plansSeeded}, demo=${result.demoSeeded}, ` +
+            `mockSessions=${result.mockSessionsSeeded}).`,
         );
         return;
       } catch (error) {
