@@ -30,6 +30,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import PauseCircleIcon from '@mui/icons-material/PauseCircle'
 import PlayCircleIcon from '@mui/icons-material/PlayCircle'
+import ScheduleIcon from '@mui/icons-material/Schedule'
 import SchoolIcon from '@mui/icons-material/School'
 import BusinessIcon from '@mui/icons-material/Business'
 import { platformApi, type PlatformPlan, type PlatformTenant } from '../../api/platform'
@@ -44,6 +45,7 @@ export function TenantsPage() {
   const [creating, setCreating] = useState(false)
   const [editing, setEditing] = useState<PlatformTenant | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PlatformTenant | null>(null)
+  const [accessTarget, setAccessTarget] = useState<PlatformTenant | null>(null)
   const [tempPassword, setTempPassword] = useState('')
 
   const plans = useQuery({ queryKey: ['platform', 'plans'], queryFn: () => platformApi.plans() })
@@ -104,6 +106,15 @@ export function TenantsPage() {
     },
   })
 
+  const setAccess = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: { endsAt?: string | null; durationDays?: number } }) =>
+      platformApi.setTenantAccess(id, body),
+    onSuccess: () => {
+      setAccessTarget(null)
+      invalidate()
+    },
+  })
+
   const rows = tenants.data?.items ?? []
 
   return (
@@ -130,9 +141,9 @@ export function TenantsPage() {
         </Stack>
       </Stack>
 
-      {(mutateStatus.error || create.error || update.error || (remove.error && apiErrorMessage(remove.error) !== '')) && (
+      {(mutateStatus.error || create.error || update.error || setAccess.error || (remove.error && apiErrorMessage(remove.error) !== '')) && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {apiErrorMessage(mutateStatus.error ?? create.error ?? update.error ?? remove.error)}
+          {apiErrorMessage(mutateStatus.error ?? create.error ?? update.error ?? setAccess.error ?? remove.error)}
         </Alert>
       )}
 
@@ -150,6 +161,7 @@ export function TenantsPage() {
               <TableCell>Type</TableCell>
               <TableCell>Plan</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Access</TableCell>
               <TableCell>Onboarding</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -177,8 +189,16 @@ export function TenantsPage() {
                 </TableCell>
                 <TableCell>{t.plan?.name ?? ''}</TableCell>
                 <TableCell><StatusChip status={t.status} /></TableCell>
+                <TableCell><AccessChip tenant={t} /></TableCell>
                 <TableCell>{t.onboardingStatus}</TableCell>
                 <TableCell align="right">
+                  <IconButton
+                    title="Set access duration"
+                    color="primary"
+                    onClick={() => setAccessTarget(t)}
+                  >
+                    <ScheduleIcon fontSize="small" />
+                  </IconButton>
                   <IconButton
                     title="Edit"
                     onClick={() => { setCreating(true); setEditing(t) }}
@@ -201,7 +221,7 @@ export function TenantsPage() {
               </TableRow>
             ))}
             {rows.length === 0 && (
-              <TableRow><TableCell colSpan={5} align="center">No tenants</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} align="center">No tenants</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
@@ -218,6 +238,14 @@ export function TenantsPage() {
           setRowsPerPage(parseInt(e.target.value, 10))
           setPage(0)
         }}
+      />
+
+      <AccessDialog
+        open={accessTarget !== null}
+        tenant={accessTarget}
+        busy={setAccess.isPending}
+        onClose={() => setAccessTarget(null)}
+        onSubmit={(body) => accessTarget && setAccess.mutate({ id: accessTarget.id, body })}
       />
 
       {creating && (
@@ -278,6 +306,141 @@ export function TenantsPage() {
 function StatusChip({ status }: { status: PlatformTenant['status'] }) {
   const color = status === 'ACTIVE' ? 'success' : status === 'SUSPENDED' ? 'error' : 'warning'
   return <Chip label={status} size="small" color={color} />
+}
+
+function AccessChip({ tenant }: { tenant: PlatformTenant }) {
+  if (tenant.accessExpired) {
+    return <Chip label="Expired" size="small" color="error" variant="filled" />
+  }
+  if (!tenant.accessExpiresAt) {
+    return <Chip label="No expiry" size="small" variant="outlined" />
+  }
+  const ends = new Date(tenant.accessExpiresAt)
+  const daysLeft = Math.ceil((ends.getTime() - Date.now()) / 86_400_000)
+  const soon = daysLeft <= 7
+  return (
+    <Chip
+      label={`Ends ${ends.toLocaleDateString()}${soon ? ` (${daysLeft}d)` : ''}`}
+      size="small"
+      color={soon ? 'warning' : 'default'}
+      variant={soon ? 'filled' : 'outlined'}
+    />
+  )
+}
+
+const ACCESS_PRESETS = [7, 30, 60, 90, 180, 365]
+
+function AccessDialog({
+  open,
+  tenant,
+  busy,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  tenant: PlatformTenant | null
+  busy: boolean
+  onClose: () => void
+  onSubmit: (body: { endsAt?: string | null; durationDays?: number }) => void
+}) {
+  const [mode, setMode] = useState<'preset' | 'custom' | 'unlimited'>('preset')
+  const [preset, setPreset] = useState(30)
+  const [customDate, setCustomDate] = useState('')
+  const [error, setError] = useState('')
+
+  const currentExpiry = tenant?.accessExpiresAt
+    ? new Date(tenant.accessExpiresAt).toLocaleString()
+    : 'No expiry (unlimited)'
+
+  const submit = () => {
+    setError('')
+    if (mode === 'unlimited') {
+      onSubmit({ endsAt: null })
+      return
+    }
+    if (mode === 'preset') {
+      onSubmit({ durationDays: preset })
+      return
+    }
+    if (!customDate) {
+      setError('Pick a date and time')
+      return
+    }
+    const when = new Date(customDate)
+    if (Number.isNaN(when.getTime()) || when.getTime() <= Date.now()) {
+      setError('Choose a date and time in the future')
+      return
+    }
+    onSubmit({ endsAt: when.toISOString() })
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>Set access — {tenant?.name}</DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            Current: <strong>{currentExpiry}</strong>. When the window elapses the
+            tenant is suspended automatically until access is granted again.
+          </Typography>
+
+          <TextField
+            select
+            size="small"
+            label="Access type"
+            value={mode}
+            onChange={(e) => setMode(e.target.value as typeof mode)}
+          >
+            <MenuItem value="preset">For a duration</MenuItem>
+            <MenuItem value="custom">Until a specific date</MenuItem>
+            <MenuItem value="unlimited">No expiry (restore unlimited)</MenuItem>
+          </TextField>
+
+          {mode === 'preset' && (
+            <TextField
+              select
+              size="small"
+              label="Duration"
+              value={preset}
+              onChange={(e) => setPreset(Number(e.target.value))}
+            >
+              {ACCESS_PRESETS.map((d) => (
+                <MenuItem key={d} value={d}>
+                  {d} days
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          {mode === 'custom' && (
+            <TextField
+              size="small"
+              label="Expires at"
+              type="datetime-local"
+              value={customDate}
+              onChange={(e) => setCustomDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          )}
+
+          {mode === 'unlimited' && (
+            <Alert severity="info">
+              The tenant will keep access with no automatic expiry. You can still
+              suspend it manually.
+            </Alert>
+          )}
+
+          {error && <Alert severity="error">{error}</Alert>}
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" disabled={busy} onClick={submit}>
+          {mode === 'unlimited' ? 'Grant unlimited access' : 'Grant access'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
 }
 
 function TenantDialog({

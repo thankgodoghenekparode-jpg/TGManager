@@ -36,6 +36,7 @@ import {
   createTenantSchema,
   listPlatformUsersSchema,
   listTenantsSchema,
+  setTenantAccessSchema,
   updatePlanSchema,
   updatePlatformUserSchema,
   updateTenantSchema,
@@ -44,6 +45,7 @@ import {
   type CreateTenantDto,
   type ListPlatformUsersDto,
   type ListTenantsDto,
+  type SetTenantAccessDto,
   type UpdatePlanDto,
   type UpdatePlatformUserDto,
   type UpdateTenantDto,
@@ -260,6 +262,29 @@ export class PlatformController {
   @ApiOkResponse({ description: 'Tenant activated.' })
   activateTenant(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.platform.activateTenant(id, req.user.sub, req.ip);
+  }
+
+  @Post('tenants/:id/access')
+  @PlatformRoles(...ADMINS)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Grant / extend / clear tenant access',
+    description:
+      'Sets the tenant access window: pass durationDays or a future endsAt to ' +
+      'grant/extend access (reactivating the tenant if it lapsed), or endsAt:null ' +
+      'to clear the expiry and give unlimited access. When the window elapses, ' +
+      'the tenant is auto-suspended until access is granted again.',
+  })
+  @ApiParam({ name: 'id', type: String, description: 'Tenant ID (UUID)' })
+  @ApiBody({ schema: schemaRef('SetTenantAccessDto') })
+  @ApiOkResponse({ description: 'Tenant access window updated.' })
+  setTenantAccess(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(setTenantAccessSchema))
+    dto: SetTenantAccessDto,
+  ) {
+    return this.platform.setTenantAccess(id, dto, req.user.sub, req.ip);
   }
 
   // ------------------------------------------------------------ platform settings

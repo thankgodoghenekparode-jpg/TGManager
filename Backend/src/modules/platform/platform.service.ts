@@ -5,10 +5,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DistributedLockService } from '../../common/locks/distributed-lock.service';
 import { AuditService } from '../audit/audit.service';
 import { PlanLimitsService } from '../plans/plan-limits.service';
 import { TenantsService } from '../tenants/tenants.service';
@@ -24,6 +26,7 @@ import type {
   CreateTenantDto,
   ListPlatformUsersDto,
   ListTenantsDto,
+  SetTenantAccessDto,
   UpdatePlanDto,
   UpdatePlatformUserDto,
   UpdateTenantDto,
@@ -59,6 +62,7 @@ export class PlatformService {
     private readonly audit: AuditService,
     private readonly tenants: TenantsService,
     private readonly passwordReset: PasswordResetService,
+    private readonly locks: DistributedLockService,
   ) {}
 
   // ---------------------------------------------------------------- plans
@@ -184,6 +188,16 @@ export class PlatformService {
             take: 1,
             select: { user: { select: { id: true, email: true } } },
           },
+          subscriptions: {
+            orderBy: { startsAt: 'desc' },
+            take: 1,
+            select: {
+              id: true,
+              status: true,
+              startsAt: true,
+              endsAt: true,
+            },
+          },
           _count: {
             select: {
               tenantUsers: true,
@@ -198,11 +212,19 @@ export class PlatformService {
     ]);
 
     return {
-      items: items.map(({ tenantUsers, ...tenant }) => ({
-        ...tenant,
-        adminEmail: tenantUsers[0]?.user.email ?? null,
-        adminUserId: tenantUsers[0]?.user.id ?? null,
-      })),
+      items: items.map(({ tenantUsers, subscriptions, ...tenant }) => {
+        const latest = subscriptions[0] ?? null;
+        return {
+          ...tenant,
+          adminEmail: tenantUsers[0]?.user.email ?? null,
+          adminUserId: tenantUsers[0]?.user.id ?? null,
+          subscription: latest,
+          accessExpiresAt: latest?.endsAt?.toISOString() ?? null,
+          accessExpired:
+            latest?.endsAt != null &&
+            latest.endsAt.getTime() <= Date.now(),
+        };
+      }),
       total,
       limit: query.limit,
       offset: query.offset,
@@ -214,6 +236,16 @@ export class PlatformService {
       where: { id: tenantId },
       include: {
         plan: true,
+        subscriptions: {
+          orderBy: { startsAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            startsAt: true,
+            endsAt: true,
+          },
+        },
         _count: {
           select: {
             tenantUsers: true,
@@ -234,7 +266,14 @@ export class PlatformService {
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
     }
-    return tenant;
+    const { subscriptions, ...rest } = tenant;
+    const latest = subscriptions[0] ?? null;
+    return {
+      ...rest,
+      subscription: latest,
+      accessExpiresAt: latest?.endsAt?.toISOString() ?? null,
+      accessExpired: latest?.endsAt != null && latest.endsAt.getTime() <= Date.now(),
+    };
   }
 
   async updateTenant(tenantId: string, dto: UpdateTenantDto) {
@@ -286,6 +325,21 @@ export class PlatformService {
       where: { id: tenantId },
       data: { status: 'ACTIVE' },
     });
+
+    // If the tenant's latest access window has already elapsed, clear it so the
+    // reactivation actually grants access (otherwise the guard would keep
+    // blocking and the hourly sweep would re-suspend within the hour).
+    const latest = await this.prisma.tenantSubscription.findFirst({
+      where: { tenantId },
+      orderBy: { startsAt: 'desc' },
+    });
+    if (latest?.endsAt && latest.endsAt.getTime() <= Date.now()) {
+      await this.prisma.tenantSubscription.update({
+        where: { id: latest.id },
+        data: { endsAt: null, status: 'ACTIVE' },
+      });
+    }
+
     this.audit.record(tenantId, {
       userId: actorUserId,
       action: 'PLATFORM.ACTIVATE_TENANT',
@@ -295,6 +349,167 @@ export class PlatformService {
       ip,
     });
     return updated;
+  }
+
+  /**
+   * Grant / extend / clear a tenant's access window.
+   * - A future `endsAt` (or `durationDays`) sets the expiry: the tenant stays
+   *   active until that moment, then the access-expiry sweep marks it TRIAL_ENDED.
+   * - `endsAt: null` clears the expiry (unlimited access).
+   * Granting access always reactivates a lapsed tenant, so the same endpoint
+   * is the single "give access again" action for the super admin.
+   */
+  async setTenantAccess(
+    tenantId: string,
+    dto: SetTenantAccessDto,
+    actorUserId: string,
+    ip?: string,
+  ) {
+    const tenant = await this.assertTenantExists(tenantId);
+
+    let endsAt: Date | null;
+    if (dto.durationDays !== undefined) {
+      endsAt = new Date(Date.now() + dto.durationDays * 24 * 60 * 60 * 1000);
+    } else if (dto.endsAt !== undefined) {
+      endsAt = dto.endsAt === null ? null : new Date(dto.endsAt);
+    } else {
+      throw new BadRequestException(
+        'Provide exactly one of endsAt or durationDays',
+      );
+    }
+
+    if (endsAt && endsAt.getTime() <= Date.now()) {
+      throw new BadRequestException(
+        'endsAt must be in the future — use null to clear the expiry, or a future date',
+      );
+    }
+
+    // Reuse the tenant's latest access window when one exists; otherwise
+    // create the first one. Editing the same row keeps the "latest window"
+    // rule in the TenantGuard unambiguous.
+    const latest = await this.prisma.tenantSubscription.findFirst({
+      where: { tenantId },
+      orderBy: { startsAt: 'desc' },
+    });
+    const subscription = latest
+      ? await this.prisma.tenantSubscription.update({
+          where: { id: latest.id },
+          data: { startsAt: new Date(), endsAt, status: 'ACTIVE' },
+        })
+      : await this.prisma.tenantSubscription.create({
+          data: {
+            tenantId,
+            planId: tenant.planId,
+            startsAt: new Date(),
+            endsAt,
+            status: 'ACTIVE',
+          },
+        });
+
+    // Granting access always reactivates the tenant.
+    if (tenant.status !== 'ACTIVE') {
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: { status: 'ACTIVE' },
+      });
+    }
+
+    this.audit.record(tenantId, {
+      userId: actorUserId,
+      action: 'PLATFORM.SET_TENANT_ACCESS',
+      entityType: 'TENANT',
+      entityId: tenantId,
+      metadata: {
+        name: tenant.name,
+        endsAt: endsAt?.toISOString() ?? null,
+        durationDays: dto.durationDays ?? null,
+      },
+      ip,
+    });
+
+    return {
+      tenantId,
+      status: 'ACTIVE' as const,
+      accessExpiresAt: endsAt?.toISOString() ?? null,
+      subscription,
+    };
+  }
+
+  /**
+   * Automatic enforcement, guarded by a distributed lock so only one instance
+   * sweeps in a multi-instance deployment. Flips ACTIVE tenants whose latest
+   * access window has elapsed to TRIAL_ENDED so they are hard-blocked by the
+   * TenantGuard and clearly visible to the super admin. Granting access again
+   * reactivates them. (The TenantGuard also denies requests inline, so this
+   * sweep only keeps the stored status consistent between hourly runs.)
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async sweepExpiredAccess(): Promise<void> {
+    await this.locks.runOnce('tenant-access-expiry', 55 * 60_000, () =>
+      this.expireLapsedTenants(),
+    );
+  }
+
+  /** Marks ACTIVE tenants whose latest access window has elapsed as TRIAL_ENDED. */
+  async expireLapsedTenants(): Promise<{
+    evaluated: number;
+    suspended: number;
+  }> {
+    try {
+      const now = new Date();
+      const candidates = await this.prisma.tenant.findMany({
+        where: {
+          status: 'ACTIVE',
+          subscriptions: { some: { endsAt: { lt: now } } },
+        },
+        select: {
+          id: true,
+          name: true,
+          subscriptions: {
+            orderBy: { startsAt: 'desc' },
+            take: 1,
+            select: { endsAt: true },
+          },
+        },
+      });
+
+      const expired = candidates.filter((candidate) => {
+        const latest = candidate.subscriptions[0];
+        return (
+          latest?.endsAt != null && latest.endsAt.getTime() <= now.getTime()
+        );
+      });
+
+      for (const tenant of expired) {
+        await this.prisma.tenant.update({
+          where: { id: tenant.id },
+          data: { status: 'TRIAL_ENDED' },
+        });
+        this.logger.warn(
+          `Tenant "${tenant.name}" (${tenant.id}) access window ended; marked TRIAL_ENDED.`,
+        );
+        this.audit.record(tenant.id, {
+          action: 'TENANT.ACCESS_EXPIRED',
+          entityType: 'TENANT',
+          entityId: tenant.id,
+          metadata: { name: tenant.name },
+        });
+      }
+
+      if (expired.length > 0) {
+        this.logger.log(
+          `Access-expiry sweep: ${expired.length} tenant(s) suspended.`,
+        );
+      }
+      return { evaluated: candidates.length, suspended: expired.length };
+    } catch (error) {
+      this.logger.error(
+        `Access-expiry sweep failed: ${
+          error instanceof Error ? error.message : 'unknown'
+        }`,
+      );
+      return { evaluated: 0, suspended: 0 };
+    }
   }
 
   async getTenantUsage(tenantId: string) {

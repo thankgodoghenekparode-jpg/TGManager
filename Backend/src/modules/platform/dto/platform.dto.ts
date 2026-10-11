@@ -160,6 +160,40 @@ export const updateTenantSchema = z.object({
 
 export type UpdateTenantDto = z.infer<typeof updateTenantSchema>;
 
+/**
+ * Grant / extend / clear a tenant's access window.
+ * - `endsAt`: explicit expiry (RFC 3339). `null` removes the expiry (unlimited).
+ * - `durationDays`: convenience — expires N days from now.
+ * Provide exactly one of the two.
+ */
+export const setTenantAccessSchema = z
+  .object({
+    endsAt: z
+      .string()
+      .datetime()
+      .nullable()
+      .optional()
+      .describe('Access expiry (RFC 3339) or null to clear the expiry (unlimited)'),
+    durationDays: z
+      .number()
+      .int()
+      .min(1)
+      .max(7300)
+      .optional()
+      .describe('Access duration in days from now (1-7300)'),
+  })
+  .refine(
+    (d) =>
+      (d.endsAt === undefined && d.durationDays !== undefined) ||
+      (d.endsAt !== undefined && d.durationDays === undefined),
+    {
+      message: 'Provide exactly one of endsAt or durationDays',
+      path: ['endsAt'],
+    },
+  );
+
+export type SetTenantAccessDto = z.infer<typeof setTenantAccessSchema>;
+
 export const listTenantsSchema = z.object({
   search: z
     .string()

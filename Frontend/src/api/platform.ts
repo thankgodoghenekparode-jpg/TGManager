@@ -33,6 +33,14 @@ export interface PlatformTenant {
   createdAt: string
   adminEmail: string | null
   adminUserId: string | null
+  subscription?: {
+    id: string
+    status: string
+    startsAt: string
+    endsAt: string | null
+  } | null
+  accessExpiresAt?: string | null
+  accessExpired?: boolean
   _count?: {
     tenantUsers?: number
     branches?: number
@@ -109,6 +117,14 @@ export const platformApi = {
   },
   activateTenant(id: string) {
     return api.post(`/platform/tenants/${id}/activate`).then((r) => r.data)
+  },
+  setTenantAccess(id: string, body: { endsAt?: string | null; durationDays?: number }) {
+    return api
+      .post<{ tenantId: string; status: string; accessExpiresAt: string | null }>(
+        `/platform/tenants/${id}/access`,
+        body,
+      )
+      .then((r) => r.data)
   },
   users(query?: { search?: string; role?: string; limit?: number; offset?: number }) {
     return api

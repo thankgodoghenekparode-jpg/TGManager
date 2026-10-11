@@ -40,6 +40,11 @@ export class TenantGuard implements CanActivate {
             onboardingStatus: true,
             status: true,
             timezone: true,
+            subscriptions: {
+              orderBy: { startsAt: 'desc' },
+              take: 1,
+              select: { endsAt: true },
+            },
           },
         },
       },
@@ -49,10 +54,17 @@ export class TenantGuard implements CanActivate {
       throw new ForbiddenException('You are not a member of this tenant');
     }
 
-    if (membership.tenant.status !== 'ACTIVE') {
+    const latestSubscription = membership.tenant.subscriptions[0];
+    const accessExpired =
+      latestSubscription?.endsAt != null &&
+      latestSubscription.endsAt.getTime() <= Date.now();
+
+    if (membership.tenant.status !== 'ACTIVE' || accessExpired) {
+      const reason = accessExpired
+        ? 'This tenant\'s access window has ended'
+        : `Tenant is ${membership.tenant.status.toLowerCase().replace('_', ' ')}`;
       throw new ForbiddenException(
-        `Tenant is ${membership.tenant.status.toLowerCase().replace('_', ' ')}. ` +
-          'Contact support to restore access.',
+        `${reason}. Please contact support to restore access.`,
       );
     }
 

@@ -57,6 +57,7 @@ import {
 import {
   createPlanSchema,
   createPlatformUserSchema,
+  setTenantAccessSchema,
   updatePlanSchema,
   updatePlatformUserSchema,
   updateTenantSchema,
@@ -177,6 +178,7 @@ export const DTO_SCHEMAS: Record<string, z.ZodTypeAny> = {
   UpdatePlatformUserDto: updatePlatformUserSchema,
   PlatformSettingsDto: platformSettingsSchema,
   UpdateTenantDto: updateTenantSchema,
+  SetTenantAccessDto: setTenantAccessSchema,
   CreateEmailChangeDto: createEmailChangeSchema,
   CreatePasswordResetRequestDto: createPasswordResetRequestSchema,
   RejectRequestDto: rejectRequestSchema,
