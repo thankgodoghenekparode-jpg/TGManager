@@ -26,6 +26,7 @@ import {
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { schoolApi } from '../../api/school';
+import { QrScanner } from '../../components/QrScanner';
 
 export function AttendancePage() {
   const qc = useQueryClient();
@@ -64,13 +65,28 @@ export function AttendancePage() {
     mutationFn: (payload: string) => schoolApi.scanAttendance({ scanPayload: payload }),
     onSuccess: (data: any) => {
       qc.invalidateQueries({ queryKey: ['school', 'attendance'] });
-      setLastScanResult(`Check-in recorded: ${data.student?.firstName ?? 'Student'} (${data.status})`);
+      const action =
+        data?.action === 'CHECK_OUT'
+          ? 'Check-out recorded'
+          : 'Check-in recorded';
+      setLastScanResult(
+        `${action}: ${data.student?.firstName ?? 'Student'} ${data.student?.lastName ?? ''} (${data.status})`,
+      );
       setScanInput('');
     },
     onError: (err: any) => {
-      setLastScanResult(`Scan error: ${err.message || 'Unknown ID card'}`);
+      const message =
+        err?.response?.data?.message ??
+        err?.message ??
+        'Unknown ID card';
+      setLastScanResult(`Scan error: ${message}`);
     },
   });
+
+  const handleScan = (text: string) => {
+    setScanInput(text);
+    scanMutation.mutate(text);
+  };
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -269,32 +285,18 @@ export function AttendancePage() {
       </Card>
 
       {/* Gate Scanner Dialog */}
-      <Dialog open={scannerOpen} onClose={() => setScannerOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={scannerOpen} onClose={() => setScannerOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>Gate Security QR / Barcode Scanner</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ mt: 1, alignItems: 'center' }}>
-            <Box
-              sx={{
-                width: 140,
-                height: 140,
-                bgcolor: 'rgba(14, 165, 233, 0.08)',
-                border: '2px dashed #0284c7',
-                borderRadius: 3,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <QrCodeScannerIcon sx={{ fontSize: 56, color: 'primary.main' }} />
-              <Typography variant="caption" color="text.secondary">
-                Point reader at card
-              </Typography>
-            </Box>
+            <QrScanner
+              onScan={handleScan}
+              paused={scanMutation.isPending}
+            />
 
             <Typography variant="body2" color="text.secondary" align="center">
-              Scan student digital ID card barcode or QR code, or paste card QR identifier below:
+              Point the camera at the student ID card. The QR code or barcode is
+              detected automatically; you can also type or paste the card code below:
             </Typography>
 
             <TextField

@@ -65,7 +65,12 @@ export class SchoolAttendanceService {
         // ignore json parse error
       }
     }
-    if (raw.includes('/') && (raw.startsWith('http://') || raw.startsWith('https://'))) {
+    // Strip common scanner noise: URL query strings / fragments (e.g.
+    // https://school/qr/STU-…?t=123) and trailing control characters that
+    // some barcode readers append to the payload.
+    raw = raw.split(/[?#]/)[0].replace(/[\u0000-\u001f\u007f;]+$/g, '').trim();
+    // QR payloads sometimes carry the school domain prefix (https://….edu.ng/qr/STU-…).
+    if (/^https?:\/\//i.test(raw) && raw.includes('/')) {
       const parts = raw.split('/');
       raw = parts[parts.length - 1] || raw;
     }

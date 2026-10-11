@@ -28,7 +28,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
+import { QRCodeSVG } from 'qrcode.react';
 import PrintIcon from '@mui/icons-material/Print';
 import CloseIcon from '@mui/icons-material/Close';
 import BadgeIcon from '@mui/icons-material/Badge';
@@ -428,8 +428,21 @@ export function StudentsPage() {
                     gap: 0.5,
                   }}
                 >
-                  <QrCode2Icon sx={{ fontSize: 64, color: 'text.primary' }} />
-                  <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+                  <QRCodeSVG
+                    value={selectedStudentForCard.qrIdentifier}
+                    size={132}
+                    level="M"
+                    marginSize={1}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      wordBreak: 'break-all',
+                      textAlign: 'center',
+                    }}
+                  >
                     {selectedStudentForCard.qrIdentifier}
                   </Typography>
                 </Box>
