@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import {
   Alert,
   Box,
@@ -14,7 +14,7 @@ import {
 import BusinessIcon from '@mui/icons-material/Business'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { useAuthStore } from '../store/auth'
-import { useTenantStore } from '../store/tenant'
+import { useTenantStore, isPlatformAdmin } from '../store/tenant'
 import { setTenantId, tenantLogoUrl } from '../api/client'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useColorMode } from '../contexts/ThemeContext'
@@ -22,14 +22,17 @@ import { Logo } from '../components/brand/Logo'
 
 export function SelectCompanyPage() {
   const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user)
   const memberships = useAuthStore((s) => s.memberships)
   const loadTenant = useTenantStore((s) => s.load)
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState('')
   const { mode } = useColorMode()
   const isDark = mode === 'dark'
+  const isPlatform = isPlatformAdmin(user?.role)
 
   useEffect(() => {
+    if (isPlatform) return
     if (memberships.length === 1) {
       void enter(memberships[0].id)
     }
@@ -53,6 +56,11 @@ export function SelectCompanyPage() {
     } finally {
       setLoading(null)
     }
+  }
+
+  // Platform administrators never pick a company workspace.
+  if (isPlatform) {
+    return <Navigate to="/admin" replace />
   }
 
   return (

@@ -41,9 +41,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await authApi.login(email, password)
       setAccessToken(null)
+      const { isPlatformAdmin, useTenantStore } = await import('./tenant')
       const storedTenantId = getTenantId()
-      if (storedTenantId && !res.memberships.some((m) => m.id === storedTenantId)) {
-        const { useTenantStore } = await import('./tenant')
+      // Platform admins never carry a tenant context, and a stored tenant the
+      // user is no longer a member of must be dropped too.
+      if (
+        isPlatformAdmin(res.user.role) ||
+        (storedTenantId && !res.memberships.some((m) => m.id === storedTenantId))
+      ) {
         useTenantStore.getState().clear()
       }
       set({ user: res.user, memberships: res.memberships, initialized: true })
@@ -71,6 +76,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true })
     try {
       const res = await authApi.me()
+      // A platform admin must not inherit a stale tenant context (e.g. a
+      // leftover /app session); otherwise the tenant guards would render a
+      // company/school dashboard for the super admin.
+      const { isPlatformAdmin, useTenantStore } = await import('./tenant')
+      if (isPlatformAdmin(res.user.role)) {
+        useTenantStore.getState().clear()
+      }
       set({ user: res.user, memberships: res.memberships, initialized: true })
     } catch {
       set({ user: null, memberships: [], initialized: true })

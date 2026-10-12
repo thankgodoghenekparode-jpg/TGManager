@@ -47,7 +47,14 @@ export function LoginPage() {
     const user = useAuthStore.getState().user
     if (!user) throw new Error('Login failed')
     const isPlatform = isPlatformAdmin(user.role)
-    const target = from ?? (isPlatform ? '/admin' : getTenantId() ? '/app' : '/select-company')
+    // Platform admins always land in the platform console. A stale `from`
+    // (e.g. /app left over from a previous company session) must never route
+    // them into a tenant workspace.
+    const target = isPlatform
+      ? from && from.startsWith('/admin')
+        ? from
+        : '/admin'
+      : from ?? (getTenantId() ? '/app' : '/select-company')
     if (target.startsWith('/app')) {
       await loadTenant()
     }

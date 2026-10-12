@@ -36,6 +36,8 @@ export function CompanyGuard({ children }: { children?: ReactNode }) {
   const location = useLocation()
 
   if (!user) return <Navigate to="/login" replace />
+  // Platform administrators use the /admin console only — never a tenant workspace.
+  if (isPlatformAdmin(user.role)) return <Navigate to="/admin" replace />
   if (loading) return null
   if (!tenant?.id) return <Navigate to="/select-company" replace />
   if (tenant.type === 'SCHOOL') {
@@ -71,6 +73,8 @@ export function SchoolGuard({ children }: { children?: ReactNode }) {
   const loading = useTenantStore((s) => s.loading)
 
   if (!user) return <Navigate to="/login" replace />
+  // Platform administrators use the /admin console only — never a tenant workspace.
+  if (isPlatformAdmin(user.role)) return <Navigate to="/admin" replace />
   if (loading) return null
   if (!tenant?.id) return <Navigate to="/select-company" replace />
   if (tenant.type === 'COMPANY') return <Navigate to="/app" replace />
@@ -88,6 +92,8 @@ export function ParentGuard({ children }: { children?: ReactNode }) {
   const loading = useTenantStore((s) => s.loading)
 
   if (!user) return <Navigate to="/login" replace />
+  // Platform administrators use the /admin console only — never a tenant workspace.
+  if (isPlatformAdmin(user.role)) return <Navigate to="/admin" replace />
   if (loading) return null
   if (!tenant?.id) return <Navigate to="/select-company" replace />
   if (!hasParentAccess(tenant)) return <Navigate to="/school" replace />
