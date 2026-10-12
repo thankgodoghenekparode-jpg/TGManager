@@ -62,7 +62,7 @@ export function UsersPage() {
       platformApi.createUser(body),
     onSuccess: (res) => {
       setCreating(false)
-      setTempPassword(res.temporaryPassword ?? '')
+      setTempPassword(res.tempPassword ?? '')
       invalidate()
     },
   })

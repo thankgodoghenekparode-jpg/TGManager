@@ -136,7 +136,7 @@ export const platformApi = {
   },
   createUser(body: { email: string; firstName: string; lastName: string; role: string }) {
     return api
-      .post<PlatformUser & { temporaryPassword?: string }>('/platform/users', body)
+      .post<{ user: PlatformUser; tempPassword: string }>('/platform/users', body)
       .then((r) => r.data)
   },
   updateUser(

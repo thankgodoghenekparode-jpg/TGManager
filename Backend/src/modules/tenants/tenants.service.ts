@@ -15,6 +15,18 @@ const LOGO_MIME_TYPES: Record<string, string> = {
   'image/webp': 'webp',
 };
 
+/**
+ * Provisioning a tenant creates a user, the tenant, its membership, several
+ * system roles, the school profile (for schools), a role assignment, a
+ * subscription, and a branch — all atomically. Remote/serverless Postgres
+ * (e.g. a Supabase pooler) can be slow, so the default 5s interactive
+ * transaction timeout is too tight and yields P2028. Give it generous headroom.
+ */
+const TENANT_TRANSACTION_OPTIONS = {
+  maxWait: 15_000,
+  timeout: 60_000,
+} as const;
+
 export interface CreateTenantWithAdminParams {
   firstName: string;
   lastName: string;
@@ -184,7 +196,7 @@ export class TenantsService {
       });
 
       return { user, tenant };
-    });
+    }, TENANT_TRANSACTION_OPTIONS);
   }
 
   async getMyTenants(userId: string) {

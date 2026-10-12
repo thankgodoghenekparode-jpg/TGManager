@@ -52,6 +52,69 @@ function sanitizeUser<T extends { passwordHash?: string }>(user: T) {
   return safe;
 }
 
+/**
+ * Global platform roles that should be treated as a tenant's primary admin.
+ * Lower number = higher priority. School tenants seeded with a principal
+ * (global role USER + tenant RBAC role PRINCIPAL) are handled by the
+ * role-assignment fallback in `pickTenantAdmin`.
+ */
+const ADMIN_GLOBAL_ROLE_PRIORITY: Record<string, number> = {
+  COMPANY_ADMIN: 0,
+  SCHOOL_OWNER: 1,
+  SCHOOL_ADMIN: 2,
+  PRINCIPAL: 3,
+  VICE_PRINCIPAL: 4,
+  BRANCH_ADMIN: 5,
+};
+
+/** Tenant-scoped (RBAC) role names that identify an administrative owner. */
+const ADMIN_RBAC_ROLE_PRIORITY: Record<string, number> = {
+  COMPANY_ADMIN: 10,
+  SCHOOL_OWNER: 10,
+  SCHOOL_ADMIN: 11,
+  PRINCIPAL: 12,
+  VICE_PRINCIPAL: 13,
+  BRANCH_ADMIN: 14,
+};
+
+interface TenantAdminCandidate {
+  id: string;
+  email: string;
+  role: string;
+  roleAssignments?: { companyRole: { name: string } | null }[];
+}
+
+/**
+ * Picks the best "admin" contact for a tenant. Prefers a global admin role,
+ * then a user holding an admin-named tenant RBAC role (this is how school
+ * principals are seeded), and finally falls back to the earliest member.
+ */
+function pickTenantAdmin(
+  tenantUsers: { user: TenantAdminCandidate }[],
+): TenantAdminCandidate | null {
+  const scored = tenantUsers.map(({ user }, index) => {
+    const globalPriority = ADMIN_GLOBAL_ROLE_PRIORITY[user.role];
+    if (globalPriority !== undefined) {
+      return { user, score: globalPriority };
+    }
+    const rbacPriorities = (user.roleAssignments ?? [])
+      .map((assignment) =>
+        assignment.companyRole
+          ? ADMIN_RBAC_ROLE_PRIORITY[assignment.companyRole.name]
+          : undefined,
+      )
+      .filter((value): value is number => value !== undefined);
+    if (rbacPriorities.length > 0) {
+      return { user, score: Math.min(...rbacPriorities) };
+    }
+    // Non-admin member: keep original creation order as a last-resort tiebreak.
+    return { user, score: 1000 + index };
+  });
+
+  scored.sort((a, b) => a.score - b.score);
+  return scored[0]?.user ?? null;
+}
+
 @Injectable()
 export class PlatformService {
   private readonly logger = new Logger(PlatformService.name);
@@ -183,10 +246,59 @@ export class PlatformService {
             select: { id: true, name: true, code: true, featureFlags: true },
           },
           tenantUsers: {
-            where: { user: { role: 'COMPANY_ADMIN' } },
+            where: {
+              OR: [
+                {
+                  user: {
+                    role: {
+                      in: [
+                        'COMPANY_ADMIN',
+                        'SCHOOL_OWNER',
+                        'SCHOOL_ADMIN',
+                        'PRINCIPAL',
+                        'VICE_PRINCIPAL',
+                        'BRANCH_ADMIN',
+                      ],
+                    },
+                  },
+                },
+                {
+                  user: {
+                    roleAssignments: {
+                      some: {
+                        companyRole: {
+                          name: {
+                            in: [
+                              'COMPANY_ADMIN',
+                              'SCHOOL_OWNER',
+                              'SCHOOL_ADMIN',
+                              'PRINCIPAL',
+                              'VICE_PRINCIPAL',
+                              'BRANCH_ADMIN',
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
             orderBy: { createdAt: 'asc' },
-            take: 1,
-            select: { user: { select: { id: true, email: true } } },
+            take: 5,
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  role: true,
+                  roleAssignments: {
+                    take: 5,
+                    select: { companyRole: { select: { name: true } } },
+                  },
+                },
+              },
+            },
           },
           subscriptions: {
             orderBy: { startsAt: 'desc' },
@@ -214,10 +326,11 @@ export class PlatformService {
     return {
       items: items.map(({ tenantUsers, subscriptions, ...tenant }) => {
         const latest = subscriptions[0] ?? null;
+        const admin = pickTenantAdmin(tenantUsers);
         return {
           ...tenant,
-          adminEmail: tenantUsers[0]?.user.email ?? null,
-          adminUserId: tenantUsers[0]?.user.id ?? null,
+          adminEmail: admin?.email ?? null,
+          adminUserId: admin?.id ?? null,
           subscription: latest,
           accessExpiresAt: latest?.endsAt?.toISOString() ?? null,
           accessExpired:
@@ -554,18 +667,21 @@ export class PlatformService {
       })
     ).map((r) => r.userId);
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.tenant.delete({ where: { id: tenantId } });
-      for (const userId of memberUserIds) {
-        const remaining = await tx.tenantUser.count({ where: { userId } });
-        if (remaining === 0) {
-          await tx.user.update({
-            where: { id: userId },
-            data: { isActive: false },
-          });
+    await this.prisma.$transaction(
+      async (tx) => {
+        await tx.tenant.delete({ where: { id: tenantId } });
+        for (const userId of memberUserIds) {
+          const remaining = await tx.tenantUser.count({ where: { userId } });
+          if (remaining === 0) {
+            await tx.user.update({
+              where: { id: userId },
+              data: { isActive: false },
+            });
+          }
         }
-      }
-    });
+      },
+      { maxWait: 15_000, timeout: 60_000 },
+    );
 
     this.logger.log(
       `Tenant "${tenant.name}" (${tenant.id}) deleted by platform admin; ` +
