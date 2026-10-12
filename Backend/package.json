@@ -26,6 +26,7 @@
     "seed": "tsx src/seed/seed.cli.ts",
     "seed:sessions": "tsx src/seed/sessions.cli.ts",
     "seed:sessions:cleanup": "tsx src/seed/sessions.cli.ts --cleanup",
+    "roles:sync": "tsx src/seed/sync-system-roles.cli.ts",
     "db:up": "docker compose up -d"
   },
   "dependencies": {
