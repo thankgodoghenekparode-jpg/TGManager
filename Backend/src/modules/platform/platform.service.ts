@@ -11,6 +11,10 @@ import { randomBytes } from 'crypto';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DistributedLockService } from '../../common/locks/distributed-lock.service';
+import {
+  DB_TRANSACTION_OPTIONS,
+  withDbRetry,
+} from '../../common/db/prisma-retry';
 import { AuditService } from '../audit/audit.service';
 import { PlanLimitsService } from '../plans/plan-limits.service';
 import { TenantsService } from '../tenants/tenants.service';
@@ -131,9 +135,10 @@ export class PlatformService {
   // ---------------------------------------------------------------- plans
 
   listPlans() {
-    return this.prisma.plan.findMany({
-      orderBy: { priceCents: 'asc' },
-    });
+    return withDbRetry(
+      () => this.prisma.plan.findMany({ orderBy: { priceCents: 'asc' } }),
+      { label: 'platform.listPlans', logger: this.logger },
+    );
   }
 
   async createPlan(dto: CreatePlanDto) {
@@ -235,39 +240,30 @@ export class PlatformService {
         : {}),
     };
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.tenant.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: query.offset,
-        take: query.limit,
-        include: {
-          plan: {
-            select: { id: true, name: true, code: true, featureFlags: true },
-          },
-          tenantUsers: {
-            where: {
-              OR: [
-                {
-                  user: {
-                    role: {
-                      in: [
-                        'COMPANY_ADMIN',
-                        'SCHOOL_OWNER',
-                        'SCHOOL_ADMIN',
-                        'PRINCIPAL',
-                        'VICE_PRINCIPAL',
-                        'BRANCH_ADMIN',
-                      ],
-                    },
+    const [items, total] = await withDbRetry(
+      () =>
+        this.prisma.$transaction(
+          [
+            this.prisma.tenant.findMany({
+              where,
+              orderBy: { createdAt: 'desc' },
+              skip: query.offset,
+              take: query.limit,
+              include: {
+                plan: {
+                  select: {
+                    id: true,
+                    name: true,
+                    code: true,
+                    featureFlags: true,
                   },
                 },
-                {
-                  user: {
-                    roleAssignments: {
-                      some: {
-                        companyRole: {
-                          name: {
+                tenantUsers: {
+                  where: {
+                    OR: [
+                      {
+                        user: {
+                          role: {
                             in: [
                               'COMPANY_ADMIN',
                               'SCHOOL_OWNER',
@@ -279,49 +275,70 @@ export class PlatformService {
                           },
                         },
                       },
+                      {
+                        user: {
+                          roleAssignments: {
+                            some: {
+                              companyRole: {
+                                name: {
+                                  in: [
+                                    'COMPANY_ADMIN',
+                                    'SCHOOL_OWNER',
+                                    'SCHOOL_ADMIN',
+                                    'PRINCIPAL',
+                                    'VICE_PRINCIPAL',
+                                    'BRANCH_ADMIN',
+                                  ],
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                  orderBy: { createdAt: 'asc' },
+                  take: 5,
+                  select: {
+                    user: {
+                      select: {
+                        id: true,
+                        email: true,
+                        role: true,
+                        roleAssignments: {
+                          take: 5,
+                          select: { companyRole: { select: { name: true } } },
+                        },
+                      },
                     },
                   },
                 },
-              ],
-            },
-            orderBy: { createdAt: 'asc' },
-            take: 5,
-            select: {
-              user: {
-                select: {
-                  id: true,
-                  email: true,
-                  role: true,
-                  roleAssignments: {
-                    take: 5,
-                    select: { companyRole: { select: { name: true } } },
+                subscriptions: {
+                  orderBy: { startsAt: 'desc' },
+                  take: 1,
+                  select: {
+                    id: true,
+                    status: true,
+                    startsAt: true,
+                    endsAt: true,
+                  },
+                },
+                _count: {
+                  select: {
+                    tenantUsers: true,
+                    branches: true,
+                    staffRecords: true,
+                    documents: true,
                   },
                 },
               },
-            },
-          },
-          subscriptions: {
-            orderBy: { startsAt: 'desc' },
-            take: 1,
-            select: {
-              id: true,
-              status: true,
-              startsAt: true,
-              endsAt: true,
-            },
-          },
-          _count: {
-            select: {
-              tenantUsers: true,
-              branches: true,
-              staffRecords: true,
-              documents: true,
-            },
-          },
-        },
-      }),
-      this.prisma.tenant.count({ where }),
-    ]);
+            }),
+            this.prisma.tenant.count({ where }),
+          ],
+          DB_TRANSACTION_OPTIONS,
+        ),
+      { label: 'platform.listTenants', logger: this.logger },
+    );
 
     return {
       items: items.map(({ tenantUsers, subscriptions, ...tenant }) => {
@@ -334,8 +351,7 @@ export class PlatformService {
           subscription: latest,
           accessExpiresAt: latest?.endsAt?.toISOString() ?? null,
           accessExpired:
-            latest?.endsAt != null &&
-            latest.endsAt.getTime() <= Date.now(),
+            latest?.endsAt != null && latest.endsAt.getTime() <= Date.now(),
         };
       }),
       total,
@@ -385,7 +401,8 @@ export class PlatformService {
       ...rest,
       subscription: latest,
       accessExpiresAt: latest?.endsAt?.toISOString() ?? null,
-      accessExpired: latest?.endsAt != null && latest.endsAt.getTime() <= Date.now(),
+      accessExpired:
+        latest?.endsAt != null && latest.endsAt.getTime() <= Date.now(),
     };
   }
 
@@ -734,15 +751,22 @@ export class PlatformService {
         : {}),
     };
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: query.offset,
-        take: query.limit,
-      }),
-      this.prisma.user.count({ where }),
-    ]);
+    const [items, total] = await withDbRetry(
+      () =>
+        this.prisma.$transaction(
+          [
+            this.prisma.user.findMany({
+              where,
+              orderBy: { createdAt: 'desc' },
+              skip: query.offset,
+              take: query.limit,
+            }),
+            this.prisma.user.count({ where }),
+          ],
+          DB_TRANSACTION_OPTIONS,
+        ),
+      { label: 'platform.listPlatformUsers', logger: this.logger },
+    );
 
     return {
       items: items.map(sanitizeUser),
@@ -848,9 +872,13 @@ export class PlatformService {
   private readonly CONFIG_ID = 'platform';
 
   async getPlatformSettings(): Promise<PlatformSettingsShape> {
-    const config = await this.prisma.platformConfig.findUnique({
-      where: { id: this.CONFIG_ID },
-    });
+    const config = await withDbRetry(
+      () =>
+        this.prisma.platformConfig.findUnique({
+          where: { id: this.CONFIG_ID },
+        }),
+      { label: 'platform.getPlatformSettings', logger: this.logger },
+    );
     return parsePlatformSettings(config?.data);
   }
 

@@ -4,6 +4,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  DB_TRANSACTION_OPTIONS,
+  withDbRetry,
+} from '../../common/db/prisma-retry';
 
 export interface PlanUsage {
   branches: number;
@@ -160,27 +164,36 @@ export class PlanLimitsService {
       inventoryItems,
       conversations,
       auditLogs,
-    ] = await this.prisma.$transaction([
-      this.prisma.branch.count({ where: { tenantId } }),
-      this.prisma.staffRecord.count({ where: { tenantId } }),
-      this.prisma.document.count({ where: { tenantId, deletedAt: null } }),
-      this.prisma.document.aggregate({
-        where: { tenantId, deletedAt: null },
-        _sum: { sizeBytes: true },
-      }),
-      this.prisma.message.count({
-        where: { conversation: { tenantId } },
-      }),
-      this.prisma.department.count({ where: { tenantId } }),
-      this.prisma.group.count({ where: { tenantId } }),
-      this.prisma.memo.count({ where: { tenantId } }),
-      this.prisma.form.count({ where: { tenantId } }),
-      this.prisma.formSubmission.count({ where: { tenantId } }),
-      this.prisma.workflowTemplate.count({ where: { tenantId } }),
-      this.prisma.inventoryItem.count({ where: { tenantId } }),
-      this.prisma.conversation.count({ where: { tenantId } }),
-      this.prisma.auditLog.count({ where: { tenantId } }),
-    ]);
+    ] = await withDbRetry(
+      () =>
+        this.prisma.$transaction(
+          [
+            this.prisma.branch.count({ where: { tenantId } }),
+            this.prisma.staffRecord.count({ where: { tenantId } }),
+            this.prisma.document.count({
+              where: { tenantId, deletedAt: null },
+            }),
+            this.prisma.document.aggregate({
+              where: { tenantId, deletedAt: null },
+              _sum: { sizeBytes: true },
+            }),
+            this.prisma.message.count({
+              where: { conversation: { tenantId } },
+            }),
+            this.prisma.department.count({ where: { tenantId } }),
+            this.prisma.group.count({ where: { tenantId } }),
+            this.prisma.memo.count({ where: { tenantId } }),
+            this.prisma.form.count({ where: { tenantId } }),
+            this.prisma.formSubmission.count({ where: { tenantId } }),
+            this.prisma.workflowTemplate.count({ where: { tenantId } }),
+            this.prisma.inventoryItem.count({ where: { tenantId } }),
+            this.prisma.conversation.count({ where: { tenantId } }),
+            this.prisma.auditLog.count({ where: { tenantId } }),
+          ],
+          DB_TRANSACTION_OPTIONS,
+        ),
+      { label: 'plans.getUsage' },
+    );
 
     return {
       branches,

@@ -9,6 +9,10 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { Prisma, AccountRequestStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  DB_TRANSACTION_OPTIONS,
+  withDbRetry,
+} from '../../common/db/prisma-retry';
 import type {
   CreateEmailChangeDto,
   CreatePasswordResetRequestDto,
@@ -140,16 +144,23 @@ export class AccountRequestsService {
   // ------------------------------------------------------------ customer: own requests
 
   async listMyRequests(userId: string) {
-    const [emailChanges, passwordResets] = await this.prisma.$transaction([
-      this.prisma.emailChangeRequest.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.passwordResetRequest.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-      }),
-    ]);
+    const [emailChanges, passwordResets] = await withDbRetry(
+      () =>
+        this.prisma.$transaction(
+          [
+            this.prisma.emailChangeRequest.findMany({
+              where: { userId },
+              orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.passwordResetRequest.findMany({
+              where: { userId },
+              orderBy: { createdAt: 'desc' },
+            }),
+          ],
+          DB_TRANSACTION_OPTIONS,
+        ),
+      { label: 'accountRequests.listMyRequests', logger: this.logger },
+    );
 
     const items = [
       ...emailChanges.map((r) => ({
@@ -182,20 +193,32 @@ export class AccountRequestsService {
     const where: Prisma.EmailChangeRequestWhereInput = {};
     if (query.status) where.status = query.status;
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.emailChangeRequest.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: query.offset,
-        take: query.limit,
-        include: {
-          user: {
-            select: { id: true, firstName: true, lastName: true, email: true },
-          },
-        },
-      }),
-      this.prisma.emailChangeRequest.count({ where }),
-    ]);
+    const [items, total] = await withDbRetry(
+      () =>
+        this.prisma.$transaction(
+          [
+            this.prisma.emailChangeRequest.findMany({
+              where,
+              orderBy: { createdAt: 'desc' },
+              skip: query.offset,
+              take: query.limit,
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                  },
+                },
+              },
+            }),
+            this.prisma.emailChangeRequest.count({ where }),
+          ],
+          DB_TRANSACTION_OPTIONS,
+        ),
+      { label: 'accountRequests.listEmailChanges', logger: this.logger },
+    );
 
     return { items, total, limit: query.limit, offset: query.offset };
   }
@@ -204,34 +227,52 @@ export class AccountRequestsService {
     const where: Prisma.PasswordResetRequestWhereInput = {};
     if (query.status) where.status = query.status;
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.passwordResetRequest.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: query.offset,
-        take: query.limit,
-        include: {
-          user: {
-            select: { id: true, firstName: true, lastName: true, email: true },
-          },
-        },
-      }),
-      this.prisma.passwordResetRequest.count({ where }),
-    ]);
+    const [items, total] = await withDbRetry(
+      () =>
+        this.prisma.$transaction(
+          [
+            this.prisma.passwordResetRequest.findMany({
+              where,
+              orderBy: { createdAt: 'desc' },
+              skip: query.offset,
+              take: query.limit,
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                  },
+                },
+              },
+            }),
+            this.prisma.passwordResetRequest.count({ where }),
+          ],
+          DB_TRANSACTION_OPTIONS,
+        ),
+      { label: 'accountRequests.listPasswordResets', logger: this.logger },
+    );
 
     return { items, total, limit: query.limit, offset: query.offset };
   }
 
   async pendingSummary() {
-    const [pendingEmailChanges, pendingPasswordResets] =
-      await this.prisma.$transaction([
-        this.prisma.emailChangeRequest.count({
-          where: { status: AccountRequestStatus.PENDING },
-        }),
-        this.prisma.passwordResetRequest.count({
-          where: { status: AccountRequestStatus.PENDING },
-        }),
-      ]);
+    const [pendingEmailChanges, pendingPasswordResets] = await withDbRetry(
+      () =>
+        this.prisma.$transaction(
+          [
+            this.prisma.emailChangeRequest.count({
+              where: { status: AccountRequestStatus.PENDING },
+            }),
+            this.prisma.passwordResetRequest.count({
+              where: { status: AccountRequestStatus.PENDING },
+            }),
+          ],
+          DB_TRANSACTION_OPTIONS,
+        ),
+      { label: 'accountRequests.pendingSummary', logger: this.logger },
+    );
     return {
       pendingEmailChanges,
       pendingPasswordResets,
