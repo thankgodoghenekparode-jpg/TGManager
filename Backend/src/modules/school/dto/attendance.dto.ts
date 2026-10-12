@@ -13,6 +13,8 @@ export const markSchoolAttendanceSchema = z.object({
   classId: z.string().cuid().optional().nullable(),
   gateId: z.string().cuid().optional().nullable(),
   method: z.enum(['ID_CARD', 'PARENT_PORTAL', 'ADMIN', 'FUTURE_BIOMETRIC', 'FUTURE_NFC']).default('ADMIN'),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
   records: z.array(attendanceRecordItemSchema).min(1, 'At least one attendance record is required'),
 });
 

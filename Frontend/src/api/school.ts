@@ -13,6 +13,8 @@ export interface SchoolProfile {
   openingTime: string;
   lateThreshold: string;
   geofenceRadius: number;
+  latitude?: number | null;
+  longitude?: number | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;
@@ -121,7 +123,10 @@ export interface SchoolAttendanceRecord {
   checkOutTime?: string | null;
   status: 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
   method: string;
+  latitude?: number | null;
+  longitude?: number | null;
   notes?: string | null;
+  gate?: { id: string; name: string; code: string } | null;
   student: {
     id: string;
     firstName: string;
@@ -342,6 +347,81 @@ export interface StudentInvoice {
     method: string;
     notes?: string | null;
   }>;
+  _count?: { payments: number };
+}
+
+export interface SchoolPayment {
+  id: string;
+  receiptNumber: string;
+  amount: number;
+  method: 'CASH' | 'BANK_TRANSFER' | 'POS' | 'ONLINE' | 'OTHER';
+  paymentReference?: string | null;
+  paymentDate: string;
+  notes?: string | null;
+  createdAt: string;
+  student: {
+    id: string;
+    admissionNumber: string;
+    firstName: string;
+    lastName: string;
+    currentClass?: { id: string; name: string } | null;
+  };
+  invoice: {
+    id: string;
+    invoiceNumber: string;
+    totalAmount: number;
+    balance: number;
+    status: string;
+  } | null;
+  recordedBy?: { id: string; firstName: string; lastName: string } | null;
+}
+
+export const STAFF_ATTENDANCE_STATUSES = [
+  'ON_TIME',
+  'LATE',
+  'EARLY_LEAVE',
+  'OVERTIME',
+  'MISSED_CLOCK_IN',
+  'NO_CLOCK_OUT',
+  'ABSENT',
+] as const;
+export type StaffAttendanceStatus = (typeof STAFF_ATTENDANCE_STATUSES)[number];
+
+export interface StaffAttendanceRecord {
+  id: string;
+  tenantId: string;
+  schoolStaffId: string;
+  date: string;
+  clockInAt?: string | null;
+  clockInLat?: number | null;
+  clockInLng?: number | null;
+  clockOutAt?: string | null;
+  clockOutLat?: number | null;
+  clockOutLng?: number | null;
+  status: StaffAttendanceStatus;
+  lateMinutes?: number | null;
+  earlyLeaveMinutes?: number | null;
+  overtimeMinutes?: number | null;
+  method: string;
+  note?: string | null;
+  schoolStaff: {
+    id: string;
+    employeeNumber: string;
+    firstName: string;
+    lastName: string;
+    category: string;
+    designation?: string | null;
+    department?: string | null;
+    photo?: string | null;
+    userId?: string | null;
+  };
+  recordedBy?: { id: string; firstName: string; lastName: string } | null;
+}
+
+export interface StaffAttendanceSummary {
+  total: number;
+  present: number;
+  byStatus: Partial<Record<StaffAttendanceStatus, number>>;
 }
 
 export interface RevenueStats {
@@ -490,17 +570,24 @@ export const schoolApi = {
     api.post(`/school/students/${studentId}/guardians`, data).then((r) => r.data),
 
   // Attendance
-  getAttendance: (params: { date?: string; classId?: string; status?: string }) =>
-    api.get<{ items: SchoolAttendanceRecord[]; total: number } | SchoolAttendanceRecord[]>('/school/attendance', { params }).then((r) => {
+  getAttendance: (params: { date?: string; classId?: string; status?: string; page?: number; limit?: number }) =>
+    api.get<{ items: SchoolAttendanceRecord[]; total: number; page?: number; limit?: number; totalPages?: number }>('/school/attendance', { params }).then((r) => {
       if (Array.isArray(r.data)) return r.data;
       if (r.data && Array.isArray((r.data as any).items)) return (r.data as any).items as SchoolAttendanceRecord[];
       return [] as SchoolAttendanceRecord[];
     }),
+  getAttendancePaged: (params: { date?: string; classId?: string; status?: string; page?: number; limit?: number }) =>
+    api
+      .get<{ items: SchoolAttendanceRecord[]; total: number; page: number; limit: number; totalPages: number }>(
+        '/school/attendance',
+        { params },
+      )
+      .then((r) => r.data),
   getAttendanceStats: (date?: string) =>
     api.get<AttendanceStats>('/school/attendance/stats', { params: { date } }).then((r) => r.data),
-  markAttendanceBulk: (data: { date: string; classId?: string; records: Array<{ studentId: string; status: string; notes?: string }> }) =>
+  markAttendanceBulk: (data: { date: string; classId?: string; records: Array<{ studentId: string; status: string; notes?: string }>; latitude?: number | null; longitude?: number | null }) =>
     api.post('/school/attendance/mark', data).then((r) => r.data),
-  scanAttendance: (data: { scanPayload: string; gateId?: string; direction?: 'IN' | 'OUT' }) =>
+  scanAttendance: (data: { scanPayload?: string; identifier?: string; gateId?: string; direction?: 'IN' | 'OUT'; latitude?: number | null; longitude?: number | null }) =>
     api.post('/school/attendance/scan', data).then((r) => r.data),
 
   // Grading & Assessment
@@ -538,6 +625,10 @@ export const schoolApi = {
     api.get<FeeStructure[]>('/school/fees/structures', { params }).then((r) => r.data),
   createFeeStructure: (data: Partial<FeeStructure>) =>
     api.post<FeeStructure>('/school/fees/structures', data).then((r) => r.data),
+  updateFeeStructure: (id: string, data: Partial<FeeStructure>) =>
+    api.patch<FeeStructure>(`/school/fees/structures/${id}`, data).then((r) => r.data),
+  deleteFeeStructure: (id: string) =>
+    api.delete(`/school/fees/structures/${id}`).then((r) => r.data),
   listInvoices: (params?: { sessionId?: string; termId?: string; classId?: string; status?: string; search?: string }) =>
     api.get<{ items: StudentInvoice[]; total: number }>('/school/invoices', { params }).then((r) => r.data),
   getInvoice: (id: string) => api.get<StudentInvoice>(`/school/invoices/${id}`).then((r) => r.data),
@@ -547,8 +638,60 @@ export const schoolApi = {
     api.post('/school/invoices/generate-class', data).then((r) => r.data),
   recordPayment: (data: { invoiceId: string; amount: number; method: 'CASH' | 'BANK_TRANSFER' | 'POS' | 'ONLINE' | 'OTHER'; notes?: string; paymentDate?: string }) =>
     api.post('/school/payments', data).then((r) => r.data),
+  listPayments: (params?: { invoiceId?: string; studentId?: string; method?: string; startDate?: string; endDate?: string; page?: number; limit?: number }) =>
+    api
+      .get<{ items: SchoolPayment[]; total: number; page: number; limit: number; totalPages: number; totalAmountPaid: number }>(
+        '/school/payments',
+        { params },
+      )
+      .then((r) => r.data),
   getRevenueStats: (params?: { sessionId?: string; termId?: string }) =>
     api.get<RevenueStats>('/school/fees/stats', { params }).then((r) => r.data),
+
+  // Staff Attendance (clock in/out)
+  listStaffAttendance: (params?: {
+    schoolStaffId?: string;
+    status?: StaffAttendanceStatus;
+    from?: string;
+    to?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) =>
+    api
+      .get<{ items: StaffAttendanceRecord[]; total: number; page: number; limit: number; totalPages: number }>(
+        '/school/staff-attendance',
+        { params },
+      )
+      .then((r) => r.data),
+  getStaffAttendanceSummary: (params?: { from?: string; to?: string; schoolStaffId?: string }) =>
+    api
+      .get<StaffAttendanceSummary>('/school/staff-attendance/summary', { params })
+      .then((r) => r.data),
+  getMyStaffAttendanceToday: () =>
+    api
+      .get<{
+        staff: StaffAttendanceRecord['schoolStaff'] | null;
+        record: StaffAttendanceRecord | null;
+        date?: string;
+      }>('/school/staff-attendance/today')
+      .then((r) => r.data),
+  clockStaffIn: (data: { schoolStaffId?: string | null; latitude?: number | null; longitude?: number | null; note?: string | null }) =>
+    api.post<StaffAttendanceRecord>('/school/staff-attendance/clock-in', data).then((r) => r.data),
+  clockStaffOut: (data: { schoolStaffId?: string | null; latitude?: number | null; longitude?: number | null; note?: string | null }) =>
+    api.post<StaffAttendanceRecord>('/school/staff-attendance/clock-out', data).then((r) => r.data),
+  recordStaffAttendance: (data: {
+    schoolStaffId: string;
+    date: string;
+    clockInAt?: string | null;
+    clockOutAt?: string | null;
+    status?: StaffAttendanceStatus;
+    note?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  }) => api.post<StaffAttendanceRecord>('/school/staff-attendance/record', data).then((r) => r.data),
+  deleteStaffAttendance: (id: string) =>
+    api.delete(`/school/staff-attendance/${id}`).then((r) => r.data),
 
   // Announcements
   listAnnouncements: (params?: { audience?: AnnouncementAudience; search?: string; page?: number; limit?: number }) =>

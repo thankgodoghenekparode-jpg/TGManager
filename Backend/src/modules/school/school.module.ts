@@ -14,6 +14,8 @@ import { TimetableController } from './timetable.controller';
 import { TimetableService } from './timetable.service';
 import { SchoolStaffController } from './staff.controller';
 import { SchoolStaffService } from './staff.service';
+import { SchoolStaffAttendanceController } from './staff-attendance.controller';
+import { SchoolStaffAttendanceService } from './staff-attendance.service';
 import { ParentController } from './parent.controller';
 import { ParentService } from './parent.service';
 import { AnnouncementsController } from './announcements.controller';
@@ -31,6 +33,7 @@ import { SchoolAnalyticsService } from './analytics.service';
     SchoolFeesController,
     TimetableController,
     SchoolStaffController,
+    SchoolStaffAttendanceController,
     ParentController,
     AnnouncementsController,
     SchoolAnalyticsController,
@@ -43,6 +46,7 @@ import { SchoolAnalyticsService } from './analytics.service';
     SchoolFeesService,
     TimetableService,
     SchoolStaffService,
+    SchoolStaffAttendanceService,
     ParentService,
     AnnouncementsService,
     SchoolAnalyticsService,

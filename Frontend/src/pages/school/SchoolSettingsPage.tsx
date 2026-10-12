@@ -17,10 +17,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SchoolIcon from '@mui/icons-material/School';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
 import { schoolApi } from '../../api/school';
 import { tenantsApi } from '../../api/tenants';
 import { tenantLogoUrl, apiErrorMessage } from '../../api/client';
 import { useTenantStore } from '../../store/tenant';
+import { getCurrentPosition } from '../../lib/geo';
 
 export function SchoolSettingsPage() {
   const qc = useQueryClient();
@@ -41,6 +43,8 @@ export function SchoolSettingsPage() {
     openingTime: '07:30',
     lateThreshold: '07:50',
     geofenceRadius: 250,
+    latitude: '' as number | '',
+    longitude: '' as number | '',
     address: '',
     city: '',
     state: '',
@@ -48,6 +52,9 @@ export function SchoolSettingsPage() {
     email: '',
     website: '',
   });
+
+  const [geoStatus, setGeoStatus] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -60,6 +67,8 @@ export function SchoolSettingsPage() {
         openingTime: profile.openingTime || '07:30',
         lateThreshold: profile.lateThreshold || '07:50',
         geofenceRadius: profile.geofenceRadius || 250,
+        latitude: profile.latitude ?? '',
+        longitude: profile.longitude ?? '',
         address: profile.address || 'Plot 14, Commercial Avenue, Ikeja',
         city: profile.city || 'Ikeja',
         state: profile.state || 'Lagos',
@@ -70,8 +79,47 @@ export function SchoolSettingsPage() {
     }
   }, [profile]);
 
+  const useCurrentLocation = async () => {
+    setLocating(true);
+    setGeoStatus(null);
+    const { position, status } = await getCurrentPosition();
+    setLocating(false);
+    if (!position) {
+      setGeoStatus(
+        status === 'denied'
+          ? 'Location permission denied. Enter the coordinates manually.'
+          : 'Could not read your location. Enter the coordinates manually.',
+      );
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      latitude: Number(position.latitude.toFixed(6)),
+      longitude: Number(position.longitude.toFixed(6)),
+    }));
+    setGeoStatus('Captured your current position. Remember to Save Settings.');
+  };
+
   const updateMutation = useMutation({
-    mutationFn: (data: typeof form) => schoolApi.updateProfile(data),
+    mutationFn: (data: typeof form) =>
+      schoolApi.updateProfile({
+        motto: data.motto,
+        principalName: data.principalName,
+        schoolType: data.schoolType,
+        ownershipType: data.ownershipType,
+        currency: data.currency,
+        openingTime: data.openingTime,
+        lateThreshold: data.lateThreshold,
+        geofenceRadius: data.geofenceRadius,
+        latitude: data.latitude === '' ? null : Number(data.latitude),
+        longitude: data.longitude === '' ? null : Number(data.longitude),
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        phone: data.phone,
+        email: data.email,
+        website: data.website,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['school', 'profile'] });
       setSuccessMsg(true);
@@ -216,6 +264,63 @@ export function SchoolSettingsPage() {
                 onChange={(e) => setForm({ ...form, geofenceRadius: Number(e.target.value) })}
               />
             </Grid>
+          </Grid>
+
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+            Campus Coordinates — used to validate staff clock-in/out and gate/classroom attendance against this location.
+          </Typography>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Latitude"
+                placeholder="e.g. 6.595400"
+                value={form.latitude}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    latitude: e.target.value === '' ? '' : Number(e.target.value),
+                  })
+                }
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Longitude"
+                placeholder="e.g. 3.343100"
+                value={form.longitude}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    longitude: e.target.value === '' ? '' : Number(e.target.value),
+                  })
+                }
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<MyLocationIcon />}
+                disabled={locating}
+                onClick={useCurrentLocation}
+                sx={{ height: 40, textTransform: 'none' }}
+              >
+                {locating ? 'Locating…' : 'Use My Current Location'}
+              </Button>
+            </Grid>
+            {geoStatus && (
+              <Grid item xs={12}>
+                <Alert severity={geoStatus.startsWith('Captured') ? 'success' : 'info'}>
+                  {geoStatus}
+                </Alert>
+              </Grid>
+            )}
           </Grid>
         </CardContent>
       </Card>

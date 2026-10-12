@@ -11,6 +11,9 @@ export const createFeeStructureSchema = z.object({
 
 export type CreateFeeStructureDto = z.infer<typeof createFeeStructureSchema>;
 
+export const updateFeeStructureSchema = createFeeStructureSchema.partial();
+export type UpdateFeeStructureDto = z.infer<typeof updateFeeStructureSchema>;
+
 export const invoiceItemInputSchema = z.object({
   feeStructureId: z.string().cuid().optional().nullable(),
   description: z.string().trim().min(1).max(200),
@@ -59,3 +62,15 @@ export const queryInvoicesSchema = z.object({
 });
 
 export type QueryInvoicesDto = z.infer<typeof queryInvoicesSchema>;
+
+export const queryPaymentsSchema = z.object({
+  invoiceId: z.string().cuid().optional(),
+  studentId: z.string().cuid().optional(),
+  method: z.enum(['CASH', 'BANK_TRANSFER', 'POS', 'ONLINE', 'OTHER']).optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+
+export type QueryPaymentsDto = z.infer<typeof queryPaymentsSchema>;

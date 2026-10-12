@@ -319,6 +319,7 @@ model User {
   resultsApproved               AcademicResult[]       @relation("ResultApprovedBy")
   schoolPaymentsRecorded        SchoolPayment[]        @relation("SchoolPaymentRecordedBy")
   schoolAnnouncementsCreated    SchoolAnnouncement[]   @relation("SchoolAnnouncementCreatedBy")
+  schoolStaffAttendanceRecorded SchoolStaffAttendance[] @relation("SchoolStaffAttendanceRecordedBy")
 
   @@index([email])
 }
@@ -424,6 +425,7 @@ model Tenant {
   schoolStaff          SchoolStaff[]
   gates                Gate[]
   schoolAttendance     SchoolAttendance[]
+  schoolStaffAttendance SchoolStaffAttendance[]
   assignments          Assignment[]
   gradingScales        GradingScale[]
   assessmentComponents AssessmentComponent[]
@@ -523,6 +525,7 @@ model Branch {
   gates             Gate[]
   students          Student[]
   schoolAttendance  SchoolAttendance[]
+  schoolStaffAttendance SchoolStaffAttendance[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -1265,6 +1268,10 @@ model SchoolProfile {
   openingTime     String        @default("07:30")
   lateThreshold   String        @default("07:45")
   geofenceRadius  Float         @default(200)
+  // Admin-set campus geofence origin. When present, staff clock-in/out and
+  // gate/classroom attendance are validated against this point + the radius.
+  latitude        Float?
+  longitude       Float?
   address         String?
   city            String?
   state           String?
@@ -1283,12 +1290,15 @@ model Gate {
   tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branchId  String?
   branch    Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  name      String
-  code      String
-  location  String?
-  status    String             @default("ACTIVE")
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  name         String
+  code         String
+  location     String?
+  latitude     Float?
+  longitude    Float?
+  radiusMeters Float?
+  status       String             @default("ACTIVE")
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   attendance SchoolAttendance[]
 
@@ -1535,6 +1545,7 @@ model SchoolStaff {
   teacherSubjects  TeacherSubject[]
   assignments      Assignment[]
   timetablePeriods TimetablePeriod[]
+  attendance       SchoolStaffAttendance[]
 
   @@unique([tenantId, employeeNumber])
   @@index([tenantId])
@@ -1565,6 +1576,37 @@ model SchoolAttendance {
   @@unique([tenantId, studentId, date])
   @@index([tenantId, date])
   @@index([studentId])
+}
+
+model SchoolStaffAttendance {
+  id                String           @id @default(cuid())
+  tenantId          String
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchId          String?
+  branch            Branch?          @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  schoolStaffId     String
+  schoolStaff       SchoolStaff      @relation(fields: [schoolStaffId], references: [id], onDelete: Cascade)
+  date              DateTime         @db.Date
+  clockInAt         DateTime?
+  clockInLat        Float?
+  clockInLng        Float?
+  clockOutAt        DateTime?
+  clockOutLat       Float?
+  clockOutLng       Float?
+  status            AttendanceStatus @default(ABSENT)
+  lateMinutes       Int?
+  earlyLeaveMinutes Int?
+  overtimeMinutes   Int?
+  method            String           @default("WEB")
+  note              String?
+  recordedByUserId  String?
+  recordedBy        User?            @relation("SchoolStaffAttendanceRecordedBy", fields: [recordedByUserId], references: [id], onDelete: SetNull)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([tenantId, schoolStaffId, date])
+  @@index([tenantId, date])
+  @@index([schoolStaffId])
 }
 
 model StudentIdCard {

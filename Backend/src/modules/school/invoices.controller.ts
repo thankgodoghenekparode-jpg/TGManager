@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -20,12 +22,16 @@ import {
   createStudentInvoiceSchema,
   generateClassInvoicesSchema,
   queryInvoicesSchema,
+  queryPaymentsSchema,
   recordSchoolPaymentSchema,
+  updateFeeStructureSchema,
   type CreateFeeStructureDto,
   type CreateStudentInvoiceDto,
   type GenerateClassInvoicesDto,
   type QueryInvoicesDto,
+  type QueryPaymentsDto,
   type RecordSchoolPaymentDto,
+  type UpdateFeeStructureDto,
 } from './dto/invoices.dto';
 
 @ApiTags('School - Fees & Invoices')
@@ -54,6 +60,24 @@ export class SchoolFeesController {
     @Body(new ZodValidationPipe(createFeeStructureSchema)) dto: CreateFeeStructureDto,
   ) {
     return this.feesService.createFeeStructure(req.tenant.id, dto);
+  }
+
+  @Patch('fees/structures/:id')
+  @Permissions(PERMISSIONS.SCHOOL_FEE_MANAGE)
+  @ApiOperation({ summary: 'Update a fee structure item (tuition, levy, etc.)' })
+  async updateFeeStructure(
+    @Req() req: PermissionRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updateFeeStructureSchema)) dto: UpdateFeeStructureDto,
+  ) {
+    return this.feesService.updateFeeStructure(req.tenant.id, id, dto);
+  }
+
+  @Delete('fees/structures/:id')
+  @Permissions(PERMISSIONS.SCHOOL_FEE_MANAGE)
+  @ApiOperation({ summary: 'Delete a fee structure item' })
+  async deleteFeeStructure(@Req() req: PermissionRequest, @Param('id') id: string) {
+    return this.feesService.deleteFeeStructure(req.tenant.id, id);
   }
 
   @Get('invoices')
@@ -101,6 +125,16 @@ export class SchoolFeesController {
     @Body(new ZodValidationPipe(recordSchoolPaymentSchema)) dto: RecordSchoolPaymentDto,
   ) {
     return this.feesService.recordPayment(req.tenant.id, req.user.sub, dto);
+  }
+
+  @Get('payments')
+  @Permissions(PERMISSIONS.SCHOOL_FEE_VIEW)
+  @ApiOperation({ summary: 'List fee payment history with payer, method and receipt details' })
+  async listPayments(
+    @Req() req: PermissionRequest,
+    @Query(new ZodValidationPipe(queryPaymentsSchema)) query: QueryPaymentsDto,
+  ) {
+    return this.feesService.listPayments(req.tenant.id, query);
   }
 
   @Get('fees/stats')

@@ -64,6 +64,8 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
           openingTime: '07:30',
           lateThreshold: '07:50',
           geofenceRadius: 300,
+          latitude: 6.5954,
+          longitude: 3.3431,
           address: 'Plot 14, Commercial Avenue, Ikeja',
           city: 'Ikeja',
           state: 'Lagos',
@@ -107,6 +109,9 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
           name: 'Main Entrance Gate',
           code: 'GATE-01',
           location: 'Front Security Checkpoint A',
+          latitude: 6.5954,
+          longitude: 3.3431,
+          radiusMeters: 150,
         },
       });
 
@@ -117,6 +122,9 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
           name: 'Bus & Staff Gate',
           code: 'GATE-02',
           location: 'North Campus Gate B',
+          latitude: 6.5971,
+          longitude: 3.3449,
+          radiusMeters: 150,
         },
       });
 
@@ -600,6 +608,28 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
         },
       });
 
+      await tx.feeStructure.create({
+        data: {
+          tenantId: schoolTenant.id,
+          sessionId: session2526.id,
+          termId: term2.id,
+          name: 'Library & Reading Materials Levy',
+          amount: 5000,
+          category: 'LIBRARY',
+        },
+      });
+
+      await tx.feeStructure.create({
+        data: {
+          tenantId: schoolTenant.id,
+          sessionId: session2526.id,
+          termId: term2.id,
+          name: 'Sports & Extracurricular Levy',
+          amount: 7500,
+          category: 'SPORTS',
+        },
+      });
+
       // 12. 10 Parents / Guardians
       const guardianData = [
         { firstName: 'Chukwudi', lastName: 'Eze', phone: '+234 803 111 2233', email: 'c.eze@gmail.com', rel: 'Father' },
@@ -811,6 +841,93 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
       }
       await tx.schoolAttendance.createMany({ data: attendanceBatch });
 
+      // 14b. Staff clock-in/out records (today & yesterday) for the demo
+      const staffClockIn = (h: number, m: number) => {
+        const d = new Date(today);
+        d.setHours(h, m, 0, 0);
+        return d;
+      };
+      const yClock = (h: number, m: number) => {
+        const d = new Date(yesterday);
+        d.setHours(h, m, 0, 0);
+        return d;
+      };
+      const staffAttendanceBatch = [
+        {
+          tenantId: schoolTenant.id,
+          branchId: ikejaBranch.id,
+          schoolStaffId: principal.staff.id,
+          date: today,
+          clockInAt: staffClockIn(7, 20),
+          clockInLat: 6.5954,
+          clockInLng: 3.3431,
+          status: 'ON_TIME' as const,
+          method: 'WEB',
+          recordedByUserId: principal.user.id,
+        },
+        {
+          tenantId: schoolTenant.id,
+          branchId: ikejaBranch.id,
+          schoolStaffId: teacherMath.staff.id,
+          date: today,
+          clockInAt: staffClockIn(7, 38),
+          clockInLat: 6.5955,
+          clockInLng: 3.3432,
+          status: 'ON_TIME' as const,
+          method: 'WEB',
+          recordedByUserId: teacherMath.user.id,
+        },
+        {
+          tenantId: schoolTenant.id,
+          branchId: ikejaBranch.id,
+          schoolStaffId: teacherEng.staff.id,
+          date: today,
+          clockInAt: staffClockIn(8, 12),
+          clockInLat: 6.5967,
+          clockInLng: 3.344,
+          status: 'LATE' as const,
+          lateMinutes: 22,
+          method: 'WEB',
+          note: 'Heavy traffic on Awolowo Way',
+          recordedByUserId: teacherEng.user.id,
+        },
+        {
+          tenantId: schoolTenant.id,
+          branchId: ikejaBranch.id,
+          schoolStaffId: bursar.staff.id,
+          date: today,
+          clockInAt: staffClockIn(7, 45),
+          clockInLat: 6.5954,
+          clockInLng: 3.3431,
+          status: 'ON_TIME' as const,
+          method: 'WEB',
+          recordedByUserId: bursar.user.id,
+        },
+        {
+          tenantId: schoolTenant.id,
+          branchId: ikejaBranch.id,
+          schoolStaffId: teacherMath.staff.id,
+          date: yesterday,
+          clockInAt: yClock(7, 30),
+          clockOutAt: yClock(15, 45),
+          status: 'ON_TIME' as const,
+          method: 'WEB',
+          recordedByUserId: teacherMath.user.id,
+        },
+        {
+          tenantId: schoolTenant.id,
+          branchId: ikejaBranch.id,
+          schoolStaffId: teacherEng.staff.id,
+          date: yesterday,
+          clockInAt: yClock(7, 35),
+          clockOutAt: yClock(15, 40),
+          status: 'ON_TIME' as const,
+          method: 'WEB',
+          recordedByUserId: teacherEng.user.id,
+        },
+      ];
+      await tx.schoolStaffAttendance.createMany({ data: staffAttendanceBatch });
+
       // 15. Batch Continuous Assessment & Exam Scores
       const resultsBatch = [];
       for (let i = 0; i < 15; i++) {
@@ -873,19 +990,32 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
         });
 
         if (amountPaid > 0) {
-          await tx.schoolPayment.create({
-            data: {
-              tenantId: schoolTenant.id,
-              invoiceId: invoice.id,
-              studentId: stu.id,
-              receiptNumber: `REC-${202600 + i}`,
-              amount: amountPaid,
-              method: 'BANK_TRANSFER',
-              paymentReference: `TXN-NIBSS-${Math.floor(1000000 + Math.random() * 9000000)}`,
-              recordedByUserId: bursar.user.id,
-              notes: isFullyPaid ? 'Full term fees payment received' : 'First instalment payment',
-            },
-          });
+          // Record each instalment as its own payment so the payment count and
+          // history are meaningful (some invoices paid once, some in two parts).
+          const instalments =
+            isFullyPaid || isPartiallyPaid
+              ? [Math.round(amountPaid / 2), amountPaid - Math.round(amountPaid / 2)]
+              : [];
+          let instalmentIndex = 0;
+          for (const part of instalments) {
+            if (part <= 0) continue;
+            instalmentIndex += 1;
+            await tx.schoolPayment.create({
+              data: {
+                tenantId: schoolTenant.id,
+                invoiceId: invoice.id,
+                studentId: stu.id,
+                receiptNumber: `REC-${202600 + i}-${instalmentIndex}`,
+                amount: part,
+                method: instalmentIndex === 1 ? 'BANK_TRANSFER' : 'POS',
+                paymentReference: `TXN-NIBSS-${Math.floor(1000000 + Math.random() * 9000000)}`,
+                recordedByUserId: bursar.user.id,
+                notes: isFullyPaid
+                  ? `Instalment ${instalmentIndex} of full term fees`
+                  : `Instalment ${instalmentIndex} (part payment)`,
+              },
+            });
+          }
         }
       }
 

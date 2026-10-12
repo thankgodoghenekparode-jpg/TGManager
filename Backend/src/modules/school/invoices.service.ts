@@ -11,7 +11,9 @@ import type {
   CreateStudentInvoiceDto,
   GenerateClassInvoicesDto,
   QueryInvoicesDto,
+  QueryPaymentsDto,
   RecordSchoolPaymentDto,
+  UpdateFeeStructureDto,
 } from './dto/invoices.dto';
 
 @Injectable()
@@ -62,6 +64,43 @@ export class SchoolFeesService {
         termId: dto.termId,
       },
     });
+  }
+
+  async updateFeeStructure(
+    tenantId: string,
+    id: string,
+    dto: UpdateFeeStructureDto,
+  ) {
+    const existing = await this.prisma.feeStructure.findFirst({
+      where: { id, tenantId },
+    });
+    if (!existing) throw new NotFoundException('Fee structure not found');
+
+    return this.prisma.feeStructure.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.category !== undefined
+          ? { category: dto.category.toUpperCase() }
+          : {}),
+        ...(dto.amount !== undefined ? { amount: dto.amount } : {}),
+        ...(dto.classId !== undefined ? { classId: dto.classId } : {}),
+        ...(dto.sessionId !== undefined ? { sessionId: dto.sessionId } : {}),
+        ...(dto.termId !== undefined ? { termId: dto.termId } : {}),
+      },
+    });
+  }
+
+  async deleteFeeStructure(tenantId: string, id: string) {
+    const existing = await this.prisma.feeStructure.findFirst({
+      where: { id, tenantId },
+    });
+    if (!existing) throw new NotFoundException('Fee structure not found');
+
+    // Invoice items referencing this fee keep their description/amount; the
+    // relation is nullable with onDelete: SetNull.
+    await this.prisma.feeStructure.delete({ where: { id } });
+    return { success: true };
   }
 
   // ================= Invoices =================
@@ -198,6 +237,7 @@ export class SchoolFeesService {
           session: { select: { id: true, name: true } },
           term: { select: { id: true, name: true } },
           items: true,
+          _count: { select: { payments: true } },
           payments: {
             select: {
               id: true,
@@ -303,6 +343,77 @@ export class SchoolFeesService {
         invoice: updatedInvoice,
       };
     });
+  }
+
+  /**
+   * Paginated payment history. Every fee instalment is stored as its own
+   * SchoolPayment row, so this is the record of "how many times" a fee was
+   * paid, with payer/recorder, method, reference and receipt details.
+   */
+  async listPayments(tenantId: string, query: QueryPaymentsDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 50;
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      tenantId,
+      ...(query.invoiceId ? { invoiceId: query.invoiceId } : {}),
+      ...(query.studentId ? { studentId: query.studentId } : {}),
+      ...(query.method ? { method: query.method } : {}),
+    };
+    if (query.startDate || query.endDate) {
+      where.paymentDate = {
+        ...(query.startDate
+          ? { gte: new Date(`${query.startDate}T00:00:00.000Z`) }
+          : {}),
+        ...(query.endDate
+          ? { lte: new Date(`${query.endDate}T23:59:59.999Z`) }
+          : {}),
+      };
+    }
+
+    const [items, total, aggregate] = await Promise.all([
+      this.prisma.schoolPayment.findMany({
+        where,
+        include: {
+          student: {
+            select: {
+              id: true,
+              admissionNumber: true,
+              firstName: true,
+              lastName: true,
+              currentClass: { select: { id: true, name: true } },
+            },
+          },
+          invoice: {
+            select: {
+              id: true,
+              invoiceNumber: true,
+              totalAmount: true,
+              balance: true,
+              status: true,
+            },
+          },
+          recordedBy: {
+            select: { id: true, firstName: true, lastName: true },
+          },
+        },
+        orderBy: { paymentDate: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.schoolPayment.count({ where }),
+      this.prisma.schoolPayment.aggregate({ where, _sum: { amount: true } }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      totalAmountPaid: aggregate._sum.amount ?? 0,
+    };
   }
 
   async getRevenueStats(tenantId: string, sessionId?: string, termId?: string) {

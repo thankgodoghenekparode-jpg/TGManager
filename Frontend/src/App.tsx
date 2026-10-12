@@ -16,6 +16,7 @@ import { SchoolDashboardPage } from './pages/school/SchoolDashboard'
 import { StudentsPage } from './pages/school/StudentsPage'
 import { ClassesPage } from './pages/school/ClassesPage'
 import { AttendancePage as SchoolAttendancePage } from './pages/school/AttendancePage'
+import { SchoolStaffAttendancePage } from './pages/school/SchoolStaffAttendancePage'
 import { GradingPage } from './pages/school/GradingPage'
 import { TimetablePage } from './pages/school/TimetablePage'
 import { SchoolStaffPage } from './pages/school/SchoolStaffPage'
@@ -141,6 +142,7 @@ const router = createBrowserRouter([
               { path: '/school/students', element: <StudentsPage /> },
               { path: '/school/classes', element: <ClassesPage /> },
               { path: '/school/attendance', element: <SchoolAttendancePage /> },
+              { path: '/school/staff-attendance', element: <SchoolStaffAttendancePage /> },
               { path: '/school/grading', element: <GradingPage /> },
               { path: '/school/timetable', element: <TimetablePage /> },
               { path: '/school/fees', element: <FeesPage /> },

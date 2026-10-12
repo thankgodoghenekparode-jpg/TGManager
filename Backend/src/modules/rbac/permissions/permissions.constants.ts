@@ -80,6 +80,8 @@ export const PERMISSIONS = {
   SCHOOL_FEE_MANAGE: 'school_fee.manage',
   SCHOOL_ATTENDANCE_VIEW: 'school_attendance.view',
   SCHOOL_ATTENDANCE_MANAGE: 'school_attendance.manage',
+  SCHOOL_STAFF_ATTENDANCE_VIEW: 'school_staff_attendance.view',
+  SCHOOL_STAFF_ATTENDANCE_MANAGE: 'school_staff_attendance.manage',
   SCHOOL_PARENT_VIEW: 'school.parent_view',
 
   INTEGRATION_MANAGE: 'integration.manage',

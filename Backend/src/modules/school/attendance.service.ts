@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { distanceMeters, localTimeKey } from '../../common/utils/time.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import type {
   MarkSchoolAttendanceDto,
@@ -35,6 +37,8 @@ export class SchoolAttendanceService {
           method: dto.method,
           checkInTime: r.checkInTime ? new Date(r.checkInTime) : new Date(),
           checkOutTime: r.checkOutTime ? new Date(r.checkOutTime) : null,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
           notes: r.notes,
         },
         update: {
@@ -42,6 +46,8 @@ export class SchoolAttendanceService {
           method: dto.method,
           ...(r.checkInTime ? { checkInTime: new Date(r.checkInTime) } : {}),
           ...(r.checkOutTime ? { checkOutTime: new Date(r.checkOutTime) } : {}),
+          ...(dto.latitude != null ? { latitude: dto.latitude } : {}),
+          ...(dto.longitude != null ? { longitude: dto.longitude } : {}),
           notes: r.notes,
         },
       });
@@ -120,12 +126,20 @@ export class SchoolAttendanceService {
     const todayStr = now.toISOString().slice(0, 10);
     const attendanceDate = new Date(`${todayStr}T00:00:00.000Z`);
 
+    // Enforce the admin-configured campus/gate geofence (when both the fence
+    // and a device position are available) before accepting the scan.
+    await this.assertGeofence(tenantId, dto.gateId, dto.latitude, dto.longitude);
+
     // Check school opening and late thresholds
     const profile = await this.prisma.schoolProfile.findUnique({
       where: { tenantId },
     });
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { timezone: true },
+    });
     const lateThreshold = profile?.lateThreshold || '07:45';
-    const currentHoursMinutes = now.toTimeString().slice(0, 5); // "HH:MM"
+    const currentHoursMinutes = localTimeKey(now, tenant?.timezone || 'UTC'); // "HH:MM"
     const isLate = currentHoursMinutes > lateThreshold;
 
     const existing = await this.prisma.schoolAttendance.findUnique({
@@ -283,5 +297,78 @@ export class SchoolAttendanceService {
         ? Math.round(((counts.PRESENT + counts.LATE) / totalStudents) * 100)
         : 0,
     };
+  }
+
+  /**
+   * Resolves the effective geofence for a gate scan: the gate's own fence when
+   * configured, otherwise the campus-wide fence from the school profile.
+   * Returns null when no coordinates have been set by the admin, in which case
+   * scans are accepted without a location check.
+   */
+  private async resolveGeofence(
+    tenantId: string,
+    gateId?: string | null,
+  ): Promise<{ latitude: number; longitude: number; radiusMeters: number } | null> {
+    if (gateId) {
+      const gate = await this.prisma.gate.findFirst({
+        where: { id: gateId, tenantId },
+      });
+      if (
+        gate &&
+        gate.latitude != null &&
+        gate.longitude != null &&
+        gate.radiusMeters != null
+      ) {
+        return {
+          latitude: gate.latitude,
+          longitude: gate.longitude,
+          radiusMeters: gate.radiusMeters,
+        };
+      }
+    }
+
+    const profile = await this.prisma.schoolProfile.findUnique({
+      where: { tenantId },
+    });
+    if (
+      profile &&
+      profile.latitude != null &&
+      profile.longitude != null &&
+      profile.geofenceRadius != null
+    ) {
+      return {
+        latitude: profile.latitude,
+        longitude: profile.longitude,
+        radiusMeters: profile.geofenceRadius,
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Verifies the scanning device is within the configured geofence. When either
+   * the fence or the device position is unavailable, the check is skipped so
+   * attendance can still be captured (e.g. desktop kiosks without GPS).
+   */
+  private async assertGeofence(
+    tenantId: string,
+    gateId: string | null | undefined,
+    latitude?: number | null,
+    longitude?: number | null,
+  ): Promise<void> {
+    if (latitude == null || longitude == null) return;
+    const fence = await this.resolveGeofence(tenantId, gateId);
+    if (!fence) return;
+    const distance = distanceMeters(
+      fence.latitude,
+      fence.longitude,
+      latitude,
+      longitude,
+    );
+    if (distance > fence.radiusMeters) {
+      throw new ForbiddenException(
+        `Outside the school geofence (${Math.round(distance)}m away). Move closer to the gate/campus and try again.`,
+      );
+    }
   }
 }

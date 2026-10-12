@@ -3,6 +3,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
@@ -28,6 +29,7 @@ export function SchoolLayout() {
     { label: 'Students & ID Cards', path: '/school/students', icon: SchoolIcon },
     { label: 'Classes & Academics', path: '/school/classes', icon: ClassIcon },
     { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon },
+    { label: 'Staff Clock In/Out', path: '/school/staff-attendance', icon: AccessTimeIcon },
     { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon },
     { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon },
     { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon },

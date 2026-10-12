@@ -9,6 +9,8 @@ export const schoolProfileSchema = z.object({
   openingTime: z.string().trim().regex(/^\d{2}:\d{2}$/).default('07:30'),
   lateThreshold: z.string().trim().regex(/^\d{2}:\d{2}$/).default('07:45'),
   geofenceRadius: z.number().positive().max(5000).default(200),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
   address: z.string().trim().max(255).optional().nullable(),
   city: z.string().trim().max(100).optional().nullable(),
   state: z.string().trim().max(100).optional().nullable(),
