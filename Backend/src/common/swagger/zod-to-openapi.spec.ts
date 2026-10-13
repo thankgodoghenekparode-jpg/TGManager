@@ -81,6 +81,23 @@ describe('zodToOpenApiSchema', () => {
     expect(openApi.required).toEqual(['maybe']);
   });
 
+  it('unwraps preprocess pipes to the output schema', () => {
+    const blankToNull = (value: unknown) => (value === '' ? null : value);
+    const schema = z.object({
+      name: z
+        .preprocess(blankToNull, z.string().max(50).nullable())
+        .optional(),
+      port: z
+        .preprocess(blankToNull, z.coerce.number().int().min(1).nullable())
+        .optional(),
+    });
+    const openApi = zodToOpenApiSchema(schema);
+    expect(openApi.properties).toMatchObject({
+      name: { type: ['string', 'null'], maxLength: 50 },
+      port: { type: ['integer', 'null'], minimum: 1 },
+    });
+  });
+
   it('converts records and unions', () => {
     const schema = z.object({
       meta: z.record(z.string(), z.string()),

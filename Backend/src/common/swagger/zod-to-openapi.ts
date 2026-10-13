@@ -231,8 +231,18 @@ function convert(schema: AnyZodSchema): Record<string, unknown> {
     }
     case 'effects':
     case 'pipeline':
-    case 'transform': {
-      const inner = (d.in ?? d.innerType ?? d.out) as AnyZodSchema | undefined;
+    case 'transform':
+    case 'pipe': {
+      const input = d.in as AnyZodSchema | undefined;
+      const output = d.out as AnyZodSchema | undefined;
+      // `z.preprocess(fn, schema)` compiles to a pipe whose `in` side is a bare
+      // transform; the schema worth documenting is on the `out` side. Chains
+      // such as `.transform().refine()` keep the source schema on the `in` side,
+      // which is the useful shape to document.
+      const inner =
+        input && def(input).type !== 'transform'
+          ? input
+          : (output ?? (d.innerType as AnyZodSchema | undefined));
       if (inner) {
         return convert(inner);
       }

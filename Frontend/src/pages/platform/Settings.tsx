@@ -55,7 +55,7 @@ export function SettingsPage() {
       disabled={!isSuper}
       busy={update.isPending}
       error={update.error ? apiErrorMessage(update.error) : ''}
-      onSave={(body) => update.mutate(body)}
+      onSave={(body) => update.mutateAsync(body)}
     />
   )
 }
@@ -71,7 +71,7 @@ function SettingsForm({
   disabled: boolean
   busy: boolean
   error: string
-  onSave: (body: Partial<SettingsShape>) => void
+  onSave: (body: Partial<SettingsShape>) => Promise<unknown>
 }) {
   const [form, setForm] = useState<SettingsShape>(() => ({
     ...initial,
@@ -84,10 +84,14 @@ function SettingsForm({
     setSaved(false)
   }
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
-    onSave(form)
-    setSaved(true)
+    try {
+      await onSave(form)
+      setSaved(true)
+    } catch {
+      setSaved(false)
+    }
   }
 
   const num = (v: number | null | undefined) => (v === null ? '' : String(v ?? ''))
