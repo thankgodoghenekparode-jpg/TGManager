@@ -63,9 +63,9 @@ export function getAppTheme(mode: 'light' | 'dark' = 'dark'): Theme {
             // rem-based, so this is the single lever for the whole UI). The auth
             // screens opt out via `html.auth-page` (see index.css) and keep the
             // smaller, more compact scale.
-            fontSize: '18px',
-            '@media (max-width:900px)': { fontSize: '17.5px' },
-            '@media (max-width:600px)': { fontSize: '17px' },
+            fontSize: '20px',
+            '@media (max-width:900px)': { fontSize: '19.5px' },
+            '@media (max-width:600px)': { fontSize: '19px' },
           },
           '::selection': { backgroundColor: 'rgba(236, 6, 24, 0.35)', color: '#FFFFFF' },
           '& *::-webkit-scrollbar': { width: 6, height: 6 },
