@@ -56,7 +56,8 @@ export class SeedOnBootstrapService implements OnModuleInit {
         this.logger.log(
           `Database seed completed in ${Date.now() - startedAt}ms ` +
             `(plans=${result.plansSeeded}, demo=${result.demoSeeded}, ` +
-            `mockSessions=${result.mockSessionsSeeded}).`,
+            `mockSessions=${result.mockSessionsSeeded}, ` +
+            `results=${result.schoolResults.resultsCreated}).`,
         );
         return;
       } catch (error) {

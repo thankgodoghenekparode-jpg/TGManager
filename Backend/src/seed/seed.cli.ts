@@ -14,7 +14,10 @@ async function main(): Promise<void> {
   try {
     const result = await runSeed(prisma);
     console.log(
-      `Seed complete: plans=${result.plansSeeded}, demo=${result.demoSeeded}, mockSessions=${result.mockSessionsSeeded}`,
+      `Seed complete: plans=${result.plansSeeded}, demo=${result.demoSeeded}, ` +
+        `mockSessions=${result.mockSessionsSeeded}, ` +
+        `schoolResults=${result.schoolResults.resultsCreated} created / ` +
+        `${result.schoolResults.resultsExisting} existing`,
     );
   } finally {
     await prisma.$disconnect();

@@ -928,32 +928,10 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
       ];
       await tx.schoolStaffAttendance.createMany({ data: staffAttendanceBatch });
 
-      // 15. Batch Continuous Assessment & Exam Scores
-      const resultsBatch = [];
-      for (let i = 0; i < 15; i++) {
-        const stu = createdStudents[i];
-        const ca = 30 + (i % 10);
-        const exam = 42 + ((i * 3) % 25);
-        const total = ca + exam;
-        const grade = total >= 75 ? 'A1' : total >= 70 ? 'B2' : total >= 65 ? 'B3' : 'C4';
-
-        resultsBatch.push({
-          tenantId: schoolTenant.id,
-          studentId: stu.id,
-          classId: stu.currentClassId!,
-          subjectId: math.id,
-          sessionId: session2526.id,
-          termId: term2.id,
-          caScore: ca,
-          examScore: exam,
-          totalScore: total,
-          grade,
-          gradePoint: total >= 75 ? 5.0 : total >= 70 ? 4.5 : total >= 65 ? 4.0 : 3.5,
-          remark: total >= 70 ? 'Distinction' : 'Very Good',
-          status: 'APPROVED' as const,
-        });
-      }
-      await tx.academicResult.createMany({ data: resultsBatch });
+      // 15. Term results are seeded comprehensively (every student × every
+      // class subject, across all started terms) by `seedSchoolResults` after
+      // this function returns, so they can also back-fill an existing demo
+      // school. See `src/seed/school-results-seed.ts`.
 
       // 16. Fee Invoices & Payments
       for (let i = 0; i < createdStudents.length; i++) {

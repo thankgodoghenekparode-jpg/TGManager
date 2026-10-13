@@ -6,6 +6,10 @@ import {
 } from '../modules/rbac/permissions/permissions.constants';
 import { seedSchoolDemo } from './school-seed';
 import { seedSchoolSessions } from './school-sessions-seed';
+import {
+  seedSchoolResults,
+  type SeedSchoolResultsResult,
+} from './school-results-seed';
 
 const DEFAULT_PASSWORD = 'password123';
 const BCRYPT_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
@@ -2260,6 +2264,7 @@ export interface SeedRun {
   demoSeeded: boolean;
   schoolDemoSeeded: boolean;
   mockSessionsSeeded: number;
+  schoolResults: SeedSchoolResultsResult;
 }
 
 /**
@@ -2270,16 +2275,20 @@ export interface SeedRun {
  * - The demo school is seeded if it does not already exist.
  * - Mock academic sessions for the demo school are loaded (idempotent). Remove
  *   them again with `npm run seed:sessions:cleanup`.
+ * - Term results for the demo school are filled in (idempotent). Re-run with
+ *   `npm run seed:results`.
  */
 export async function runSeed(prisma: PrismaClient): Promise<SeedRun> {
   await seedPlans(prisma);
   const demoSeeded = await seedDemoOrg(prisma);
   const schoolDemoSeeded = await seedSchoolDemo(prisma);
   const mockSessionsSeeded = await seedSchoolSessions(prisma);
+  const schoolResults = await seedSchoolResults(prisma);
   return {
     plansSeeded: true,
     demoSeeded,
     schoolDemoSeeded,
     mockSessionsSeeded,
+    schoolResults,
   };
 }
