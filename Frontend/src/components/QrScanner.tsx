@@ -61,6 +61,11 @@ export function QrScanner({ onScan, paused = false }: QrScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
+  // Keep the latest `paused` value in a ref: the decode callback is created once
+  // when the camera starts, so a captured `paused` would stay stale forever and
+  // the scanner would keep re-firing scans while a request is still in flight.
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   useEffect(() => {
     let cancelled = false;
@@ -91,7 +96,7 @@ export function QrScanner({ onScan, paused = false }: QrScannerProps) {
             },
           },
           (decodedText) => {
-            if (cancelled || paused) return;
+            if (cancelled || pausedRef.current) return;
             const now = Date.now();
             const last = lastScanRef.current;
             if (last && last.text === decodedText && now - last.at < DEDUPE_WINDOW_MS) {

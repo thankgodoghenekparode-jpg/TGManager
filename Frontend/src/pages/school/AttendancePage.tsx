@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
@@ -30,7 +30,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import HowToRegIcon from '@mui/icons-material/HowToReg';
 import { schoolApi } from '../../api/school';
 import { QrScanner } from '../../components/QrScanner';
-import { getCurrentPosition } from '../../lib/geo';
+import { getCurrentPosition, type GeoPosition } from '../../lib/geo';
 import { Can } from '../../components/PermissionGate';
 
 export function AttendancePage() {
@@ -46,6 +46,34 @@ export function AttendancePage() {
   const [markClassId, setMarkClassId] = useState('');
   const [markDate, setMarkDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [markStatuses, setMarkStatuses] = useState<Record<string, string>>({});
+
+  // Last known device location, reused briefly so gate scans are geotagged
+  // without waiting on the browser every single time.
+  const positionRef = useRef<{ position: GeoPosition; at: number } | null>(null);
+
+  const prefetchPosition = () => {
+    // Kick off the (re)load early so a permission prompt is shown before the
+    // first scan and, once granted, scans are tagged instantly.
+    void getCurrentPosition(8000).then(({ position }) => {
+      if (position) positionRef.current = { position, at: Date.now() };
+    });
+  };
+
+  /**
+   * Best-effort location for a scan. Never blocks the scan for long: it reuses a
+   * recent fix when available, otherwise waits only briefly (and always returns
+   * within ~3s even if the browser/webview never answers the permission prompt).
+   */
+  const resolveScanPosition = async (): Promise<GeoPosition | null> => {
+    const cached = positionRef.current;
+    if (cached && Date.now() - cached.at < 120_000) return cached.position;
+    const { position } = await getCurrentPosition(2500);
+    if (position) {
+      positionRef.current = { position, at: Date.now() };
+      return position;
+    }
+    return null;
+  };
 
   const { data: stats } = useQuery({
     queryKey: ['school', 'attendance', 'stats', selectedDate],
@@ -102,8 +130,9 @@ export function AttendancePage() {
   const scanMutation = useMutation({
     mutationFn: async (payload: string) => {
       // Capture the scanning device's position so the gate/classroom check-in is
-      // geotagged (and validated against the admin-set campus geofence).
-      const { position } = await getCurrentPosition(6000);
+      // geotagged (and validated against the admin-set campus geofence). This is
+      // best-effort: a missing/denied location never blocks the scan itself.
+      const position = await resolveScanPosition();
       return schoolApi.scanAttendance({
         scanPayload: payload,
         latitude: position?.latitude ?? null,
@@ -131,8 +160,10 @@ export function AttendancePage() {
   });
 
   const handleScan = (text: string) => {
-    setScanInput(text);
-    scanMutation.mutate(text);
+    const code = text.trim();
+    if (!code || scanMutation.isPending) return;
+    setScanInput(code);
+    scanMutation.mutate(code);
   };
 
   return (
@@ -167,6 +198,7 @@ export function AttendancePage() {
             onClick={() => {
               setScannerOpen(true);
               setLastScanResult(null);
+              prefetchPosition();
             }}
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
@@ -402,7 +434,7 @@ export function AttendancePage() {
               onChange={(e) => setScanInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && scanInput.trim()) {
-                  scanMutation.mutate(scanInput.trim());
+                  handleScan(scanInput);
                 }
               }}
             />
@@ -419,7 +451,7 @@ export function AttendancePage() {
           <Button
             variant="contained"
             disabled={!scanInput.trim() || scanMutation.isPending}
-            onClick={() => scanMutation.mutate(scanInput.trim())}
+            onClick={() => handleScan(scanInput)}
           >
             {scanMutation.isPending ? 'Verifying...' : 'Record Gate Entry'}
           </Button>
