@@ -18,6 +18,7 @@ import {
   seedStudentLogins,
   type SeedStudentLoginsResult,
 } from './school-student-logins-seed';
+import { seedCbt, type SeedCbtResult } from './cbt-seed';
 import { DEFAULT_PASSWORD } from '../common/default-password.constants';
 
 const BCRYPT_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
@@ -2275,6 +2276,7 @@ export interface SeedRun {
   schoolResults: SeedSchoolResultsResult;
   schoolTimetable: SeedSchoolTimetableResult;
   studentLogins: SeedStudentLoginsResult;
+  cbt: SeedCbtResult;
 }
 
 /**
@@ -2296,6 +2298,7 @@ export async function runSeed(prisma: PrismaClient): Promise<SeedRun> {
   const schoolResults = await seedSchoolResults(prisma);
   const schoolTimetable = await seedSchoolTimetable(prisma);
   const studentLogins = await seedStudentLogins(prisma);
+  const cbt = await seedCbt(prisma);
   return {
     plansSeeded: true,
     demoSeeded,
@@ -2304,5 +2307,6 @@ export async function runSeed(prisma: PrismaClient): Promise<SeedRun> {
     schoolResults,
     schoolTimetable,
     studentLogins,
+    cbt,
   };
 }

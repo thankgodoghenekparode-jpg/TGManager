@@ -76,6 +76,72 @@ export interface InviteGuardianResult {
   temporaryPassword: string | null;
 }
 
+export interface ChildCbtAttempt {
+  id: string;
+  attemptNumber: number;
+  status: 'SUBMITTED' | 'EXPIRED';
+  score: number;
+  totalMarks: number;
+  percentage: number;
+  passed: boolean;
+  correctCount: number;
+  incorrectCount: number;
+  unansweredCount: number;
+  timeUsedSeconds: number;
+  submittedAt: string | null;
+  exam: {
+    id: string;
+    title: string;
+    category: string;
+    mode: string;
+    durationMinutes: number;
+    passMark: number;
+    showCorrectAnswers: boolean;
+    subject: { id: string; code: string; name: string } | null;
+  };
+}
+
+export interface ChildCbtReviewItem {
+  index: number;
+  questionId: string;
+  text: string;
+  explanation: string | null;
+  marks: number;
+  selectedOptionId: string | null;
+  answered: boolean;
+  isCorrect: boolean;
+  marksAwarded: number;
+  options: Array<{ id: string; label: string; text: string; isCorrect: boolean }>;
+}
+
+export interface ChildCbtResult {
+  attempt: {
+    id: string;
+    attemptNumber: number;
+    status: 'SUBMITTED' | 'EXPIRED';
+    score: number;
+    totalMarks: number;
+    percentage: number;
+    passed: boolean;
+    correctCount: number;
+    incorrectCount: number;
+    unansweredCount: number;
+    timeUsedSeconds: number;
+    submittedAt: string | null;
+  };
+  exam: {
+    id: string;
+    title: string;
+    category: string;
+    mode: string;
+    subject: { id: string; code: string; name: string } | null;
+    passMark: number;
+    showCorrectAnswers: boolean;
+  };
+  canReview: boolean;
+  review: ChildCbtReviewItem[] | null;
+}
+
 export const parentApi = {
   me: () => api.get<ParentProfile>('/school/parent/me').then((r) => r.data),
   children: () => api.get<ParentChild[]>('/school/parent/children').then((r) => r.data),
@@ -96,6 +162,14 @@ export const parentApi = {
       .then((r) => r.data),
   invoices: (id: string) =>
     api.get<ParentChildInvoice[]>(`/school/parent/children/${id}/invoices`).then((r) => r.data),
+  cbtAttempts: (id: string) =>
+    api
+      .get<{ items: ChildCbtAttempt[]; total: number }>(`/school/parent/children/${id}/cbt`)
+      .then((r) => r.data),
+  cbtAttempt: (id: string, attemptId: string) =>
+    api
+      .get<ChildCbtResult>(`/school/parent/children/${id}/cbt/${attemptId}`)
+      .then((r) => r.data),
   invite: (data: { guardianId: string; email?: string; password?: string }) =>
     api.post<InviteGuardianResult>('/school/parent/invite', data).then((r) => r.data),
 };

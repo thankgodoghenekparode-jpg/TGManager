@@ -42,5 +42,11 @@ export const SchoolPermissionBlocks = {
   PARENTS: ['school.manage', 'school.parent_view'],
   CHAT: ['chat.view', 'chat.create'],
   ANNOUNCEMENTS: ['school.view', 'school.manage'],
+  CBT: ['cbt.view', 'cbt.take', 'cbt.question_view', 'cbt.exam_view', 'cbt.result_view'],
+  CBT_TAKE: ['cbt.take'],
+  CBT_RESULT_VIEW: ['cbt.result_view'],
+  CBT_BANK: ['cbt.question_view', 'cbt.question_manage'],
+  CBT_EXAMS: ['cbt.exam_view', 'cbt.exam_manage'],
+  CBT_REPORTS: ['cbt.result_view', 'cbt.exam_manage'],
   SETTINGS: ['tenant.manage', 'school.manage'],
 } as const

@@ -79,6 +79,14 @@ const STARTER_PERMISSIONS = [
   B.SCHOOL_STAFF_ATTENDANCE_VIEW,
   B.SCHOOL_STAFF_ATTENDANCE_MANAGE,
   B.SCHOOL_PARENT_VIEW,
+  // CBT (computer-based tests): part of the school workspace on every tier.
+  B.CBT_VIEW,
+  B.CBT_TAKE,
+  B.CBT_QUESTION_VIEW,
+  B.CBT_QUESTION_MANAGE,
+  B.CBT_EXAM_VIEW,
+  B.CBT_EXAM_MANAGE,
+  B.CBT_RESULT_VIEW,
 ] as const satisfies readonly Permission[];
 
 /** Pro: documents, inventory, workflows, audit. */
@@ -113,6 +121,7 @@ const STARTER_FEATURES = [
   'Forms & submissions',
   'Team chat',
   'Reports: view & submit',
+  'School CBT: question bank, practice & mock exams',
 ];
 
 const PRO_FEATURES = [

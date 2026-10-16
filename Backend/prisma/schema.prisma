@@ -320,6 +320,8 @@ model User {
   schoolPaymentsRecorded        SchoolPayment[]        @relation("SchoolPaymentRecordedBy")
   schoolAnnouncementsCreated    SchoolAnnouncement[]   @relation("SchoolAnnouncementCreatedBy")
   schoolStaffAttendanceRecorded SchoolStaffAttendance[] @relation("SchoolStaffAttendanceRecordedBy")
+  cbtQuestionsCreated           CbtQuestion[]          @relation("CbtQuestionCreatedBy")
+  cbtExamsCreated               CbtExam[]              @relation("CbtExamCreatedBy")
 
   @@index([email])
 }
@@ -436,6 +438,13 @@ model Tenant {
   schoolPayments       SchoolPayment[]
   timetablePeriods     TimetablePeriod[]
   schoolAnnouncements  SchoolAnnouncement[]
+
+  // CBT Domain Relations
+  cbtTopics          CbtTopic[]
+  cbtQuestions       CbtQuestion[]
+  cbtExams           CbtExam[]
+  cbtExamAssignments CbtExamAssignment[]
+  cbtAttempts        CbtExamAttempt[]
 
   @@index([planId])
 }
@@ -1376,6 +1385,8 @@ model ClassRoom {
   assignments      Assignment[]
   timetablePeriods TimetablePeriod[]
   feeStructures    FeeStructure[]
+  cbtExams         CbtExam[]
+  cbtAssignments   CbtExamAssignment[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -1398,6 +1409,9 @@ model Subject {
   results          AcademicResult[]
   assignments      Assignment[]
   timetablePeriods TimetablePeriod[]
+  cbtTopics        CbtTopic[]
+  cbtQuestions     CbtQuestion[]
+  cbtExams         CbtExam[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1476,6 +1490,8 @@ model Student {
   invoices               StudentInvoice[]
   payments               SchoolPayment[]
   idCards                StudentIdCard[]
+  cbtAssignments         CbtExamAssignment[]
+  cbtAttempts            CbtExamAttempt[]
 
   @@unique([tenantId, admissionNumber])
   @@index([tenantId])
@@ -1880,4 +1896,244 @@ model SchoolAnnouncement {
   updatedAt        DateTime  @updatedAt
 
   @@index([tenantId])
+}
+
+// ============================= CBT =============================
+// Computer-Based Test practice & mock examinations.
+// TGManager is an independent practice platform — not an official JAMB, WAEC
+// or NECO portal. `source` records where each question legitimately came from
+// and licensed provider banks can be integrated later.
+
+enum CbtCategory {
+  JAMB
+  WAEC
+  NECO
+  SCHOOL
+  MOCK
+  GENERAL
+}
+
+enum CbtExamMode {
+  PRACTICE
+  MOCK
+}
+
+enum CbtExamStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CbtQuestionSource {
+  SCHOOL
+  TGMANAGER
+  LICENSED
+  AI
+}
+
+enum CbtDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum CbtQuestionStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CbtAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+}
+
+model CbtTopic {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  name      String
+  category  String?
+  createdAt DateTime @default(now())
+
+  questions CbtQuestion[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@index([subjectId])
+}
+
+model CbtQuestion {
+  id              String            @id @default(cuid())
+  tenantId        String
+  tenant          Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subjectId       String
+  subject         Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  topicId         String?
+  topic           CbtTopic?         @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  topicName       String?
+  category        CbtCategory       @default(GENERAL)
+  difficulty      CbtDifficulty     @default(MEDIUM)
+  text            String
+  imageUrl        String?
+  explanation     String?
+  marks           Float             @default(1)
+  source          CbtQuestionSource @default(SCHOOL)
+  status          CbtQuestionStatus @default(ACTIVE)
+  createdByUserId String?
+  createdBy       User?             @relation("CbtQuestionCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  options        CbtQuestionOption[]
+  examLinks      CbtExamQuestion[]
+  attemptAnswers CbtExamAttemptAnswer[]
+
+  @@index([tenantId])
+  @@index([tenantId, subjectId])
+  @@index([tenantId, category])
+  @@index([tenantId, status])
+  @@index([topicId])
+}
+
+model CbtQuestionOption {
+  id         String      @id @default(cuid())
+  questionId String
+  question   CbtQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label      String
+  text       String
+  isCorrect  Boolean     @default(false)
+  order      Int         @default(0)
+
+  attemptAnswers CbtExamAttemptAnswer[]
+
+  @@index([questionId])
+}
+
+model CbtExam {
+  id                     String        @id @default(cuid())
+  tenantId               String
+  tenant                 Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title                  String
+  category               CbtCategory   @default(SCHOOL)
+  mode                   CbtExamMode   @default(MOCK)
+  subjectId              String?
+  subject                Subject?      @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  classId                String?
+  class                  ClassRoom?    @relation(fields: [classId], references: [id], onDelete: SetNull)
+  description            String?
+  instructions           String?
+  durationMinutes        Int           @default(30)
+  totalMarks             Float         @default(0)
+  passMark               Float         @default(50)
+  randomizeQuestions     Boolean       @default(true)
+  randomizeOptions       Boolean       @default(false)
+  maxAttempts            Int           @default(1)
+  showResultImmediately  Boolean       @default(true)
+  showCorrectAnswers     Boolean       @default(false)
+  negativeMarking        Boolean       @default(false)
+  negativeMarkPerWrong   Float         @default(0)
+  startAt                DateTime?
+  endAt                  DateTime?
+  status                 CbtExamStatus @default(DRAFT)
+  createdByUserId        String?
+  createdBy              User?         @relation("CbtExamCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  questions   CbtExamQuestion[]
+  assignments CbtExamAssignment[]
+  attempts    CbtExamAttempt[]
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, category])
+  @@index([classId])
+  @@index([subjectId])
+}
+
+model CbtExamQuestion {
+  id         String      @id @default(cuid())
+  examId     String
+  exam       CbtExam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionId String
+  question   CbtQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  order      Int         @default(0)
+  marks      Float?
+  createdAt  DateTime    @default(now())
+
+  @@unique([examId, questionId])
+  @@index([examId])
+  @@index([questionId])
+}
+
+model CbtExamAssignment {
+  id        String     @id @default(cuid())
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  examId    String
+  exam      CbtExam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  classId   String?
+  class     ClassRoom? @relation(fields: [classId], references: [id], onDelete: Cascade)
+  studentId String?
+  student   Student?   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@index([tenantId])
+  @@index([examId])
+  @@index([classId])
+  @@index([studentId])
+}
+
+model CbtExamAttempt {
+  id              String           @id @default(cuid())
+  tenantId        String
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  examId          String
+  exam            CbtExam          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attemptNumber   Int              @default(1)
+  status          CbtAttemptStatus @default(IN_PROGRESS)
+  startedAt       DateTime         @default(now())
+  expiresAt       DateTime
+  submittedAt     DateTime?
+  score           Float            @default(0)
+  totalMarks      Float            @default(0)
+  correctCount    Int              @default(0)
+  incorrectCount  Int              @default(0)
+  unansweredCount Int              @default(0)
+  percentage      Float            @default(0)
+  passed          Boolean          @default(false)
+  timeUsedSeconds Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  answers CbtExamAttemptAnswer[]
+
+  @@unique([examId, studentId, attemptNumber])
+  @@index([tenantId])
+  @@index([examId, studentId])
+  @@index([studentId])
+}
+
+model CbtExamAttemptAnswer {
+  id               String              @id @default(cuid())
+  attemptId        String
+  attempt          CbtExamAttempt      @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         CbtQuestion         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionId String?
+  selectedOption   CbtQuestionOption?  @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  isCorrect        Boolean?
+  marksAwarded     Float               @default(0)
+  markedForReview  Boolean             @default(false)
+  updatedAt        DateTime            @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
 }

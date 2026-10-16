@@ -161,6 +161,13 @@ export const SYSTEM_ROLE_DEFS: Record<
       PERMISSIONS.DOCUMENT_VIEW,
       PERMISSIONS.DOCUMENT_CREATE,
       PERMISSIONS.MEMO_VIEW,
+      // CBT: teachers author questions and run CBT for their classes.
+      PERMISSIONS.CBT_VIEW,
+      PERMISSIONS.CBT_QUESTION_VIEW,
+      PERMISSIONS.CBT_QUESTION_MANAGE,
+      PERMISSIONS.CBT_EXAM_VIEW,
+      PERMISSIONS.CBT_EXAM_MANAGE,
+      PERMISSIONS.CBT_RESULT_VIEW,
     ],
   },
   ACCOUNTANT: {
@@ -209,7 +216,13 @@ export const SYSTEM_ROLE_DEFS: Record<
   STUDENT: {
     name: SYSTEM_ROLE_NAMES.STUDENT,
     description:
-      'Student portal access. Signs in with the student ID to view their own results, attendance and fees.',
-    permissions: [PERMISSIONS.SCHOOL_VIEW],
+      'Student portal access. Signs in with the student ID to view their own results, attendance and fees, and to take CBT practice/mock examinations.',
+    permissions: [
+      PERMISSIONS.SCHOOL_VIEW,
+      // CBT: students take authorised examinations and review their own results.
+      PERMISSIONS.CBT_VIEW,
+      PERMISSIONS.CBT_TAKE,
+      PERMISSIONS.CBT_RESULT_VIEW,
+    ],
   },
 };

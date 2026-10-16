@@ -20,6 +20,8 @@ const PRINCIPAL = [
   'staff.view', 'staff.create', 'staff.update', 'staff.delete', 'staff.assign_role',
   'role.view', 'role.assign', 'chat.create', 'chat.view',
   'document.view', 'document.create', 'memo.view', 'memo.create', 'memo.manage', 'report.view',
+  'cbt.view', 'cbt.take', 'cbt.question_view', 'cbt.question_manage',
+  'cbt.exam_view', 'cbt.exam_manage', 'cbt.result_view',
 ]
 
 const TEACHER = [
@@ -27,6 +29,8 @@ const TEACHER = [
   'school_attendance.view', 'school_attendance.manage', 'school_staff_attendance.view',
   'attendance.clock_in', 'attendance.clock_out',
   'chat.create', 'chat.view', 'document.view', 'document.create', 'memo.view',
+  'cbt.view', 'cbt.question_view', 'cbt.question_manage',
+  'cbt.exam_view', 'cbt.exam_manage', 'cbt.result_view',
 ]
 
 const ACCOUNTANT = [
@@ -65,6 +69,14 @@ describe('school role visibility matrix', () => {
     expect(sections).not.toContain('STAFF')
     expect(sections).not.toContain('PARENTS')
     expect(sections).not.toContain('SETTINGS')
+  })
+
+  it('teacher manages CBT but never takes examinations', () => {
+    const sections = visibleSections(TEACHER)
+    expect(sections).toEqual(
+      expect.arrayContaining(['CBT', 'CBT_BANK', 'CBT_EXAMS', 'CBT_REPORTS']),
+    )
+    expect(sections).not.toContain('CBT_TAKE')
   })
 
   it('accountant sees fees but not academics, classes or gate attendance', () => {

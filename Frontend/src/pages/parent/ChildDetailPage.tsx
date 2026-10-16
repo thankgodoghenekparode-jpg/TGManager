@@ -37,6 +37,7 @@ import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl, apiErrorMessage } from '../../api/client';
 import { DocumentActions } from '../../components/documents/DocumentActions';
 import { DocumentFooter, DocumentHeader, DocumentPaper } from '../../components/documents/DocumentPaper';
+import { ChildCbtPanel } from './ChildCbtPanel';
 
 function formatDate(value?: string | null) {
   if (!value) return '—';
@@ -180,6 +181,7 @@ export function ChildDetailPage() {
         <Tab label="Attendance" />
         <Tab label="Results" />
         <Tab label="Fees & Invoices" />
+        <Tab label="CBT Results" />
       </Tabs>
 
       {tab === 0 && (
@@ -420,6 +422,8 @@ export function ChildDetailPage() {
           )}
         </Box>
       )}
+
+      {tab === 3 && <ChildCbtPanel childId={id} />}
 
       {/* Printable report card */}
       <Dialog open={reportOpen} onClose={() => setReportOpen(false)} maxWidth="md" fullWidth>

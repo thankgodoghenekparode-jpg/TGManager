@@ -125,4 +125,31 @@ export class ParentController {
   async childInvoices(@Req() req: PermissionRequest, @Param('id') id: string) {
     return this.parentService.getChildInvoices(req.tenant.id, req.user.sub, id);
   }
+
+  @Get('children/:id/cbt')
+  @Permissions(PERMISSIONS.SCHOOL_PARENT_VIEW)
+  @ApiOperation({ summary: 'CBT examination results for a child' })
+  async childCbt(@Req() req: PermissionRequest, @Param('id') id: string) {
+    return this.parentService.getChildCbtAttempts(
+      req.tenant.id,
+      req.user.sub,
+      id,
+    );
+  }
+
+  @Get('children/:id/cbt/:attemptId')
+  @Permissions(PERMISSIONS.SCHOOL_PARENT_VIEW)
+  @ApiOperation({ summary: 'One CBT result for a child (review when permitted)' })
+  async childCbtAttempt(
+    @Req() req: PermissionRequest,
+    @Param('id') id: string,
+    @Param('attemptId') attemptId: string,
+  ) {
+    return this.parentService.getChildCbtAttempt(
+      req.tenant.id,
+      req.user.sub,
+      id,
+      attemptId,
+    );
+  }
 }

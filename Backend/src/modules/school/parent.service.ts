@@ -12,6 +12,7 @@ import {
   SYSTEM_ROLE_NAMES,
 } from '../rbac/system-roles/system-roles.constants';
 import { GradingService } from './grading.service';
+import { cbtHashSeed, cbtShuffle } from '../cbt/cbt.constants';
 import type {
   ChildAttendanceQueryDto,
   ChildResultsQueryDto,
@@ -282,5 +283,191 @@ export class ParentService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  // --------------------------------------------------------------------------
+  // CBT (computer-based test) results for a guardian's child
+  // --------------------------------------------------------------------------
+
+  /**
+   * CBT attempts for a linked child. Only examinations whose results are
+   * visible are returned — guardians never see hidden/in-progress scores.
+   */
+  async getChildCbtAttempts(
+    tenantId: string,
+    userId: string,
+    studentId: string,
+  ) {
+    await this.assertChildAccess(tenantId, userId, studentId);
+
+    const [items, total] = await Promise.all([
+      this.prisma.cbtExamAttempt.findMany({
+        where: {
+          tenantId,
+          studentId,
+          status: { in: ['SUBMITTED', 'EXPIRED'] },
+          exam: { showResultImmediately: true },
+        },
+        orderBy: { submittedAt: 'desc' },
+        take: 100,
+        select: {
+          id: true,
+          attemptNumber: true,
+          status: true,
+          score: true,
+          totalMarks: true,
+          percentage: true,
+          passed: true,
+          correctCount: true,
+          incorrectCount: true,
+          unansweredCount: true,
+          timeUsedSeconds: true,
+          submittedAt: true,
+          exam: {
+            select: {
+              id: true,
+              title: true,
+              category: true,
+              mode: true,
+              durationMinutes: true,
+              passMark: true,
+              showCorrectAnswers: true,
+              subject: { select: { id: true, code: true, name: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.cbtExamAttempt.count({
+        where: {
+          tenantId,
+          studentId,
+          status: { in: ['SUBMITTED', 'EXPIRED'] },
+          exam: { showResultImmediately: true },
+        },
+      }),
+    ]);
+
+    return { items, total };
+  }
+
+  /** A single CBT result, with a question review when the school allows it. */
+  async getChildCbtAttempt(
+    tenantId: string,
+    userId: string,
+    studentId: string,
+    attemptId: string,
+  ) {
+    await this.assertChildAccess(tenantId, userId, studentId);
+
+    const attempt = await this.prisma.cbtExamAttempt.findFirst({
+      where: { id: attemptId, tenantId, studentId },
+      include: {
+        exam: { include: { subject: { select: { id: true, code: true, name: true } } } },
+        answers: {
+          select: {
+            questionId: true,
+            selectedOptionId: true,
+            isCorrect: true,
+            marksAwarded: true,
+          },
+        },
+      },
+    });
+
+    if (
+      !attempt ||
+      attempt.status === 'IN_PROGRESS' ||
+      !attempt.exam.showResultImmediately
+    ) {
+      throw new NotFoundException('CBT result not found');
+    }
+
+    const base = {
+      attempt: {
+        id: attempt.id,
+        attemptNumber: attempt.attemptNumber,
+        status: attempt.status,
+        score: attempt.score,
+        totalMarks: attempt.totalMarks,
+        percentage: attempt.percentage,
+        passed: attempt.passed,
+        correctCount: attempt.correctCount,
+        incorrectCount: attempt.incorrectCount,
+        unansweredCount: attempt.unansweredCount,
+        timeUsedSeconds: attempt.timeUsedSeconds,
+        submittedAt: attempt.submittedAt,
+      },
+      exam: {
+        id: attempt.exam.id,
+        title: attempt.exam.title,
+        category: attempt.exam.category,
+        mode: attempt.exam.mode,
+        subject: attempt.exam.subject,
+        passMark: attempt.exam.passMark,
+        showCorrectAnswers: attempt.exam.showCorrectAnswers,
+      },
+      canReview: attempt.exam.showCorrectAnswers,
+      review: null as null | unknown[],
+    };
+
+    if (!attempt.exam.showCorrectAnswers) return base;
+
+    const examQuestions = await this.prisma.cbtExamQuestion.findMany({
+      where: { examId: attempt.examId },
+      orderBy: { order: 'asc' },
+      select: {
+        questionId: true,
+        marks: true,
+        question: {
+          select: {
+            text: true,
+            explanation: true,
+            marks: true,
+            options: {
+              orderBy: { order: 'asc' as const },
+              select: { id: true, label: true, text: true, isCorrect: true },
+            },
+          },
+        },
+      },
+    });
+
+    const answerByQuestion = new Map(
+      attempt.answers.map((answer) => [answer.questionId, answer]),
+    );
+
+    let review = examQuestions.map((row) => {
+      const answer = answerByQuestion.get(row.questionId);
+      return {
+        questionId: row.questionId,
+        text: row.question.text,
+        explanation: row.question.explanation,
+        marks: row.marks ?? row.question.marks,
+        selectedOptionId: answer?.selectedOptionId ?? null,
+        answered: !!answer?.selectedOptionId,
+        isCorrect: answer?.isCorrect ?? false,
+        marksAwarded: answer?.marksAwarded ?? 0,
+        options: row.question.options,
+      };
+    });
+
+    // Match the order the student actually saw, using the same seeded shuffle.
+    if (attempt.exam.randomizeQuestions) {
+      review = cbtShuffle(review, cbtHashSeed(attempt.id));
+    }
+    if (attempt.exam.randomizeOptions) {
+      review = review.map((item) => ({
+        ...item,
+        options: cbtShuffle(
+          item.options,
+          cbtHashSeed(`${attempt.id}:${item.questionId}`),
+        ),
+      }));
+    }
+
+    return {
+      ...base,
+      review: review.map((item, index) => ({ index: index + 1, ...item })),
+    };
   }
 }

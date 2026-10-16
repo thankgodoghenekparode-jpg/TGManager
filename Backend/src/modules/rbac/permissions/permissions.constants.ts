@@ -84,6 +84,15 @@ export const PERMISSIONS = {
   SCHOOL_STAFF_ATTENDANCE_MANAGE: 'school_staff_attendance.manage',
   SCHOOL_PARENT_VIEW: 'school.parent_view',
 
+  // CBT (Computer-Based Test practice & mock examinations)
+  CBT_VIEW: 'cbt.view',
+  CBT_TAKE: 'cbt.take',
+  CBT_QUESTION_VIEW: 'cbt.question_view',
+  CBT_QUESTION_MANAGE: 'cbt.question_manage',
+  CBT_EXAM_VIEW: 'cbt.exam_view',
+  CBT_EXAM_MANAGE: 'cbt.exam_manage',
+  CBT_RESULT_VIEW: 'cbt.result_view',
+
   INTEGRATION_MANAGE: 'integration.manage',
 
   AUDIT_VIEW: 'audit.view',

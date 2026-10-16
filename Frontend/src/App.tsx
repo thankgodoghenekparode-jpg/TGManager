@@ -24,6 +24,16 @@ import { SchoolParentsPage } from './pages/school/SchoolParentsPage'
 import { AnnouncementsPage } from './pages/school/AnnouncementsPage'
 import { FeesPage } from './pages/school/FeesPage'
 import { SchoolSettingsPage } from './pages/school/SchoolSettingsPage'
+
+import { CbtDashboardPage } from './pages/school/cbt/CbtDashboard'
+import { CbtPracticePage } from './pages/school/cbt/CbtPractice'
+import { CbtHistoryPage } from './pages/school/cbt/CbtHistory'
+import { CbtQuestionBankPage } from './pages/school/cbt/CbtQuestionBank'
+import { CbtExamsPage } from './pages/school/cbt/CbtExams'
+import { CbtExamBriefPage } from './pages/school/cbt/CbtExamBrief'
+import { CbtAttemptPage } from './pages/school/cbt/CbtAttemptPage'
+import { CbtExamReportPage } from './pages/school/cbt/CbtExamReport'
+import { CbtPerformancePage } from './pages/school/cbt/CbtPerformance'
 import { ParentDashboard } from './pages/parent/ParentDashboard'
 import { ChildDetailPage } from './pages/parent/ChildDetailPage'
 import { PortfolioPage } from './pages/Portfolio'
@@ -145,6 +155,15 @@ const router = createBrowserRouter([
               { path: '/school/attendance', element: <RequirePermission permissions={SchoolPermissionBlocks.GATE_ATTENDANCE} redirectTo="/school"><SchoolAttendancePage /></RequirePermission> },
               { path: '/school/staff-attendance', element: <RequirePermission permissions={SchoolPermissionBlocks.STAFF_ATTENDANCE} redirectTo="/school"><SchoolStaffAttendancePage /></RequirePermission> },
               { path: '/school/grading', element: <RequirePermission permissions={SchoolPermissionBlocks.GRADING} redirectTo="/school"><GradingPage /></RequirePermission> },
+              { path: '/school/cbt', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT} redirectTo="/school"><CbtDashboardPage /></RequirePermission> },
+              { path: '/school/cbt/practice', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_TAKE} redirectTo="/school"><CbtPracticePage /></RequirePermission> },
+              { path: '/school/cbt/history', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_RESULT_VIEW} redirectTo="/school"><CbtHistoryPage /></RequirePermission> },
+              { path: '/school/cbt/questions', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_BANK} redirectTo="/school"><CbtQuestionBankPage /></RequirePermission> },
+              { path: '/school/cbt/exams', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_EXAMS} redirectTo="/school"><CbtExamsPage /></RequirePermission> },
+              { path: '/school/cbt/exams/:id/report', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_REPORTS} redirectTo="/school"><CbtExamReportPage /></RequirePermission> },
+              { path: '/school/cbt/exams/:id/brief', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_TAKE} redirectTo="/school"><CbtExamBriefPage /></RequirePermission> },
+              { path: '/school/cbt/performance', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_REPORTS} redirectTo="/school"><CbtPerformancePage /></RequirePermission> },
+              { path: '/school/cbt/attempts/:attemptId', element: <RequirePermission permissions={SchoolPermissionBlocks.CBT_TAKE} redirectTo="/school"><CbtAttemptPage /></RequirePermission> },
               { path: '/school/timetable', element: <RequirePermission permissions={SchoolPermissionBlocks.TIMETABLE} redirectTo="/school"><TimetablePage /></RequirePermission> },
               { path: '/school/fees', element: <RequirePermission permissions={SchoolPermissionBlocks.FEES} redirectTo="/school"><FeesPage /></RequirePermission> },
               { path: '/school/staff', element: <RequirePermission permissions={SchoolPermissionBlocks.STAFF} redirectTo="/school"><SchoolStaffPage /></RequirePermission> },

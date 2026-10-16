@@ -13,6 +13,7 @@ import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import ChatIcon from '@mui/icons-material/Chat';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import SettingsIcon from '@mui/icons-material/Settings';
+import QuizIcon from '@mui/icons-material/Quiz';
 import { AppShell, type NavItem } from './AppShell';
 import { useAuthStore } from '../../store/auth';
 import { useTenantStore } from '../../store/tenant';
@@ -40,6 +41,7 @@ export function SchoolLayout() {
     { item: { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon }, perms: SchoolPermissionBlocks.GATE_ATTENDANCE },
     { item: { label: 'Staff Clock In/Out', path: '/school/staff-attendance', icon: AccessTimeIcon }, perms: SchoolPermissionBlocks.STAFF_ATTENDANCE },
     { item: { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon }, perms: SchoolPermissionBlocks.GRADING },
+    { item: { label: 'CBT & Mock Exams', path: '/school/cbt', icon: QuizIcon }, perms: SchoolPermissionBlocks.CBT },
     { item: { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon }, perms: SchoolPermissionBlocks.TIMETABLE },
     { item: { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon }, perms: SchoolPermissionBlocks.FEES },
     { item: { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon }, perms: SchoolPermissionBlocks.STAFF },
