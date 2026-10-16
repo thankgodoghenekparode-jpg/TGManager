@@ -116,7 +116,9 @@ export async function seedSchoolTimetable(
     prisma.schoolStaff.findMany({
       where: {
         tenantId: tenant.id,
-        category: 'TEACHER',
+        // Teachers carry the lessons; the principal and school administrator
+        // also teach in a small school and fill in wherever a teacher clashes.
+        category: { in: ['TEACHER', 'ADMINISTRATOR'] },
       },
       select: { id: true, user: { select: { email: true } } },
     }),
