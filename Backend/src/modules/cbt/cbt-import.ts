@@ -180,7 +180,7 @@ export function parseQuestionCsv(text: string): CbtParsedImport {
     const row: CbtImportRow = {
       line,
       subject: read(cells, 'subject'),
-      category: read(cells, 'category') || 'GENERAL',
+      category: read(cells, 'category') || 'MOCK',
       topic: read(cells, 'topic'),
       difficulty: read(cells, 'difficulty') || 'MEDIUM',
       question: read(cells, 'question'),

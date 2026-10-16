@@ -13,13 +13,13 @@ describe('parseCsvRows', () => {
 
 describe('parseQuestionCsv', () => {
   it('accepts a well-formed row using a letter for the correct answer', () => {
-    const csv = `${header}\nMATH,SCHOOL,Algebra,EASY,What is 2 + 2?,3,4,5,6,B,Two plus two,1,SCHOOL`;
+    const csv = `${header}\nMATH,MOCK,Algebra,EASY,What is 2 + 2?,3,4,5,6,B,Two plus two,1,SCHOOL`;
     const parsed = parseQuestionCsv(csv);
     expect(parsed.errors).toHaveLength(0);
     expect(parsed.rows).toHaveLength(1);
     expect(parsed.rows[0]).toMatchObject({
       subject: 'MATH',
-      category: 'SCHOOL',
+      category: 'MOCK',
       difficulty: 'EASY',
       correct: 'B',
       marks: '1',
@@ -28,7 +28,7 @@ describe('parseQuestionCsv', () => {
   });
 
   it('accepts the exact option text as the correct answer', () => {
-    const csv = `${header}\nMATH,SCHOOL,Algebra,EASY,What is 2 + 2?,3,4,5,6,4,,1,SCHOOL`;
+    const csv = `${header}\nMATH,MOCK,Algebra,EASY,What is 2 + 2?,3,4,5,6,4,,1,SCHOOL`;
     const parsed = parseQuestionCsv(csv);
     expect(parsed.errors).toHaveLength(0);
     expect(resolveCorrectIndex(parsed.rows[0])).toBe(1);
@@ -51,25 +51,25 @@ describe('parseQuestionCsv', () => {
   });
 
   it('rejects a correct answer that is not one of the options', () => {
-    const csv = `${header}\nMATH,SCHOOL,Algebra,EASY,Question text?,3,4,5,6,Z,,1,SCHOOL`;
+    const csv = `${header}\nMATH,MOCK,Algebra,EASY,Question text?,3,4,5,6,Z,,1,SCHOOL`;
     const parsed = parseQuestionCsv(csv);
     expect(parsed.errors.some((issue) => issue.column === 'correct')).toBe(true);
   });
 
   it('rejects a correct answer pointing at an empty option', () => {
-    const csv = `${header}\nMATH,SCHOOL,Algebra,EASY,Question text?,3,4,,,C,,1,SCHOOL`;
+    const csv = `${header}\nMATH,MOCK,Algebra,EASY,Question text?,3,4,,,C,,1,SCHOOL`;
     const parsed = parseQuestionCsv(csv);
     expect(parsed.errors.some((issue) => issue.column === 'correct')).toBe(true);
   });
 
   it('rejects a bad marks value', () => {
-    const csv = `${header}\nMATH,SCHOOL,Algebra,EASY,Question text?,3,4,5,6,B,,abc,SCHOOL`;
+    const csv = `${header}\nMATH,MOCK,Algebra,EASY,Question text?,3,4,5,6,B,,abc,SCHOOL`;
     const parsed = parseQuestionCsv(csv);
     expect(parsed.errors.some((issue) => issue.column === 'marks')).toBe(true);
   });
 
   it('skips completely blank rows without failing', () => {
-    const csv = `${header}\nMATH,SCHOOL,Algebra,EASY,What is two plus two?,3,4,5,6,B,,1,SCHOOL\n,,,,,,,,,,,,\n`;
+    const csv = `${header}\nMATH,MOCK,Algebra,EASY,What is two plus two?,3,4,5,6,B,,1,SCHOOL\n,,,,,,,,,,,,\n`;
     const parsed = parseQuestionCsv(csv);
     expect(parsed.errors).toHaveLength(0);
     expect(parsed.rows).toHaveLength(1);

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -31,6 +32,7 @@ import {
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
@@ -41,6 +43,7 @@ import {
   AI_QUESTION_NOTICE,
   cbtApi,
   CBT_CATEGORY_LABELS,
+  CBT_CATEGORY_ORDER,
   CBT_SOURCE_LABELS,
   type CbtCategory,
   type CbtDifficulty,
@@ -53,7 +56,7 @@ import { apiErrorMessage } from '../../../api/client';
 import { useCan } from '../../../components/PermissionGate';
 import { CATEGORY_COLORS, SOURCE_COLORS, formatDate } from './cbtUi';
 
-const CATEGORIES: CbtCategory[] = ['JAMB', 'WAEC', 'NECO', 'SCHOOL', 'MOCK', 'GENERAL'];
+const CATEGORIES: CbtCategory[] = CBT_CATEGORY_ORDER;
 const DIFFICULTIES: CbtDifficulty[] = ['EASY', 'MEDIUM', 'HARD'];
 const SOURCES: CbtQuestionSource[] = ['SCHOOL', 'TGMANAGER', 'LICENSED', 'AI'];
 const STATUSES: CbtQuestionStatus[] = ['DRAFT', 'ACTIVE', 'ARCHIVED'];
@@ -82,7 +85,7 @@ interface QuestionForm {
 const emptyForm = (subjectId = ''): QuestionForm => ({
   subjectId,
   topicName: '',
-  category: 'SCHOOL',
+  category: 'MOCK',
   difficulty: 'MEDIUM',
   text: '',
   imageUrl: '',
@@ -100,10 +103,14 @@ const emptyForm = (subjectId = ''): QuestionForm => ({
 
 export function CbtQuestionBankPage() {
   const qc = useQueryClient();
+  const [searchParams] = useSearchParams();
   const canManage = useCan('cbt.question_manage');
   const [page, setPage] = useState(1);
   const [subjectId, setSubjectId] = useState('');
-  const [category, setCategory] = useState<CbtCategory | ''>('');
+  const [category, setCategory] = useState<CbtCategory | ''>(() => {
+    const fromUrl = searchParams.get('category');
+    return CBT_CATEGORY_ORDER.includes(fromUrl as CbtCategory) ? (fromUrl as CbtCategory) : '';
+  });
   const [difficulty, setDifficulty] = useState<CbtDifficulty | ''>('');
   const [source, setSource] = useState<CbtQuestionSource | ''>('');
   const [status, setStatus] = useState<CbtQuestionStatus | ''>('');
@@ -111,9 +118,10 @@ export function CbtQuestionBankPage() {
 
   const [form, setForm] = useState<QuestionForm | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(
-    null,
-  );
+  const [feedback, setFeedback] = useState<{
+    severity: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
   const [importOpen, setImportOpen] = useState(false);
 
   const { data: summary } = useQuery({
@@ -188,6 +196,29 @@ export function CbtQuestionBankPage() {
     onError: (err) => setFeedback({ severity: 'error', message: apiErrorMessage(err) }),
   });
 
+  const seedMutation = useMutation({
+    mutationFn: () => cbtApi.seedDefaults(),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ['cbt', 'questions'] });
+      if (result.questions > 0) {
+        setFeedback({
+          severity: 'success',
+          message: `Loaded ${result.questions} default question${
+            result.questions === 1 ? '' : 's'
+          } and ${result.exams} examination${result.exams === 1 ? '' : 's'}.`,
+        });
+      } else {
+        setFeedback({
+          severity: 'info',
+          message: `Default banks are already present${
+            result.skipped.length ? ` for ${result.skipped.join(', ')}` : ''
+          }.`,
+        });
+      }
+    },
+    onError: (err) => setFeedback({ severity: 'error', message: apiErrorMessage(err) }),
+  });
+
   const openCreate = () => {
     setFormError(null);
     setForm(emptyForm(subjects[0]?.id ?? ''));
@@ -257,6 +288,16 @@ export function CbtQuestionBankPage() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
+          {canManage && (
+            <Button
+              startIcon={<AutoAwesomeIcon />}
+              variant="outlined"
+              disabled={seedMutation.isPending}
+              onClick={() => seedMutation.mutate()}
+            >
+              {seedMutation.isPending ? 'Loading…' : 'Load default banks'}
+            </Button>
+          )}
           {canManage && (
             <Button startIcon={<UploadFileIcon />} variant="outlined" onClick={() => setImportOpen(true)}>
               Import CSV
@@ -402,9 +443,42 @@ export function CbtQuestionBankPage() {
       ) : error ? (
         <Alert severity="error">{apiErrorMessage(error)}</Alert>
       ) : items.length === 0 ? (
-        <Alert severity="info">
-          No questions match these filters. Create one or import a CSV to get started.
-        </Alert>
+        summary && summary.total === 0 ? (
+          <Card variant="outlined">
+            <CardContent sx={{ textAlign: 'center', py: 5 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Your question bank is empty
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Load TGManager&apos;s default WAEC, NECO, JAMB and Mock Examination practice
+                questions, import a CSV, or create questions yourself. Defaults are original
+                practice content — not official past papers.
+              </Typography>
+              {canManage && (
+                <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap" useFlexGap>
+                  <Button
+                    variant="contained"
+                    startIcon={<AutoAwesomeIcon />}
+                    disabled={seedMutation.isPending}
+                    onClick={() => seedMutation.mutate()}
+                  >
+                    {seedMutation.isPending ? 'Loading…' : 'Load default banks'}
+                  </Button>
+                  <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={() => setImportOpen(true)}>
+                    Import CSV
+                  </Button>
+                  <Button variant="outlined" startIcon={<AddIcon />} onClick={openCreate}>
+                    New question
+                  </Button>
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <Alert severity="info">
+            No questions match these filters. Create one or import a CSV to get started.
+          </Alert>
+        )
       ) : (
         <Card variant="outlined">
           <CardContent sx={{ overflowX: 'auto' }}>

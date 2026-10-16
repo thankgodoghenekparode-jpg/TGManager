@@ -9,23 +9,21 @@ import type { Prisma } from '../../generated/prisma/client';
  * AI-generated items stay clearly distinguishable in the UI.
  */
 
-export const CBT_CATEGORIES = [
-  'JAMB',
-  'WAEC',
-  'NECO',
-  'SCHOOL',
-  'MOCK',
-  'GENERAL',
-] as const;
+/**
+ * The four examination tracks a student can practise. Order matches the way
+ * they are presented in the UI.
+ */
+export const CBT_CATEGORIES = ['WAEC', 'NECO', 'JAMB', 'MOCK'] as const;
 export type CbtCategoryValue = (typeof CBT_CATEGORIES)[number];
 
+/** Category used when the caller does not choose one (school-authored content). */
+export const CBT_DEFAULT_CATEGORY: CbtCategoryValue = 'MOCK';
+
 export const CBT_CATEGORY_LABELS: Record<CbtCategoryValue, string> = {
-  JAMB: 'JAMB Practice',
-  WAEC: 'WAEC Practice',
-  NECO: 'NECO Practice',
-  SCHOOL: 'School CBT',
-  MOCK: 'Mock Examinations',
-  GENERAL: 'General Practice',
+  WAEC: 'WAEC',
+  NECO: 'NECO',
+  JAMB: 'JAMB',
+  MOCK: 'Mock Examination',
 };
 
 export const CBT_SOURCES = ['SCHOOL', 'TGMANAGER', 'LICENSED', 'AI'] as const;
@@ -83,7 +81,7 @@ export const CBT_IMPORT_COLUMNS = [
 export const CBT_IMPORT_TEMPLATE =
   CBT_IMPORT_COLUMNS.join(',') +
   '\n' +
-  'MATH,SCHOOL,Algebra,EASY,What is 2 + 2?,3,4,5,6,B,Adding two ones gives four.,1,TGMANAGER';
+  'MATH,MOCK,Algebra,EASY,What is 2 + 2?,3,4,5,6,B,Adding two ones gives four.,1,TGMANAGER';
 
 /** A seeded PRNG keeps per-attempt shuffling stable across refreshes. */
 export function cbtHashSeed(value: string): number {

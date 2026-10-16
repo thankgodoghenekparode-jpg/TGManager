@@ -80,6 +80,15 @@ export class CbtQuestionsController {
     return this.questions.importCsv(req.tenant.id, req.user.sub, dto);
   }
 
+  @Post('seed-defaults')
+  @Permissions(PERMISSIONS.CBT_QUESTION_MANAGE)
+  @ApiOperation({
+    summary: 'Load TGManager default practice banks for any missing category',
+  })
+  seedDefaults(@Req() req: PermissionRequest) {
+    return this.questions.seedDefaults(req.tenant.id, req.user.sub);
+  }
+
   @Get(':id')
   @Permissions(PERMISSIONS.CBT_QUESTION_VIEW)
   @ApiOperation({ summary: 'Get one question (includes correct answer)' })

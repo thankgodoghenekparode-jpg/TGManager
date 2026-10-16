@@ -3,12 +3,26 @@ import type { CbtCategory, CbtExamMode, CbtQuestionSource } from '../../../api/c
 
 /** Colour chip per CBT category so the dashboard reads at a glance. */
 export const CATEGORY_COLORS: Record<CbtCategory, string> = {
-  JAMB: 'primary',
   WAEC: 'secondary',
   NECO: 'info',
-  SCHOOL: 'success',
+  JAMB: 'primary',
   MOCK: 'warning',
-  GENERAL: 'default',
+};
+
+/** Strong accent colours used by the category landing cards. */
+export const CATEGORY_ACCENTS: Record<CbtCategory, string> = {
+  WAEC: '#7b1fa2',
+  NECO: '#0288d1',
+  JAMB: '#2e7d32',
+  MOCK: '#ed6c02',
+};
+
+/** One-line description shown under each category name. */
+export const CATEGORY_TAGLINES: Record<CbtCategory, string> = {
+  WAEC: 'West African Senior School Certificate practice',
+  NECO: 'National Examinations Council practice',
+  JAMB: 'UTME-style practice across core subjects',
+  MOCK: 'School mock examinations — default questions plus your own',
 };
 
 export const SOURCE_COLORS: Record<CbtQuestionSource, string> = {

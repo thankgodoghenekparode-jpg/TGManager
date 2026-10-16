@@ -43,6 +43,7 @@ import { schoolApi } from '../../../api/school';
 import {
   cbtApi,
   CBT_CATEGORY_LABELS,
+  CBT_CATEGORY_ORDER,
   type CbtCategory,
   type CbtExamDetail,
   type CbtExamMode,
@@ -53,7 +54,7 @@ import { useCan } from '../../../components/PermissionGate';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { CATEGORY_COLORS, formatDateTime, modeLabel } from './cbtUi';
 
-const CATEGORIES: CbtCategory[] = ['JAMB', 'WAEC', 'NECO', 'SCHOOL', 'MOCK', 'GENERAL'];
+const CATEGORIES: CbtCategory[] = CBT_CATEGORY_ORDER;
 const MODES: CbtExamMode[] = ['PRACTICE', 'MOCK'];
 const STATUSES: CbtExamStatus[] = ['DRAFT', 'PUBLISHED', 'ARCHIVED'];
 
@@ -87,7 +88,7 @@ interface ExamForm {
 
 const emptyForm = (): ExamForm => ({
   title: '',
-  category: 'SCHOOL',
+  category: 'MOCK',
   mode: 'MOCK',
   subjectId: '',
   classId: '',

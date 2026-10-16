@@ -35,6 +35,7 @@ import { useCan } from '../../../components/PermissionGate';
 import {
   cbtApi,
   CBT_CATEGORY_LABELS,
+  CBT_CATEGORY_ORDER,
   CBT_PLATFORM_NOTICE,
   type CbtCategory,
   type CbtStaffDashboard,
@@ -42,19 +43,18 @@ import {
 } from '../../../api/cbt';
 import { apiErrorMessage } from '../../../api/client';
 import {
+  CATEGORY_ACCENTS,
   CATEGORY_COLORS,
+  CATEGORY_TAGLINES,
   formatDate,
   scoreColor,
 } from './cbtUi';
 
-const CATEGORY_ORDER: CbtCategory[] = ['JAMB', 'WAEC', 'NECO', 'SCHOOL', 'MOCK', 'GENERAL'];
 const CATEGORY_ICONS: Record<CbtCategory, ReactElement> = {
-  JAMB: <MenuBookIcon />,
   WAEC: <AssignmentIcon />,
   NECO: <ScienceIcon />,
-  SCHOOL: <QuizIcon />,
+  JAMB: <MenuBookIcon />,
   MOCK: <EmojiEventsIcon />,
-  GENERAL: <InsightsIcon />,
 };
 
 function KpiCard({
@@ -107,11 +107,13 @@ export function CbtDashboardPage() {
 
   const categoryCards = useMemo(
     () =>
-      CATEGORY_ORDER.map((category) => ({
+      CBT_CATEGORY_ORDER.map((category) => ({
         category,
         label: CBT_CATEGORY_LABELS[category],
+        tagline: CATEGORY_TAGLINES[category],
         icon: CATEGORY_ICONS[category],
         color: CATEGORY_COLORS[category],
+        accent: CATEGORY_ACCENTS[category],
       })),
     [],
   );
@@ -185,20 +187,61 @@ export function CbtDashboardPage() {
         Practice by category
       </Typography>
       <Grid container spacing={2}>
-        {categoryCards.map(({ category, label, icon, color }) => (
-          <Grid item xs={12} sm={6} md={4} key={category}>
-            <Card variant="outlined">
+        {categoryCards.map(({ category, label, tagline, icon, color, accent }) => (
+          <Grid item xs={12} sm={6} md={3} key={category}>
+            <Card
+              variant="outlined"
+              sx={{
+                height: '100%',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'box-shadow .2s, transform .2s',
+                '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: 0,
+                  borderTop: `4px solid ${accent}`,
+                },
+              }}
+            >
               <CardActionArea
+                sx={{ height: '100%', p: 0.5 }}
                 onClick={() =>
-                  navigate(`/school/cbt/practice?category=${category}`)
+                  student
+                    ? navigate(`/school/cbt/practice?category=${category}`)
+                    : navigate(`/school/cbt/questions?category=${category}`)
                 }
-                disabled={!student}
               >
                 <CardContent>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Chip color={color as any} icon={icon} label={category} />
-                    <Typography variant="subtitle1">{label}</Typography>
-                  </Stack>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: `${accent}1a`,
+                      color: accent,
+                      mb: 1.5,
+                    }}
+                  >
+                    {icon}
+                  </Box>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    {label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                    {tagline}
+                  </Typography>
+                  <Chip
+                    size="small"
+                    color={color as any}
+                    variant="outlined"
+                    label={student ? 'Practise now' : 'View questions'}
+                    sx={{ mt: 1.5 }}
+                  />
                 </CardContent>
               </CardActionArea>
             </Card>

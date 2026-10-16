@@ -6,7 +6,8 @@ import {
 import { randomBytes } from 'node:crypto';
 import type { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CBT_IMPORT_TEMPLATE } from './cbt.constants';
+import { CBT_CATEGORIES, CBT_IMPORT_TEMPLATE } from './cbt.constants';
+import { seedCbtDefaults } from './cbt-defaults';
 import {
   parseQuestionCsv,
   resolveCorrectIndex,
@@ -37,6 +38,15 @@ const questionInclude = {
 @Injectable()
 export class CbtQuestionsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Fills in any missing default category banks (WAEC, NECO, JAMB and Mock
+   * Examination) for this school. Categories that already have questions are
+   * left untouched, so this is safe to run at any time.
+   */
+  async seedDefaults(tenantId: string, userId: string | null) {
+    return seedCbtDefaults(this.prisma, tenantId, { createdByUserId: userId });
+  }
 
   async list(tenantId: string, query: QueryQuestionsDto) {
     const where: Prisma.CbtQuestionWhereInput = {
@@ -283,8 +293,7 @@ export class CbtQuestionsService {
   }
 
   /** Downloadable CSV template describing the accepted import format. */
-  template() {
-    return {
+  template() {    return {
       template: CBT_IMPORT_TEMPLATE,
       columns: [
         'subject',
@@ -304,7 +313,7 @@ export class CbtQuestionsService {
       notes: [
         'Subject must match a subject code or name already configured in this school.',
         'Correct may be a letter (A–D) or the exact text of the right option.',
-        'category: JAMB, WAEC, NECO, SCHOOL, MOCK, GENERAL',
+        `category: ${CBT_CATEGORIES.join(', ')}`,
         'difficulty: EASY, MEDIUM, HARD',
         'source: SCHOOL, TGMANAGER, LICENSED, AI',
         'AI-generated items must be labelled as practice questions, never as past questions.',

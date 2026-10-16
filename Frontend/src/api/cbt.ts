@@ -2,7 +2,7 @@ import { api } from './client';
 
 // ==================== Shared vocab ====================
 
-export type CbtCategory = 'JAMB' | 'WAEC' | 'NECO' | 'SCHOOL' | 'MOCK' | 'GENERAL';
+export type CbtCategory = 'WAEC' | 'NECO' | 'JAMB' | 'MOCK';
 export type CbtExamMode = 'PRACTICE' | 'MOCK';
 export type CbtExamStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 export type CbtQuestionSource = 'SCHOOL' | 'TGMANAGER' | 'LICENSED' | 'AI';
@@ -11,13 +11,14 @@ export type CbtQuestionStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 export type CbtAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED';
 
 export const CBT_CATEGORY_LABELS: Record<CbtCategory, string> = {
-  JAMB: 'JAMB Practice',
-  WAEC: 'WAEC Practice',
-  NECO: 'NECO Practice',
-  SCHOOL: 'School CBT',
-  MOCK: 'Mock Examinations',
-  GENERAL: 'General Practice',
+  WAEC: 'WAEC',
+  NECO: 'NECO',
+  JAMB: 'JAMB',
+  MOCK: 'Mock Examination',
 };
+
+/** The categories in the order they are presented across the CBT UI. */
+export const CBT_CATEGORY_ORDER: CbtCategory[] = ['WAEC', 'NECO', 'JAMB', 'MOCK'];
 
 export const CBT_SOURCE_LABELS: Record<CbtQuestionSource, string> = {
   SCHOOL: 'School-created',
@@ -571,6 +572,12 @@ export const cbtApi = {
     api
       .get<{ template: string; columns: string[]; notes: string[] }>(
         '/school/cbt/questions/template',
+      )
+      .then((r) => r.data),
+  seedDefaults: () =>
+    api
+      .post<{ questions: number; exams: number; topics: number; skipped: string[] }>(
+        '/school/cbt/questions/seed-defaults',
       )
       .then((r) => r.data),
   previewImport: (csv: string) =>

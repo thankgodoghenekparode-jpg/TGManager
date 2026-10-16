@@ -52,7 +52,7 @@ export const createQuestionSchema = z
     subjectId: z.string().cuid('A subject is required'),
     topicId: z.string().cuid().optional().nullable(),
     topicName: z.string().trim().min(1).max(150).optional().nullable(),
-    category: z.enum(CBT_CATEGORIES).default('GENERAL'),
+    category: z.enum(CBT_CATEGORIES).default('MOCK'),
     difficulty: z.enum(CBT_DIFFICULTIES).default('MEDIUM'),
     text: z.string().trim().min(3, 'Question text is required').max(4000),
     imageUrl: z.string().trim().max(500).optional().nullable(),
@@ -116,7 +116,7 @@ export type ImportQuestionsDto = z.infer<typeof importQuestionsSchema>;
 export const createExamSchema = z
   .object({
     title: z.string().trim().min(3, 'Title is required').max(200),
-    category: z.enum(CBT_CATEGORIES).default('SCHOOL'),
+    category: z.enum(CBT_CATEGORIES).default('MOCK'),
     mode: z.enum(CBT_EXAM_MODES).default('MOCK'),
     subjectId: z.string().cuid().optional().nullable(),
     classId: z.string().cuid().optional().nullable(),

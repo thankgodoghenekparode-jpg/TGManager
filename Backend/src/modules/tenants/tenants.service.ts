@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PlansService } from '../plans/plans.service';
 import { StorageService } from '../storage/storage.service';
+import { seedCbtDefaults } from '../cbt/cbt-defaults';
 import {
   SYSTEM_ROLE_DEFS,
   SYSTEM_ROLE_NAMES,
@@ -61,7 +62,7 @@ export class TenantsService {
 
     const slug = await this.generateUniqueSlug(params.companyName);
 
-    return this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
           email: params.email.toLowerCase(),
@@ -198,6 +199,22 @@ export class TenantsService {
 
       return { user, tenant };
     }, TENANT_TRANSACTION_OPTIONS);
+
+    // Schools get TGManager's default CBT practice banks out of the box. This
+    // runs after the tenant transaction commits and never blocks registration.
+    if ((params.type ?? 'COMPANY') === 'SCHOOL') {
+      void seedCbtDefaults(this.prisma, created.tenant.id, {
+        createdByUserId: created.user.id,
+      }).catch((error) => {
+        this.logger.error(
+          `Failed to seed default CBT banks for tenant ${created.tenant.id}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      });
+    }
+
+    return created;
   }
 
   async getMyTenants(userId: string) {

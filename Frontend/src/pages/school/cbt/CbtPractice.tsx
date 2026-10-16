@@ -15,11 +15,11 @@ import {
 } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
-import { cbtApi, CBT_CATEGORY_LABELS, type CbtCategory } from '../../../api/cbt';
+import { cbtApi, CBT_CATEGORY_LABELS, CBT_CATEGORY_ORDER, type CbtCategory } from '../../../api/cbt';
 import { apiErrorMessage } from '../../../api/client';
 import { CATEGORY_COLORS, formatDateTime, modeLabel } from './cbtUi';
 
-const CATEGORIES: CbtCategory[] = ['JAMB', 'WAEC', 'NECO', 'SCHOOL', 'MOCK', 'GENERAL'];
+const CATEGORIES: CbtCategory[] = CBT_CATEGORY_ORDER;
 
 export function CbtPracticePage() {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ export function CbtPracticePage() {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} gutterBottom>
-        {category === 'ALL' ? 'Practice & examinations' : CBT_CATEGORY_LABELS[category]}
+        {category === 'ALL' ? 'Practice & examinations' : CBT_CATEGORY_LABELS[category] ?? 'Practice & examinations'}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         Only examinations assigned to you (or open to the whole school) appear here.

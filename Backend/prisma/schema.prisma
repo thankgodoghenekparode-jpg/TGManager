@@ -1905,12 +1905,10 @@ model SchoolAnnouncement {
 // and licensed provider banks can be integrated later.
 
 enum CbtCategory {
-  JAMB
   WAEC
   NECO
-  SCHOOL
+  JAMB
   MOCK
-  GENERAL
 }
 
 enum CbtExamMode {
@@ -1975,7 +1973,7 @@ model CbtQuestion {
   topicId         String?
   topic           CbtTopic?         @relation(fields: [topicId], references: [id], onDelete: SetNull)
   topicName       String?
-  category        CbtCategory       @default(GENERAL)
+  category        CbtCategory       @default(MOCK)
   difficulty      CbtDifficulty     @default(MEDIUM)
   text            String
   imageUrl        String?
@@ -2018,7 +2016,7 @@ model CbtExam {
   tenantId               String
   tenant                 Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   title                  String
-  category               CbtCategory   @default(SCHOOL)
+  category               CbtCategory   @default(MOCK)
   mode                   CbtExamMode   @default(MOCK)
   subjectId              String?
   subject                Subject?      @relation(fields: [subjectId], references: [id], onDelete: SetNull)
