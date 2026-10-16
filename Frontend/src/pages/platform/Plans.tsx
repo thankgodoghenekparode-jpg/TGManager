@@ -165,7 +165,7 @@ function PlanEditDialog({
           <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
           <TextField label="Code" value={code} disabled={!!plan} onChange={(e) => setCode(e.target.value)} fullWidth />
           <TextField
-            label="Price (USD / month)"
+            label="Price (₦ / month)"
             type="number"
             value={priceDollars}
             onChange={(e) => setPriceDollars(e.target.value)}

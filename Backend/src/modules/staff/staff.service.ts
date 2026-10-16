@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { DEFAULT_PASSWORD } from '../../common/default-password.constants';
 import { Prisma } from '../../generated/prisma/client';
 import { UserRole } from '../../generated/prisma/enums';
 import type { AbilitiesContext } from '../../common/types/permission-request.interface';
@@ -48,7 +48,7 @@ export class StaffService {
     await this.planLimits.enforceStaffLimit(tenantId);
     await this.access.assertBranchAccess(tenantId, dto.branchId, abilities);
 
-    const generatedPassword = randomBytes(9).toString('base64url');
+    const generatedPassword = DEFAULT_PASSWORD;
     const passwordHash = await bcrypt.hash(generatedPassword, BCRYPT_ROUNDS);
 
     const result = await this.prisma.$transaction(async (tx) => {

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { DEFAULT_PASSWORD } from '../../common/default-password.constants';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DistributedLockService } from '../../common/locks/distributed-lock.service';
@@ -654,7 +654,7 @@ export class PlatformService {
   // ---------------------------------------------------------------- tenants: create/delete
 
   async createTenant(dto: CreateTenantDto) {
-    const tempPassword = randomBytes(12).toString('base64url');
+    const tempPassword = DEFAULT_PASSWORD;
     const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
 
     const { user, tenant } = await this.tenants.createTenantWithAdmin({
@@ -717,7 +717,7 @@ export class PlatformService {
       throw new ConflictException('A user with this email already exists');
     }
 
-    const tempPassword = randomBytes(12).toString('base64url');
+    const tempPassword = DEFAULT_PASSWORD;
     const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
 
     const user = await this.prisma.user.create({

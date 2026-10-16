@@ -8,8 +8,8 @@ import {
   SYSTEM_ROLE_DEFS,
   SYSTEM_ROLE_NAMES,
 } from '../modules/rbac/system-roles/system-roles.constants';
+import { DEFAULT_PASSWORD } from '../common/default-password.constants';
 
-const DEFAULT_PASSWORD = 'password123';
 const BCRYPT_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
 
 export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {

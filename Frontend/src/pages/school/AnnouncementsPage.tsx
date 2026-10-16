@@ -25,6 +25,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import { schoolApi, type AnnouncementAudience, type SchoolAnnouncement } from '../../api/school';
+import { Can } from '../../components/PermissionGate';
 
 const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
   ALL: 'Everyone',
@@ -125,14 +126,16 @@ export function AnnouncementsPage() {
             Broadcast updates to students, parents and staff.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={openCreate}
-          sx={{ textTransform: 'none', fontWeight: 600 }}
-        >
-          New Announcement
-        </Button>
+        <Can permissions={['school.manage']}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={openCreate}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            New Announcement
+          </Button>
+        </Can>
       </Stack>
 
       {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
@@ -167,16 +170,18 @@ export function AnnouncementsPage() {
                     color={item.audience === 'ALL' ? 'primary' : 'default'}
                     variant={item.audience === 'ALL' ? 'filled' : 'outlined'}
                   />
-                  <Tooltip title="Edit">
-                    <IconButton size="small" onClick={() => openEdit(item)}>
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton size="small" color="error" onClick={() => setToDelete(item)}>
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <Can permissions={['school.manage']}>
+                    <Tooltip title="Edit">
+                      <IconButton size="small" onClick={() => openEdit(item)}>
+                        <EditOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton size="small" color="error" onClick={() => setToDelete(item)}>
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Can>
                 </Stack>
               </Stack>
               <Typography

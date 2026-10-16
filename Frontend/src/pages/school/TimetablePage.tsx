@@ -25,6 +25,7 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import RoomIcon from '@mui/icons-material/Room';
 import PersonIcon from '@mui/icons-material/Person';
 import { schoolApi, DAYS_OF_WEEK, type DayOfWeek, type TimetablePeriod } from '../../api/school';
+import { Can } from '../../components/PermissionGate';
 
 interface PeriodForm {
   id?: string;
@@ -181,9 +182,11 @@ export function TimetablePage() {
               </MenuItem>
             ))}
           </TextField>
-          <Button variant="contained" startIcon={<AddIcon />} disabled={!classId} onClick={() => openCreate('MONDAY')} sx={{ textTransform: 'none' }}>
-            Add Period
-          </Button>
+          <Can permissions={['academic.manage']}>
+            <Button variant="contained" startIcon={<AddIcon />} disabled={!classId} onClick={() => openCreate('MONDAY')} sx={{ textTransform: 'none' }}>
+              Add Period
+            </Button>
+          </Can>
         </Stack>
       </Stack>
 
@@ -196,9 +199,11 @@ export function TimetablePage() {
                   <Typography variant="subtitle2" fontWeight={700}>
                     {day.charAt(0) + day.slice(1).toLowerCase()}
                   </Typography>
-                  <IconButton size="small" onClick={() => openCreate(day)} disabled={!classId}>
-                    <AddIcon fontSize="small" />
-                  </IconButton>
+                  <Can permissions={['academic.manage']}>
+                    <IconButton size="small" onClick={() => openCreate(day)} disabled={!classId}>
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Can>
                 </Stack>
                 <Divider sx={{ mb: 1 }} />
                 <Stack spacing={1}>
@@ -232,14 +237,16 @@ export function TimetablePage() {
                             </Stack>
                           )}
                         </Box>
-                        <Stack direction="column">
-                          <IconButton size="small" onClick={() => openEdit(period)}>
-                            <EditIcon sx={{ fontSize: 15 }} />
-                          </IconButton>
-                          <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(period.id)}>
-                            <DeleteIcon sx={{ fontSize: 15 }} />
-                          </IconButton>
-                        </Stack>
+                        <Can permissions={['academic.manage']}>
+                          <Stack direction="column">
+                            <IconButton size="small" onClick={() => openEdit(period)}>
+                              <EditIcon sx={{ fontSize: 15 }} />
+                            </IconButton>
+                            <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(period.id)}>
+                              <DeleteIcon sx={{ fontSize: 15 }} />
+                            </IconButton>
+                          </Stack>
+                        </Can>
                       </Stack>
                     </Card>
                   ))}

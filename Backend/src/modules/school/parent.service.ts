@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { DEFAULT_PASSWORD } from '../../common/default-password.constants';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   SYSTEM_ROLE_DEFS,
@@ -64,7 +64,7 @@ export class ParentService {
       );
     }
 
-    const generatedPassword = dto.password ? null : randomBytes(4).toString('hex');
+    const generatedPassword = dto.password ? null : DEFAULT_PASSWORD;
     const passwordHash = await bcrypt.hash(dto.password ?? generatedPassword!, 10);
     const parentRole = await this.ensureParentRole(tenantId, actorUserId);
 

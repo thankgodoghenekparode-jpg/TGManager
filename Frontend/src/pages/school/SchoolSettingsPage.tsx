@@ -217,7 +217,7 @@ export function SchoolSettingsPage() {
                 onChange={(e) => setForm({ ...form, currency: e.target.value })}
               >
                 <MenuItem value="NGN">NGN (₦ - Nigerian Naira)</MenuItem>
-                <MenuItem value="USD">USD ($ - US Dollar)</MenuItem>
+                <MenuItem value="USD">USD (US Dollar)</MenuItem>
                 <MenuItem value="GBP">GBP (£ - British Pound)</MenuItem>
               </TextField>
             </Grid>

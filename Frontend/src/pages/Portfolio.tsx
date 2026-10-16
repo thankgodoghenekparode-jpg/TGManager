@@ -584,7 +584,7 @@ export function PortfolioPage() {
             <Grid item xs={12} md={4}>
               <PricingCard
                 name="Free"
-                price="$0"
+                price="₦0"
                 period="/ month"
                 description="Essential workforce tools for small businesses."
                 features={['1 Branch Location', 'Up to 10 Staff Members', 'Real-Time Team Chat', 'Attendance Tracking', 'Basic Approvals']}
@@ -596,7 +596,7 @@ export function PortfolioPage() {
               <PricingCard
                 featured
                 name="Pro"
-                price="$49"
+                price="₦49"
                 period="/ month"
                 description="Complete operational power for growing teams."
                 features={['Up to 5 Branches', 'Up to 100 Staff Members', 'Biometric & GPS Clock-In', 'Custom Approval Workflows', 'Smart Inventory System', 'Weekly Report Analytics']}
@@ -607,7 +607,7 @@ export function PortfolioPage() {
             <Grid item xs={12} md={4}>
               <PricingCard
                 name="Enterprise"
-                price="$149"
+                price="₦149"
                 period="/ month"
                 description="Unlimited scale, multi-region control & audit."
                 features={['Unlimited Branches', 'Unlimited Staff Members', 'Dedicated Priority SLA', 'Full Audit Logging', 'Custom Integration APIs', 'Hardware Biometrics Integration']}

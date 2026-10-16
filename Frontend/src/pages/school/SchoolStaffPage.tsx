@@ -26,6 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { schoolApi, SCHOOL_STAFF_CATEGORIES, type SchoolStaffCategory, type SchoolStaffMember } from '../../api/school';
+import { Can } from '../../components/PermissionGate';
 
 interface StaffForm {
   id?: string;
@@ -136,9 +137,11 @@ export function SchoolStaffPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} sx={{ textTransform: 'none' }}>
-            Add Staff
-          </Button>
+          <Can permissions={['school.manage']}>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} sx={{ textTransform: 'none' }}>
+              Add Staff
+            </Button>
+          </Can>
         </Stack>
       </Stack>
 
@@ -185,12 +188,14 @@ export function SchoolStaffPage() {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton size="small" onClick={() => openEdit(member)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(member.id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <Can permissions={['school.manage']}>
+                      <IconButton size="small" onClick={() => openEdit(member)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(member.id)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Can>
                   </TableCell>
                 </TableRow>
               ))}

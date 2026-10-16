@@ -733,7 +733,7 @@ export function PlatformDashboardPage() {
                               {p.name}
                             </Typography>
                             <Chip
-                              label={`$${(p.priceCents / 100).toFixed(0)}/mo`}
+                              label={`₦${(p.priceCents / 100).toFixed(0)}/mo`}
                               size="small"
                               sx={{
                                 bgcolor: 'rgba(236, 6, 24, 0.12)',

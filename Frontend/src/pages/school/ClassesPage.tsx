@@ -30,6 +30,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { schoolApi } from '../../api/school';
+import { Can } from '../../components/PermissionGate';
 
 export function ClassesPage() {
   const qc = useQueryClient();
@@ -99,23 +100,25 @@ export function ClassesPage() {
             Manage grade levels, sections, subjects curriculum, and academic terms
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
-          {activeTab === 0 && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateClassOpen(true)}>
-              Add Classroom
-            </Button>
-          )}
-          {activeTab === 1 && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateSubjectOpen(true)}>
-              Add Subject
-            </Button>
-          )}
-          {activeTab === 2 && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateSessionOpen(true)}>
-              New Session
-            </Button>
-          )}
-        </Stack>
+        <Can permissions={['school.manage']}>
+          <Stack direction="row" spacing={1}>
+            {activeTab === 0 && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateClassOpen(true)}>
+                Add Classroom
+              </Button>
+            )}
+            {activeTab === 1 && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateSubjectOpen(true)}>
+                Add Subject
+              </Button>
+            )}
+            {activeTab === 2 && (
+              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateSessionOpen(true)}>
+                New Session
+              </Button>
+            )}
+          </Stack>
+        </Can>
       </Stack>
 
       {/* Tabs */}

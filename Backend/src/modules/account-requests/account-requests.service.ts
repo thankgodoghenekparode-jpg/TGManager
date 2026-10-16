@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomBytes } from 'crypto';
+import { DEFAULT_PASSWORD } from '../../common/default-password.constants';
 import { Prisma, AccountRequestStatus } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -427,7 +427,7 @@ export class AccountRequestsService {
     }
 
     // 16-char alphanumeric temporary password (avoids ambiguous characters).
-    const tempPassword = randomBytes(12).toString('base64url').slice(0, 16);
+    const tempPassword = DEFAULT_PASSWORD;
     const passwordHash = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
 
     await this.prisma.$transaction([

@@ -40,8 +40,8 @@ export const billingApi = {
 }
 
 export function formatPriceCents(cents: number): string {
-  if (cents === 0) return '$0'
-  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`
+  if (cents === 0) return '₦0'
+  return `₦${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`
 }
 
 /** Renders a credit bucket in a human-friendly unit (storage is in MB). */

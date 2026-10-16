@@ -36,6 +36,7 @@ import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl } from '../../api/client';
 import { DocumentActions } from '../../components/documents/DocumentActions';
 import { DocumentFooter, DocumentHeader, DocumentPaper } from '../../components/documents/DocumentPaper';
+import { Can } from '../../components/PermissionGate';
 
 interface ScoreDraft {
   caScore: string;
@@ -257,15 +258,17 @@ export function GradingPage() {
             </Grid>
             <Grid item xs={12} md={6}>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-                <Button
-                  variant="contained"
-                  startIcon={<EditNoteIcon />}
-                  disabled={!defaultClassId || !defaultSubjectId}
-                  onClick={openScoreEntry}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Enter Scores
-                </Button>
+                <Can permissions={['academic.manage']}>
+                  <Button
+                    variant="contained"
+                    startIcon={<EditNoteIcon />}
+                    disabled={!defaultClassId || !defaultSubjectId}
+                    onClick={openScoreEntry}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Enter Scores
+                  </Button>
+                </Can>
                 <Button
                   variant="outlined"
                   startIcon={<TableChartIcon />}
@@ -275,26 +278,28 @@ export function GradingPage() {
                 >
                   Class Sheet
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="success"
-                  startIcon={<DoneAllIcon />}
-                  disabled={!defaultClassId || !currentSession || !activeTerm || approveMutation.isPending}
-                  onClick={() => approveMutation.mutate('APPROVE')}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<PublishIcon />}
-                  disabled={!defaultClassId || !currentSession || !activeTerm || approveMutation.isPending}
-                  onClick={() => approveMutation.mutate('PUBLISH')}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Publish
-                </Button>
+                <Can permissions={['academic.manage']}>
+                  <Button
+                    variant="outlined"
+                    color="success"
+                    startIcon={<DoneAllIcon />}
+                    disabled={!defaultClassId || !currentSession || !activeTerm || approveMutation.isPending}
+                    onClick={() => approveMutation.mutate('APPROVE')}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={<PublishIcon />}
+                    disabled={!defaultClassId || !currentSession || !activeTerm || approveMutation.isPending}
+                    onClick={() => approveMutation.mutate('PUBLISH')}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Publish
+                  </Button>
+                </Can>
               </Stack>
             </Grid>
           </Grid>

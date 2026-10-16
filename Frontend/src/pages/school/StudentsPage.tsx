@@ -35,6 +35,7 @@ import { schoolApi, type Student } from '../../api/school';
 import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl } from '../../api/client';
 import { DocumentActions } from '../../components/documents/DocumentActions';
+import { Can } from '../../components/PermissionGate';
 
 export function StudentsPage() {
   const qc = useQueryClient();
@@ -144,14 +145,16 @@ export function StudentsPage() {
             Student roster, guardian linkages, and printable digital ID cards
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<PersonAddIcon />}
-          onClick={() => setEnrollOpen(true)}
-          sx={{ textTransform: 'none', fontWeight: 600 }}
-        >
-          Enroll New Student
-        </Button>
+        <Can permissions={['student.manage']}>
+          <Button
+            variant="contained"
+            startIcon={<PersonAddIcon />}
+            onClick={() => setEnrollOpen(true)}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Enroll New Student
+          </Button>
+        </Can>
       </Stack>
 
       {/* Filters */}

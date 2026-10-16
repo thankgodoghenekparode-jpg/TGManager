@@ -10,8 +10,8 @@ import {
   seedSchoolResults,
   type SeedSchoolResultsResult,
 } from './school-results-seed';
+import { DEFAULT_PASSWORD } from '../common/default-password.constants';
 
-const DEFAULT_PASSWORD = 'password123';
 const BCRYPT_HASH = bcrypt.hashSync(DEFAULT_PASSWORD, 10);
 
 // ---------------------------------------------------------------------------
