@@ -291,6 +291,13 @@ export class SchoolStaffService {
     if (!staff) throw new NotFoundException('Staff member not found');
 
     await this.prisma.schoolStaff.delete({ where: { id } });
+    // A removed staff member must not keep an active portal login.
+    if (staff.userId) {
+      await this.prisma.user.update({
+        where: { id: staff.userId },
+        data: { isActive: false },
+      });
+    }
     return { success: true };
   }
 }

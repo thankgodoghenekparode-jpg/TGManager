@@ -21,6 +21,7 @@ describe('SchoolStaffService', () => {
     };
     companyRole: { findFirst: jest.Mock; create: jest.Mock };
     tenant: { findUnique: jest.Mock };
+    user: { update: jest.Mock };
     roleAssignment: { deleteMany: jest.Mock; create: jest.Mock };
     $transaction: jest.Mock;
   };
@@ -55,6 +56,9 @@ describe('SchoolStaffService', () => {
       },
       tenant: {
         findUnique: jest.fn().mockResolvedValue({ slug: 'demo-school' }),
+      },
+      user: {
+        update: jest.fn().mockResolvedValue({ id: 'u1', isActive: false }),
       },
       roleAssignment: {
         deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
@@ -140,5 +144,19 @@ describe('SchoolStaffService', () => {
     await expect(service.remove('tenant', 'missing')).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it('deactivates the linked login when a staff member is removed', async () => {
+    prisma.schoolStaff.findFirst.mockResolvedValue({ id: 'st1', userId: 'u1' });
+
+    await service.remove('tenant', 'st1');
+
+    expect(prisma.schoolStaff.delete).toHaveBeenCalledWith({
+      where: { id: 'st1' },
+    });
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: { isActive: false },
+    });
   });
 });
