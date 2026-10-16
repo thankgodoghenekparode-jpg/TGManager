@@ -60,7 +60,7 @@ export class StudentsController {
     @Req() req: PermissionRequest,
     @Body(new ZodValidationPipe(createStudentSchema)) dto: CreateStudentDto,
   ) {
-    return this.studentsService.create(req.tenant.id, dto);
+    return this.studentsService.create(req.tenant.id, req.user.sub, dto);
   }
 
   @Patch('students/:id')

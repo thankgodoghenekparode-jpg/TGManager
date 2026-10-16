@@ -148,6 +148,7 @@ const router = createBrowserRouter([
               { path: '/school/timetable', element: <RequirePermission permissions={SchoolPermissionBlocks.TIMETABLE} redirectTo="/school"><TimetablePage /></RequirePermission> },
               { path: '/school/fees', element: <RequirePermission permissions={SchoolPermissionBlocks.FEES} redirectTo="/school"><FeesPage /></RequirePermission> },
               { path: '/school/staff', element: <RequirePermission permissions={SchoolPermissionBlocks.STAFF} redirectTo="/school"><SchoolStaffPage /></RequirePermission> },
+              { path: '/school/roles', element: <RequirePermission permissions={SchoolPermissionBlocks.ROLES} redirectTo="/school"><RolesPage /></RequirePermission> },
               { path: '/school/parents', element: <RequirePermission permissions={SchoolPermissionBlocks.PARENTS} redirectTo="/school"><SchoolParentsPage /></RequirePermission> },
               { path: '/school/chat', element: <RequirePermission permissions={SchoolPermissionBlocks.CHAT} redirectTo="/school"><ChatPage /></RequirePermission> },
               { path: '/school/announcements', element: <RequirePermission permissions={SchoolPermissionBlocks.ANNOUNCEMENTS} redirectTo="/school"><AnnouncementsPage /></RequirePermission> },

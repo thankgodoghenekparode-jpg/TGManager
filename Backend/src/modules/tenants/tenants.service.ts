@@ -136,6 +136,7 @@ export class TenantsService {
           SYSTEM_ROLE_DEFS.ACCOUNTANT,
           SYSTEM_ROLE_DEFS.GATE_OFFICER,
           SYSTEM_ROLE_DEFS.PARENT,
+          SYSTEM_ROLE_DEFS.STUDENT,
         ];
         for (const r of schoolRoles) {
           await tx.companyRole.create({

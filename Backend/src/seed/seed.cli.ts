@@ -17,7 +17,9 @@ async function main(): Promise<void> {
       `Seed complete: plans=${result.plansSeeded}, demo=${result.demoSeeded}, ` +
         `mockSessions=${result.mockSessionsSeeded}, ` +
         `schoolResults=${result.schoolResults.resultsCreated} created / ` +
-        `${result.schoolResults.resultsExisting} existing`,
+        `${result.schoolResults.resultsExisting} existing, ` +
+        `timetable=${result.schoolTimetable.periodsCreated} created / ` +
+        `${result.schoolTimetable.periodsExisting} existing`,
     );
   } finally {
     await prisma.$disconnect();

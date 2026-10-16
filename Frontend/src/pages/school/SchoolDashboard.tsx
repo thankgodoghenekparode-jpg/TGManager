@@ -46,6 +46,7 @@ export function SchoolDashboardPage() {
   // header actions and the detail cards are all filtered by these checks so a
   // bursar, a teacher and a gate officer each get a dashboard for their job.
   const canManageStudents = useCan('student.manage');
+  const canViewStudents = useCan('student.view');
   const canViewAttendance = useCan('school_attendance.view');
   const canManageAttendance = useCan('school_attendance.manage');
   const canViewAcademics = useCan('academic.view');
@@ -56,6 +57,7 @@ export function SchoolDashboardPage() {
   const { data: studentsData } = useQuery({
     queryKey: ['school', 'students', 'count'],
     queryFn: () => schoolApi.listStudents({ limit: 100 }),
+    enabled: canViewStudents,
   });
 
   const { data: attendanceStats } = useQuery({

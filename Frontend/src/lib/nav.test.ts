@@ -6,6 +6,10 @@ import { hasPermission } from '../components/PermissionGate'
  * Role permission sets mirror Backend/src/modules/rbac/system-roles/system-roles.constants.ts.
  * These lock in the frontend visibility matrix so a school role can never
  * silently regain access to sections it is not meant to see.
+ *
+ * PRINCIPAL is seeded with ALL_PERMISSIONS on the backend (the principal has the
+ * same access as the school administrator); the subset below still covers every
+ * nav section, which is what this matrix asserts.
  */
 const PRINCIPAL = [
   'tenant.view', 'tenant.manage', 'school.view', 'school.manage',

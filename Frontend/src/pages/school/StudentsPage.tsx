@@ -47,6 +47,12 @@ export function StudentsPage() {
   const [selectedStudentForCard, setSelectedStudentForCard] = useState<Student | null>(null);
   const idCardRef = useRef<HTMLDivElement>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [enrolledAccount, setEnrolledAccount] = useState<{
+    name: string;
+    studentId: string;
+    email: string;
+    password: string | null;
+  } | null>(null);
 
   // New Student Form State
   const [formData, setFormData] = useState({
@@ -111,9 +117,16 @@ export function StudentsPage() {
       await schoolApi.issueIdCard(student.id);
       return student;
     },
-    onSuccess: () => {
+    onSuccess: (student) => {
       qc.invalidateQueries({ queryKey: ['school', 'students'] });
       setEnrollOpen(false);
+      const account = student.studentAccount;
+      setEnrolledAccount({
+        name: `${student.firstName} ${student.lastName}`.trim(),
+        studentId: student.admissionNumber,
+        email: account?.email ?? '',
+        password: account?.created ? (account.password ?? 'password123') : null,
+      });
       setFormData({
         firstName: '',
         lastName: '',
@@ -607,6 +620,55 @@ export function StudentsPage() {
             onClick={() => enrollMutation.mutate()}
           >
             {enrollMutation.isPending ? 'Enrolling...' : 'Complete Enrollment'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Student login credentials (created automatically on enrollment) */}
+      <Dialog
+        open={!!enrolledAccount}
+        onClose={() => setEnrolledAccount(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Student Login Created</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
+            <Typography variant="body2">
+              A portal login was created for <strong>{enrolledAccount?.name}</strong>.
+            </Typography>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Student ID
+              </Typography>
+              <Typography variant="body1" fontWeight={700}>
+                {enrolledAccount?.studentId}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Login email
+              </Typography>
+              <Typography variant="body1" fontWeight={700} sx={{ wordBreak: 'break-all' }}>
+                {enrolledAccount?.email}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Default password
+              </Typography>
+              <Typography variant="body1" fontWeight={700}>
+                {enrolledAccount?.password ?? 'Unchanged (existing account)'}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Share these with the student. They can change the password after signing in.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button variant="contained" onClick={() => setEnrolledAccount(null)}>
+            Done
           </Button>
         </DialogActions>
       </Dialog>

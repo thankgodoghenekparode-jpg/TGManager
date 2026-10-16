@@ -81,8 +81,13 @@ export class CompanyRolesService {
     if (!existing) {
       throw new NotFoundException('Company role not found');
     }
-    if (existing.isSystem) {
-      throw new ForbiddenException('System roles cannot be modified');
+    // The tenant administrator role always keeps full access and cannot be
+    // weakened. Every other role — including the other system roles — can have
+    // its permissions and description tuned by the admin.
+    if (existing.name === SYSTEM_ROLE_NAMES.COMPANY_ADMIN) {
+      throw new ForbiddenException(
+        'The company administrator role cannot be modified',
+      );
     }
     if (dto.permissions) {
       this.assertPermissionsValid(dto.permissions);
@@ -90,9 +95,11 @@ export class CompanyRolesService {
     return this.prisma.companyRole.update({
       where: { id: roleId },
       data: {
-        name: dto.name,
-        description: dto.description,
-        permissions: dto.permissions,
+        // System role names are fixed so code that keys off them keeps working;
+        // only their permission set is editable.
+        ...(existing.isSystem ? {} : { name: dto.name }),
+        ...(dto.description !== undefined ? { description: dto.description } : {}),
+        ...(dto.permissions ? { permissions: dto.permissions } : {}),
       },
     });
   }

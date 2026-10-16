@@ -14,6 +14,7 @@ export const SYSTEM_ROLE_NAMES = {
   ACCOUNTANT: 'ACCOUNTANT',
   GATE_OFFICER: 'GATE_OFFICER',
   PARENT: 'PARENT',
+  STUDENT: 'STUDENT',
 } as const;
 
 interface SystemRoleDef {
@@ -136,40 +137,10 @@ export const SYSTEM_ROLE_DEFS: Record<
   PRINCIPAL: {
     name: SYSTEM_ROLE_NAMES.PRINCIPAL,
     description:
-      'School principal / head of school with full administrative and academic oversight.',
-    permissions: [
-      PERMISSIONS.TENANT_VIEW,
-      PERMISSIONS.TENANT_MANAGE,
-      PERMISSIONS.SCHOOL_VIEW,
-      PERMISSIONS.SCHOOL_MANAGE,
-      PERMISSIONS.STUDENT_VIEW,
-      PERMISSIONS.STUDENT_MANAGE,
-      PERMISSIONS.ACADEMIC_VIEW,
-      PERMISSIONS.ACADEMIC_MANAGE,
-      PERMISSIONS.SCHOOL_FEE_VIEW,
-      PERMISSIONS.SCHOOL_FEE_MANAGE,
-      PERMISSIONS.SCHOOL_ATTENDANCE_VIEW,
-      PERMISSIONS.SCHOOL_ATTENDANCE_MANAGE,
-      PERMISSIONS.SCHOOL_STAFF_ATTENDANCE_VIEW,
-      PERMISSIONS.SCHOOL_STAFF_ATTENDANCE_MANAGE,
-      PERMISSIONS.ATTENDANCE_CLOCK_IN,
-      PERMISSIONS.ATTENDANCE_CLOCK_OUT,
-      PERMISSIONS.STAFF_VIEW,
-      PERMISSIONS.STAFF_CREATE,
-      PERMISSIONS.STAFF_UPDATE,
-      PERMISSIONS.STAFF_DELETE,
-      PERMISSIONS.STAFF_ASSIGN_ROLE,
-      PERMISSIONS.ROLE_VIEW,
-      PERMISSIONS.ROLE_ASSIGN,
-      PERMISSIONS.CHAT_CREATE,
-      PERMISSIONS.CHAT_VIEW,
-      PERMISSIONS.DOCUMENT_VIEW,
-      PERMISSIONS.DOCUMENT_CREATE,
-      PERMISSIONS.MEMO_VIEW,
-      PERMISSIONS.MEMO_CREATE,
-      PERMISSIONS.MEMO_MANAGE,
-      PERMISSIONS.REPORT_VIEW,
-    ],
+      'School principal / head of school. Full administrative and academic oversight — identical access to the school administrator.',
+    // The principal is the school-side counterpart of the company admin, so
+    // they receive the same permission set (and therefore the same dashboard).
+    permissions: ALL_PERMISSIONS,
   },
   TEACHER: {
     name: SYSTEM_ROLE_NAMES.TEACHER,
@@ -234,5 +205,11 @@ export const SYSTEM_ROLE_DEFS: Record<
       PERMISSIONS.SCHOOL_VIEW,
       PERMISSIONS.SCHOOL_PARENT_VIEW,
     ],
+  },
+  STUDENT: {
+    name: SYSTEM_ROLE_NAMES.STUDENT,
+    description:
+      'Student portal access. Signs in with the student ID to view their own results, attendance and fees.',
+    permissions: [PERMISSIONS.SCHOOL_VIEW],
   },
 };

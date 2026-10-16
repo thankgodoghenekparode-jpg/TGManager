@@ -8,6 +8,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import PeopleIcon from '@mui/icons-material/People';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import ChatIcon from '@mui/icons-material/Chat';
 import CampaignIcon from '@mui/icons-material/Campaign';
@@ -42,6 +43,7 @@ export function SchoolLayout() {
     { item: { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon }, perms: SchoolPermissionBlocks.TIMETABLE },
     { item: { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon }, perms: SchoolPermissionBlocks.FEES },
     { item: { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon }, perms: SchoolPermissionBlocks.STAFF },
+    { item: { label: 'Roles & Permissions', path: '/school/roles', icon: AdminPanelSettingsIcon }, perms: SchoolPermissionBlocks.ROLES },
     { item: { label: 'Parents Portal', path: '/school/parents', icon: FamilyRestroomIcon }, perms: SchoolPermissionBlocks.PARENTS },
     { item: { label: 'Staff Chat', path: '/school/chat', icon: ChatIcon }, perms: SchoolPermissionBlocks.CHAT },
     { item: { label: 'Announcements', path: '/school/announcements', icon: CampaignIcon }, perms: SchoolPermissionBlocks.ANNOUNCEMENTS },

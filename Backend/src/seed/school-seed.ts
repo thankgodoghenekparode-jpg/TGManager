@@ -189,6 +189,16 @@ export async function seedSchoolDemo(prisma: PrismaClient): Promise<boolean> {
         },
       });
 
+      await tx.companyRole.create({
+        data: {
+          tenantId: schoolTenant.id,
+          name: SYSTEM_ROLE_NAMES.STUDENT,
+          description: SYSTEM_ROLE_DEFS.STUDENT.description,
+          isSystem: true,
+          permissions: [...SYSTEM_ROLE_DEFS.STUDENT.permissions],
+        },
+      });
+
       // Helper to register staff user
       const createStaffUser = async (
         email: string,

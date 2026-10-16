@@ -560,7 +560,14 @@ export const schoolApi = {
   listStudents: (params?: { classId?: string; search?: string; status?: string; page?: number; limit?: number }) =>
     api.get<{ items: Student[]; total: number; page: number; limit: number }>('/school/students', { params }).then((r) => r.data),
   getStudent: (id: string) => api.get<Student>(`/school/students/${id}`).then((r) => r.data),
-  createStudent: (data: Partial<Student>) => api.post<Student>('/school/students', data).then((r) => r.data),
+  createStudent: (data: Partial<Student>) =>
+    api
+      .post<
+        Student & {
+          studentAccount?: { email: string; password: string | null; created: boolean }
+        }
+      >('/school/students', data)
+      .then((r) => r.data),
   updateStudent: (id: string, data: Partial<Student>) => api.patch<Student>(`/school/students/${id}`, data).then((r) => r.data),
   deleteStudent: (id: string) => api.delete(`/school/students/${id}`).then((r) => r.data),
   issueIdCard: (studentId: string) => api.post(`/school/students/${studentId}/id-card`).then((r) => r.data),

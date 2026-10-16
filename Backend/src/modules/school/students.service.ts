@@ -4,8 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { DEFAULT_PASSWORD } from '../../common/default-password.constants';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  SYSTEM_ROLE_DEFS,
+  SYSTEM_ROLE_NAMES,
+} from '../rbac/system-roles/system-roles.constants';
 import type {
   CreateGuardianDto,
   CreateStudentDto,
@@ -28,6 +34,51 @@ export class StudentsService {
     const count = await this.prisma.student.count({ where: { tenantId } });
     const serial = String(count + 1).padStart(4, '0');
     return `ADM/${year}/${serial}`;
+  }
+
+  /** Lazily ensures the tenant has a STUDENT role (existing tenants predate it). */
+  private async ensureStudentRole(tenantId: string, actorUserId?: string) {
+    let role = await this.prisma.companyRole.findFirst({
+      where: { tenantId, name: SYSTEM_ROLE_NAMES.STUDENT },
+    });
+    if (!role) {
+      role = await this.prisma.companyRole.create({
+        data: {
+          tenantId,
+          name: SYSTEM_ROLE_NAMES.STUDENT,
+          description: SYSTEM_ROLE_DEFS.STUDENT.description,
+          isSystem: true,
+          permissions: [...SYSTEM_ROLE_DEFS.STUDENT.permissions],
+          createdByUserId: actorUserId,
+        },
+      });
+    }
+    return role;
+  }
+
+  private sanitizeForEmail(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  /**
+   * Resolves the login email for a newly enrolled student. The email captured
+   * on the admission form wins; otherwise one is derived from the admission
+   * number (the automatic student ID) on the school's own student sub-domain
+   * so it stays unique across tenants.
+   */
+  private async resolveStudentLoginEmail(
+    tenantId: string,
+    admissionNumber: string,
+    providedEmail?: string | null,
+  ): Promise<string> {
+    const provided = providedEmail?.trim().toLowerCase();
+    if (provided) return provided;
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { slug: true },
+    });
+    const domain = `${tenant?.slug ?? 'school'}.students.tgmanager.app`;
+    return `${this.sanitizeForEmail(admissionNumber)}@${domain}`;
   }
 
   async list(tenantId: string, query: QueryStudentsDto) {
@@ -110,7 +161,7 @@ export class StudentsService {
     return student;
   }
 
-  async create(tenantId: string, dto: CreateStudentDto) {
+  async create(tenantId: string, actorUserId: string, dto: CreateStudentDto) {
     let admissionNumber = dto.admissionNumber;
     if (!admissionNumber) {
       admissionNumber = await this.generateAdmissionNumber(tenantId);
@@ -124,11 +175,60 @@ export class StudentsService {
     }
 
     const qrIdentifier = this.generateQrIdentifier(tenantId);
+    const loginEmail = await this.resolveStudentLoginEmail(
+      tenantId,
+      admissionNumber,
+      dto.email,
+    );
+    const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+    const studentRole = await this.ensureStudentRole(tenantId, actorUserId);
 
     return this.prisma.$transaction(async (tx) => {
+      // Every enrolment also provisions the student's own login. An existing
+      // account with the same email is reused so its password is never reset.
+      let account = await tx.user.findUnique({ where: { email: loginEmail } });
+      const accountCreated = !account;
+      if (!account) {
+        account = await tx.user.create({
+          data: {
+            email: loginEmail,
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            passwordHash,
+            role: 'USER',
+          },
+        });
+      }
+
+      await tx.tenantUser.upsert({
+        where: { tenantId_userId: { tenantId, userId: account.id } },
+        create: { tenantId, userId: account.id },
+        update: {},
+      });
+
+      const existingAssignment = await tx.roleAssignment.findFirst({
+        where: {
+          tenantId,
+          userId: account.id,
+          companyRoleId: studentRole.id,
+          branchId: null,
+        },
+      });
+      if (!existingAssignment) {
+        await tx.roleAssignment.create({
+          data: {
+            tenantId,
+            userId: account.id,
+            companyRoleId: studentRole.id,
+            assignedByUserId: actorUserId,
+          },
+        });
+      }
+
       const student = await tx.student.create({
         data: {
           tenantId,
+          userId: account.id,
           admissionNumber,
           qrIdentifier,
           firstName: dto.firstName,
@@ -193,7 +293,14 @@ export class StudentsService {
         });
       }
 
-      return student;
+      return {
+        ...student,
+        studentAccount: {
+          email: loginEmail,
+          password: accountCreated ? DEFAULT_PASSWORD : null,
+          created: accountCreated,
+        },
+      };
     });
   }
 

@@ -90,7 +90,7 @@ export function RolesPage() {
                 <TableCell align="right">{r._count?.assignments ?? 0}</TableCell>
                 <TableCell align="right">
                   <Can permissions={['role.update']}>
-                    <IconButton onClick={() => { setEditing(r); setCreating(true) }} disabled={r.isSystem}><EditIcon fontSize="small" /></IconButton>
+                    <IconButton onClick={() => { setEditing(r); setCreating(true) }}><EditIcon fontSize="small" /></IconButton>
                   </Can>
                   <Can permissions={['role.delete']}>
                     <IconButton color="error" onClick={() => setConfirm(r)} disabled={r.isSystem}><DeleteIcon fontSize="small" /></IconButton>
@@ -163,7 +163,7 @@ function RoleDialog({
       <DialogTitle>{role ? 'Edit role' : 'New role'}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
+          <TextField label="Name" value={name} onChange={(e) => setName(e.target.value)} fullWidth disabled={role?.isSystem} helperText={role?.isSystem ? 'System role names are fixed; edit its permissions below.' : undefined} />
           <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={2} />
           <Stack spacing={1}>
             <Typography variant="subtitle2">Permissions</Typography>
