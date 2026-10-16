@@ -16,3 +16,30 @@ export const PermissionBlocks = {
   INTEGRATION: ['integration.manage'],
   SETTINGS: ['tenant.manage'],
 } as const
+
+/**
+ * Permission groups for the school workspace. A nav item or route is shown /
+ * allowed when the signed-in user holds at least one permission in its block.
+ * The sets below mirror the backend school controllers' `@Permissions(...)`
+ * decorators so the sidebar, the route guards and the API agree on access.
+ */
+export const SchoolPermissionBlocks = {
+  DASHBOARD: ['school.view'],
+  STUDENTS: ['student.view', 'student.manage'],
+  CLASSES: ['school.manage', 'academic.view', 'academic.manage'],
+  GATE_ATTENDANCE: ['school_attendance.view', 'school_attendance.manage'],
+  STAFF_ATTENDANCE: [
+    'school_staff_attendance.view',
+    'school_staff_attendance.manage',
+    'attendance.clock_in',
+    'attendance.clock_out',
+  ],
+  GRADING: ['academic.view', 'academic.manage'],
+  TIMETABLE: ['academic.view', 'academic.manage'],
+  FEES: ['school_fee.view', 'school_fee.manage'],
+  STAFF: ['school.manage', 'staff.view', 'staff.create', 'staff.update'],
+  PARENTS: ['school.manage', 'school.parent_view'],
+  CHAT: ['chat.view', 'chat.create'],
+  ANNOUNCEMENTS: ['school.view', 'school.manage'],
+  SETTINGS: ['tenant.manage', 'school.manage'],
+} as const

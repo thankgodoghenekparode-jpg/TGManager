@@ -15,6 +15,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import { AppShell, type NavItem } from './AppShell';
 import { useAuthStore } from '../../store/auth';
 import { useTenantStore } from '../../store/tenant';
+import { hasPermission } from '../PermissionGate';
+import { SchoolPermissionBlocks } from '../../lib/nav';
 import { FloatingChatButton } from '../FloatingChatButton';
 import { useChatNotificationSound } from '../../hooks/useChatNotificationSound';
 
@@ -24,23 +26,33 @@ export function SchoolLayout() {
   const logout = useAuthStore((s) => s.logout);
   const tenant = useTenantStore((s) => s.current);
 
-  const nav: NavItem[] = [
-    { label: 'Overview', path: '/school', icon: DashboardIcon },
-    { label: 'Students & ID Cards', path: '/school/students', icon: SchoolIcon },
-    { label: 'Classes & Academics', path: '/school/classes', icon: ClassIcon },
-    { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon },
-    { label: 'Staff Clock In/Out', path: '/school/staff-attendance', icon: AccessTimeIcon },
-    { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon },
-    { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon },
-    { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon },
-    { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon },
-    { label: 'Parents Portal', path: '/school/parents', icon: FamilyRestroomIcon },
-    { label: 'Staff Chat', path: '/school/chat', icon: ChatIcon },
-    { label: 'Announcements', path: '/school/announcements', icon: CampaignIcon },
-    { label: 'School Settings', path: '/school/settings', icon: SettingsIcon },
+  const role = user?.role;
+  const isCompanyAdmin = tenant?.isCompanyAdmin ?? false;
+  const tenantPermissions = tenant?.permissions ?? [];
+  const allowed = (perms: readonly string[]) =>
+    hasPermission({ role, isCompanyAdmin, tenantPermissions, required: perms });
+
+  const all: Array<{ item: NavItem; perms: readonly string[] }> = [
+    { item: { label: 'Overview', path: '/school', icon: DashboardIcon }, perms: SchoolPermissionBlocks.DASHBOARD },
+    { item: { label: 'Students & ID Cards', path: '/school/students', icon: SchoolIcon }, perms: SchoolPermissionBlocks.STUDENTS },
+    { item: { label: 'Classes & Academics', path: '/school/classes', icon: ClassIcon }, perms: SchoolPermissionBlocks.CLASSES },
+    { item: { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon }, perms: SchoolPermissionBlocks.GATE_ATTENDANCE },
+    { item: { label: 'Staff Clock In/Out', path: '/school/staff-attendance', icon: AccessTimeIcon }, perms: SchoolPermissionBlocks.STAFF_ATTENDANCE },
+    { item: { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon }, perms: SchoolPermissionBlocks.GRADING },
+    { item: { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon }, perms: SchoolPermissionBlocks.TIMETABLE },
+    { item: { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon }, perms: SchoolPermissionBlocks.FEES },
+    { item: { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon }, perms: SchoolPermissionBlocks.STAFF },
+    { item: { label: 'Parents Portal', path: '/school/parents', icon: FamilyRestroomIcon }, perms: SchoolPermissionBlocks.PARENTS },
+    { item: { label: 'Staff Chat', path: '/school/chat', icon: ChatIcon }, perms: SchoolPermissionBlocks.CHAT },
+    { item: { label: 'Announcements', path: '/school/announcements', icon: CampaignIcon }, perms: SchoolPermissionBlocks.ANNOUNCEMENTS },
+    { item: { label: 'School Settings', path: '/school/settings', icon: SettingsIcon }, perms: SchoolPermissionBlocks.SETTINGS },
   ];
 
-  useChatNotificationSound(true);
+  // Only render menu entries the current role is permitted to open.
+  const nav = all.filter(({ perms }) => allowed(perms)).map(({ item }) => item);
+
+  const chatAccess = allowed(SchoolPermissionBlocks.CHAT);
+  useChatNotificationSound(chatAccess);
 
   return (
     <AppShell
@@ -55,7 +67,7 @@ export function SchoolLayout() {
       }}
     >
       {user ? <Outlet /> : null}
-      <FloatingChatButton />
+      {chatAccess && <FloatingChatButton />}
     </AppShell>
   );
 }

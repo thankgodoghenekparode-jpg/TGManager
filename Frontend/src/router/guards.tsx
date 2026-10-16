@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../store/auth'
 import { useTenantStore, isPlatformAdmin } from '../store/tenant'
+import { hasPermission } from '../components/PermissionGate'
 
 /** Requires an authenticated user. Renders children (or <Outlet/>) once bootstrapped. */
 export function AuthGuard({ children }: { children?: ReactNode }) {
@@ -98,6 +99,36 @@ export function ParentGuard({ children }: { children?: ReactNode }) {
   if (!tenant?.id) return <Navigate to="/select-company" replace />
   if (!hasParentAccess(tenant)) return <Navigate to="/school" replace />
   return <>{children ?? <Outlet />}</>
+}
+
+/**
+ * `hasPermission` lives in the PermissionGate component module; re-exported
+ * here for route guards. A route renders its element only when the signed-in
+ * user holds at least one of the required permissions, otherwise it bounces
+ * back to the workspace home (the sidebar already hides the link).
+ */
+export function RequirePermission({
+  permissions,
+  redirectTo = '/',
+  children,
+}: {
+  permissions: readonly string[]
+  redirectTo?: string
+  children: ReactNode
+}) {
+  const role = useAuthStore((s) => s.user?.role)
+  const tenant = useTenantStore((s) => s.current)
+  const loading = useTenantStore((s) => s.loading)
+
+  if (loading) return null
+  const allowed = hasPermission({
+    role,
+    isCompanyAdmin: tenant?.isCompanyAdmin ?? false,
+    tenantPermissions: tenant?.permissions ?? [],
+    required: permissions,
+  })
+  if (!allowed) return <Navigate to={redirectTo} replace />
+  return <>{children}</>
 }
 
 /** Redirects authenticated users away from guest-only pages. */

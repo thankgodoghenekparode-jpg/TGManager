@@ -52,19 +52,25 @@ export function CompanyDashboardPage() {
   const [clockDialog, setClockDialog] = useState<'in' | 'out' | null>(null)
   const [clockResult, setClockResult] = useState<AttendanceRecord | null>(null)
   const [clockKind, setClockKind] = useState<'in' | 'out' | null>(null)
-  const canSubmitReports = hasPermission({
-    role,
-    isCompanyAdmin: tenant?.isCompanyAdmin ?? false,
-    tenantPermissions: tenant?.permissions ?? [],
-    required: ['report.submit'],
-  })
-  const branches = useQuery({ queryKey: ['branches'], queryFn: () => branchesApi.list() })
-  const staff = useQuery({ queryKey: ['staff'], queryFn: () => staffApi.list() })
-  const departments = useQuery({ queryKey: ['departments'], queryFn: () => departmentsApi.list() })
-  const inventory = useQuery({ queryKey: ['inventory'], queryFn: () => inventoryApi.list() })
+  const isCompanyAdmin = tenant?.isCompanyAdmin ?? false
+  const tenantPermissions = tenant?.permissions ?? []
+  const can = (...required: string[]) =>
+    hasPermission({ role, isCompanyAdmin, tenantPermissions, required })
+
+  const canSubmitReports = can('report.submit')
+  const canViewBranches = can('branch.view')
+  const canViewStaff = can('staff.view')
+  const canViewDepartments = can('department.view')
+  const canViewInventory = can('inventory.view')
+  const canApprove = can('workflow.approve')
+
+  const branches = useQuery({ queryKey: ['branches'], queryFn: () => branchesApi.list(), enabled: canViewBranches })
+  const staff = useQuery({ queryKey: ['staff'], queryFn: () => staffApi.list(), enabled: canViewStaff })
+  const departments = useQuery({ queryKey: ['departments'], queryFn: () => departmentsApi.list(), enabled: canViewDepartments })
+  const inventory = useQuery({ queryKey: ['inventory'], queryFn: () => inventoryApi.list(), enabled: canViewInventory })
   const attendance = useQuery({ queryKey: ['report-attendance-dash'], queryFn: () => reportsApi.attendance() })
   const notifications = useQuery({ queryKey: ['notifications'], queryFn: () => notificationsApi.list(5) })
-  const approvals = useQuery({ queryKey: ['wf-approvals'], queryFn: () => workflowsApi.approvals() })
+  const approvals = useQuery({ queryKey: ['wf-approvals'], queryFn: () => workflowsApi.approvals(), enabled: canApprove })
 
   const staffData = staff.data ?? []
   const lowStock = (inventory.data ?? []).filter((i) => i.quantity <= i.minQuantity)
@@ -110,17 +116,27 @@ export function CompanyDashboardPage() {
         </Alert>
       )}
       <Grid container spacing={2.5}>
-        <Stat label="Branches" value={branches.data?.length ?? '—'} icon={<ApartmentIcon fontSize="small" />} tone="#4f46e5" />
-        <Stat
-          label="Staff"
-          value={staffData.length}
-          sub={`${staffData.filter((s) => s.isActive).length} active`}
-          icon={<PeopleIcon fontSize="small" />}
-          tone="#111827"
-        />
-        <Stat label="Departments" value={departments.data?.length ?? '—'} icon={<AccountTreeIcon fontSize="small" />} tone="#0891b2" />
-        <Stat label="Low stock items" value={lowStock.length} warn={lowStock.length > 0} icon={<WarningAmberIcon fontSize="small" />} tone="#e11d48" />
-        <Stat label="Pending approvals" value={approvals.data?.length ?? '—'} icon={<TaskAltIcon fontSize="small" />} tone="#d97706" />
+        {canViewBranches && (
+          <Stat label="Branches" value={branches.data?.length ?? '—'} icon={<ApartmentIcon fontSize="small" />} tone="#4f46e5" />
+        )}
+        {canViewStaff && (
+          <Stat
+            label="Staff"
+            value={staffData.length}
+            sub={`${staffData.filter((s) => s.isActive).length} active`}
+            icon={<PeopleIcon fontSize="small" />}
+            tone="#111827"
+          />
+        )}
+        {canViewDepartments && (
+          <Stat label="Departments" value={departments.data?.length ?? '—'} icon={<AccountTreeIcon fontSize="small" />} tone="#0891b2" />
+        )}
+        {canViewInventory && (
+          <Stat label="Low stock items" value={lowStock.length} warn={lowStock.length > 0} icon={<WarningAmberIcon fontSize="small" />} tone="#e11d48" />
+        )}
+        {canApprove && (
+          <Stat label="Pending approvals" value={approvals.data?.length ?? '—'} icon={<TaskAltIcon fontSize="small" />} tone="#d97706" />
+        )}
         <Stat label="Plan" value={tenant?.plan?.name ?? '—'} icon={<WorkspacePremiumIcon fontSize="small" />} tone="#059669" />
       </Grid>
 
@@ -161,41 +177,43 @@ export function CompanyDashboardPage() {
       )}
 
       <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid item xs={12} md={7}>
-          <Card variant="outlined" sx={{ height: '100%' }}>
-            <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
-                <Typography variant="subtitle1" fontWeight={700}>Recent staff</Typography>
-                <Link component={RouterLink} to="/app/staff" variant="body2">View all</Link>
-              </Stack>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Branch</TableCell>
-                      <TableCell>Role</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {staffData.slice(0, 6).map((s) => (
-                      <TableRow key={s.id} hover>
-                        <TableCell>{s.user.firstName} {s.user.lastName}</TableCell>
-                        <TableCell>{s.branch?.name ?? '—'}</TableCell>
-                        <TableCell>{s.roles.map((r) => r.name).join(', ') || '—'}</TableCell>
+        {canViewStaff && (
+          <Grid item xs={12} md={7}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, flexWrap: 'wrap', gap: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={700}>Recent staff</Typography>
+                  <Link component={RouterLink} to="/app/staff" variant="body2">View all</Link>
+                </Stack>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Branch</TableCell>
+                        <TableCell>Role</TableCell>
                       </TableRow>
-                    ))}
-                    {staffData.length === 0 && (
-                      <TableRow><TableCell colSpan={3} align="center">No staff yet</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+                    </TableHead>
+                    <TableBody>
+                      {staffData.slice(0, 6).map((s) => (
+                        <TableRow key={s.id} hover>
+                          <TableCell>{s.user.firstName} {s.user.lastName}</TableCell>
+                          <TableCell>{s.branch?.name ?? '—'}</TableCell>
+                          <TableCell>{s.roles.map((r) => r.name).join(', ') || '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                      {staffData.length === 0 && (
+                        <TableRow><TableCell colSpan={3} align="center">No staff yet</TableCell></TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
-        <Grid item xs={12} md={5}>
+        <Grid item xs={12} md={canViewStaff ? 5 : 12}>
           <Card variant="outlined" sx={{ mb: 3 }}>
             <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
               <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>

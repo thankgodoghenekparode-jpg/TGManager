@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TGManager — School Proposal</title>
+<style>
+  :root{
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+    --brand:#0ea5e9; --brand2:#7c3aed; --accent:#EC0618; --green:#16a34a; --blue:#2563eb;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#eef2f7;color:var(--ink);
+    font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .page{
+    width:210mm; min-height:297mm; margin:16px auto; background:#fff; padding:18mm 18mm 16mm;
+    box-shadow:0 8px 30px rgba(15,23,42,.12);
+  }
+  .letterhead{display:flex;justify-content:space-between;align-items:flex-start;
+    border-bottom:3px solid var(--ink);padding-bottom:12px;margin-bottom:18px}
+  .logo{display:flex;gap:10px;align-items:center}
+  .mark{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-weight:900;font-size:20px}
+  .org{font-size:20px;font-weight:900;letter-spacing:.2px;line-height:1.1}
+  .org small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+  .meta{text-align:right;font-size:11px;color:var(--muted);line-height:1.6}
+  .meta strong{color:var(--ink)}
+  h1{font-size:24px;margin:0 0 4px;line-height:1.2}
+  h1 span{color:var(--brand2)}
+  .kicker{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--brand);text-transform:uppercase;margin:0 0 6px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--brand2);
+    margin:22px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+  h3{font-size:13.5px;margin:14px 0 4px}
+  p{font-size:12.5px;line-height:1.65;margin:6px 0;color:#1e293b}
+  ul{margin:6px 0 6px 0;padding-left:18px}
+  li{font-size:12.5px;line-height:1.6;margin:3px 0;color:#1e293b}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px}
+  th,td{border:1px solid var(--line);padding:7px 9px;text-align:left;vertical-align:top}
+  th{background:#f1f5f9;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#334155}
+  .tiers{display:flex;gap:12px;margin:10px 0}
+  .tier{flex:1;border:1px solid var(--line);border-radius:10px;padding:14px}
+  .tier.hi{border-color:var(--blue);background:#eff6ff}
+  .tier h4{margin:0;font-size:13px}
+  .tier .price{font-size:20px;font-weight:900;margin:6px 0 2px}
+  .tier .cad{font-size:11px;color:var(--muted)}
+  .tier ul{margin:8px 0 0;padding-left:16px}
+  .tier li{font-size:11px;margin:2px 0}
+  .callout{background:#052e16;color:#dcfce7;border-radius:10px;padding:12px 14px;margin:12px 0}
+  .callout b{display:block;font-size:12.5px}
+  .callout span{font-size:11.5px;opacity:.92}
+  .two{display:flex;gap:24px}
+  .two>div{flex:1}
+  .check{list-style:none;padding-left:0}
+  .check li{padding-left:20px;position:relative}
+  .check li::before{content:"✓";position:absolute;left:0;font-weight:900}
+  .check.green li::before{color:var(--green)}
+  .check.blue li::before{color:var(--blue)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+  .sign{display:flex;gap:40px;margin-top:18px}
+  .sign>div{flex:1}
+  .sig-line{border-top:1px solid #94a3b8;margin-top:26px;padding-top:5px;font-size:11px;color:var(--muted)}
+  footer{margin-top:22px;border-top:1px solid var(--line);padding-top:10px;
+    font-size:11px;color:var(--muted);display:flex;justify-content:space-between;gap:12px}
+  .muted{color:var(--muted);font-size:11.5px}
+  .nobreak{break-inside:avoid;page-break-inside:avoid}
+  @page{size:A4;margin:14mm}
+  @media print{
+    html,body{background:#fff}
+    .page{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}
+    .no-print{display:none}
+    a{color:inherit;text-decoration:none}
+  }
+  .print-bar{max-width:210mm;margin:16px auto 0;display:flex;justify-content:flex-end}
+  .print-btn{border:0;border-radius:8px;padding:10px 16px;font-weight:800;color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,var(--brand),var(--brand2));font-size:13px}
+</style>
+</head>
+<body>
+<div class="print-bar no-print"><button class="print-btn" onclick="window.print()">Print / Save as PDF</button></div>
+
+<div class="page">
+  <div class="letterhead">
+    <div class="logo">
+      <div class="mark">TG</div>
+      <div class="org">TGManager<small>School Management Platform</small></div>
+    </div>
+    <div class="meta">
+      <div><strong>Proposal for:</strong> [School Name]</div>
+      <div><strong>From:</strong> [Your Name], [Designation]</div>
+      <div><strong>Date:</strong> [Date]</div>
+      <div><strong>Ref:</strong> TGManager/SCH/Proposal</div>
+    </div>
+  </div>
+
+  <p class="kicker">Proposal</p>
+  <h1>Deployment of <span>TGManager</span> — A Complete School Management Platform</h1>
+
+  <h2>A · Cover Letter</h2>
+  <p>Dear Sir/Madam,</p>
+  <p>Every school today runs on a mix of paper registers, exercise books, spreadsheets and
+  scattered WhatsApp messages. The result is lost records, slow result processing, fee
+  leakage and frustrated parents.</p>
+  <p><strong>TGManager</strong> replaces that with one secure platform that runs the whole
+  school — from admissions and attendance to grading, fee collection and parent
+  communication. It works on any phone, tablet or computer; there is nothing to install.</p>
+  <p>We propose a <strong>free one-term pilot</strong> so your management team can see the
+  difference before committing a single naira. This document explains what TGManager does,
+  how we would deploy it in your school, what it costs, and how to get started.</p>
+  <p>We would be delighted to arrange a short walkthrough with you and your bursar.</p>
+  <p>Yours faithfully,<br/><strong>[Your Name]</strong><br/>[Designation], TGManager<br/>[Phone] · [Email]</p>
+
+  <h2>B · Executive Summary</h2>
+  <p>TGManager is a modern, cloud-based school management system built for schools. In one
+  platform, your school can:</p>
+  <ul class="check blue">
+    <li>Enrol students and keep complete academic, guardian and medical records.</li>
+    <li>Track attendance via QR gate scanning, class registers and staff clock-in/out.</li>
+    <li>Build timetables that stay in sync across every class and teacher.</li>
+    <li>Enter continuous assessment and exam scores, apply WAEC-standard grades, run an approval workflow and produce printable report cards.</li>
+    <li>Issue fee invoices, record part-payments and balances, and give parents official receipts.</li>
+    <li>Give parents a login to see results, attendance and fees — ending result-collection queues.</li>
+    <li>Send memos and announcements to staff and parents instantly.</li>
+    <li>Monitor the whole school from live dashboards.</li>
+  </ul>
+  <p><strong>Proposed engagement:</strong> a free one-term pilot, followed by a simple
+  per-student, per-term subscription only if you choose to continue.</p>
+
+  <h2>C · The Challenges We Solve</h2>
+  <table>
+    <tr><th style="width:45%">Common challenge</th><th>How TGManager helps</th></tr>
+    <tr><td>Paper registers are easily lost or altered</td><td>Digital, timestamped and auditable records</td></tr>
+    <tr><td>Weeks spent compiling and writing report cards</td><td>Report cards generated in minutes from entered scores</td></tr>
+    <tr><td>Fee leakage, disputed payments and no clear ledger</td><td>Invoices, part-payment tracking, balances and official receipts</td></tr>
+    <tr><td>Long queues for parents collecting results</td><td>Parents log in to the portal — anytime, anywhere</td></tr>
+    <tr><td>Poor communication with parents</td><td>Announcements and notifications through the app</td></tr>
+    <tr><td>No clear picture of enrolment, attendance or collections</td><td>Live dashboards for management</td></tr>
+    <tr><td>Staff attendance and punctuality are hard to verify</td><td>Staff clock-in/out with location capture</td></tr>
+  </table>
+
+  <h2>D · What TGManager Does</h2>
+  <div class="grid2">
+    <div>
+      <h3>1. Admissions &amp; Student Records</h3>
+      <p>Enrol students, assign classes and arms, and keep guardians, medical and academic records in one searchable place.</p>
+      <h3>2. Attendance</h3>
+      <p>QR-based gate scanning, live class registers and daily attendance tracking, with location capture for gate and classroom attendance.</p>
+      <h3>3. Timetable</h3>
+      <p>Create class and teacher timetables that stay consistent across the school.</p>
+      <h3>4. Grading &amp; Report Cards</h3>
+      <p>Enter CA and exam scores, apply your grading scheme, run a formal approval/publishing workflow, and produce printable, professional report cards.</p>
+      <h3>5. Fees, Invoices &amp; Receipts</h3>
+      <p>Define your fee schedule and levies, generate invoices, record full or part-payments, track balances and how many times each fee was paid — with instant official receipts.</p>
+    </div>
+    <div>
+      <h3>6. Parent Portal</h3>
+      <p>Parents log in to view their children's results, attendance and fee status, and to read school news — no more queues on result day.</p>
+      <h3>7. Announcements</h3>
+      <p>Send memos and school news to staff and parents in seconds.</p>
+      <h3>8. Analytics &amp; Reporting</h3>
+      <p>Live dashboards for enrolment, collection rate, attendance and academic performance.</p>
+      <h3>9. Staff &amp; Roles</h3>
+      <p>Staff accounts with role-based permissions (principal, bursar, exams officer, teachers, gate officer), plus staff clock-in/out.</p>
+      <h3>10. Documents &amp; Sharing</h3>
+      <p>Every document — report cards, invoices, receipts — can be downloaded as a PDF or sent directly to a parent or colleague on WhatsApp.</p>
+    </div>
+  </div>
+
+  <h2>E · Benefits &amp; Outcomes</h2>
+  <ul class="check green">
+    <li><strong>Save staff hours every week</strong> by replacing paper registers and manual reconciliation.</li>
+    <li><strong>Produce term report cards in minutes</strong>, not weeks.</li>
+    <li><strong>Reduce fee leakage</strong> with real, audited payment records and clear balances.</li>
+    <li><strong>Improve cash flow</strong> through faster, traceable fee collection.</li>
+    <li><strong>Delight parents</strong> with instant access to results, attendance and receipts.</li>
+    <li><strong>See the whole school at a glance</strong> on one management dashboard.</li>
+    <li><strong>Strengthen accountability</strong> with role-based access and audit logs.</li>
+  </ul>
+
+  <h2>F · Implementation &amp; Rollout Plan</h2>
+  <table>
+    <tr><th style="width:16%">Phase</th><th style="width:30%">Activity</th><th>Detail</th></tr>
+    <tr><td><strong>Week 1</strong></td><td>Setup &amp; configuration</td><td>Create your school workspace, classes, subjects, staff accounts, grading scheme and fee structures.</td></tr>
+    <tr><td><strong>Week 2</strong></td><td>Data import &amp; training</td><td>Import students and guardians; train the bursar, exams officer and class teachers.</td></tr>
+    <tr><td><strong>Week 3</strong></td><td>Go live</td><td>Turn on attendance, fee collection and result entry; invite parents to the portal.</td></tr>
+  </table>
+  <p class="muted">A dedicated onboarding contact guides your team through every step.</p>
+
+  <div class="two nobreak">
+    <div>
+      <h2>G · Training &amp; Support</h2>
+      <ul>
+        <li>On-site or remote training for administrative staff and teachers.</li>
+        <li>A short, ready-to-send parent onboarding message.</li>
+        <li>Ongoing support by phone, WhatsApp and email throughout and after the pilot.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>H · Data, Security &amp; Ownership</h2>
+      <ul class="check green">
+        <li>Role-based access control and audit logs for sensitive actions.</li>
+        <li>Your data belongs to your school and can be exported on request.</li>
+        <li>Secure, encrypted transport and regular backups.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>I · Packages &amp; Pricing</h2>
+  <div class="tiers nobreak">
+    <div class="tier">
+      <h4>Starter</h4>
+      <div class="price">₦150</div><div class="cad">per student / term</div>
+      <ul>
+        <li>Admissions &amp; student records</li>
+        <li>Attendance &amp; staff management</li>
+        <li>Announcements</li>
+        <li>Email support</li>
+      </ul>
+    </div>
+    <div class="tier hi">
+      <h4>Standard ★</h4>
+      <div class="price">₦300</div><div class="cad">per student / term</div>
+      <ul>
+        <li>Everything in Starter</li>
+        <li>Grading, report cards &amp; class sheets</li>
+        <li>Fees, invoices &amp; receipts</li>
+        <li>Parent portal logins</li>
+        <li>WhatsApp / SMS notifications</li>
+      </ul>
+    </div>
+    <div class="tier">
+      <h4>Premium</h4>
+      <div class="price">Custom</div><div class="cad">&nbsp;</div>
+      <ul>
+        <li>Everything in Standard</li>
+        <li>Biometric &amp; QR gate setup</li>
+        <li>Dedicated onboarding &amp; training</li>
+        <li>Priority support &amp; data migration</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout nobreak">
+    <b>Free one-term pilot</b>
+    <span>The first term is free. Billing begins the following term, only if you choose to continue.</span>
+  </div>
+  <p class="muted">Note: Prices are per student, per term, in Naira and subject to your final confirmation. A tailored quote will be provided based on your enrolment.</p>
+
+  <h2>J · Why Choose TGManager</h2>
+  <ul class="check blue">
+    <li><strong>Built for schools</strong> — designed around how real schools run, term by term.</li>
+    <li><strong>Nothing to install</strong> — works on any phone, tablet or computer.</li>
+    <li><strong>Modern documents</strong> — professional, printable report cards, invoices and receipts.</li>
+    <li><strong>Shareable</strong> — send any document straight to WhatsApp.</li>
+    <li><strong>Low risk</strong> — start with a free term and decide after you have seen it work.</li>
+  </ul>
+
+  <h2>K · Next Steps</h2>
+  <p>1. Confirm the package and desired pilot start date.<br/>
+     2. Share your student/staff list and current fee structure.<br/>
+     3. We complete setup and training within two weeks and go live in week three.</p>
+  <p>We can also give you a <strong>live demo</strong> of a fully configured school so you can see the platform in action before deciding.</p>
+
+  <h2>L · Acceptance</h2>
+  <div class="two nobreak">
+    <div>
+      <p><strong>For [School Name]</strong></p>
+      <div class="sign"><div><div class="sig-line">Name &amp; Signature</div></div><div><div class="sig-line">Date</div></div></div>
+    </div>
+    <div>
+      <p><strong>For TGManager</strong></p>
+      <div class="sign"><div><div class="sig-line">Name &amp; Signature</div></div><div><div class="sig-line">Date</div></div></div>
+    </div>
+  </div>
+
+  <footer>
+    <span><strong>TGManager</strong> · School Management Platform</span>
+    <span>Phone/WhatsApp: [+234 ...] · Email: [sales@...] · [https://...]</span>
+  </footer>
+</div>
+</body>
+</html>

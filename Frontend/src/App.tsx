@@ -7,7 +7,7 @@ import { queryClient } from './lib/query'
 import { useAuthStore } from './store/auth'
 import { useTenantStore } from './store/tenant'
 import { getTenantId, setTenantId } from './api/client'
-import { AuthGuard, GuestGuard, PlatformGuard, CompanyGuard, SchoolGuard, ParentGuard } from './router/guards'
+import { AuthGuard, GuestGuard, PlatformGuard, CompanyGuard, SchoolGuard, ParentGuard, RequirePermission } from './router/guards'
 import { PlatformLayout } from './components/layout/PlatformLayout'
 import { CompanyLayout } from './components/layout/CompanyLayout'
 import { SchoolLayout } from './components/layout/SchoolLayout'
@@ -64,6 +64,7 @@ import { ChangeEmailPage } from './pages/account/ChangeEmail'
 import { MyRequestsPage } from './pages/account/MyRequests'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { ForSchoolsPage } from './pages/marketing/ForSchools'
+import { SchoolPermissionBlocks } from './lib/nav'
 
 const router = createBrowserRouter([
   { path: '/', element: <PortfolioPage /> },
@@ -139,19 +140,19 @@ const router = createBrowserRouter([
             element: <SchoolLayout />,
             children: [
               { path: '/school', element: <SchoolDashboardPage /> },
-              { path: '/school/students', element: <StudentsPage /> },
-              { path: '/school/classes', element: <ClassesPage /> },
-              { path: '/school/attendance', element: <SchoolAttendancePage /> },
-              { path: '/school/staff-attendance', element: <SchoolStaffAttendancePage /> },
-              { path: '/school/grading', element: <GradingPage /> },
-              { path: '/school/timetable', element: <TimetablePage /> },
-              { path: '/school/fees', element: <FeesPage /> },
-              { path: '/school/staff', element: <SchoolStaffPage /> },
-              { path: '/school/parents', element: <SchoolParentsPage /> },
-              { path: '/school/chat', element: <ChatPage /> },
-              { path: '/school/announcements', element: <AnnouncementsPage /> },
+              { path: '/school/students', element: <RequirePermission permissions={SchoolPermissionBlocks.STUDENTS} redirectTo="/school"><StudentsPage /></RequirePermission> },
+              { path: '/school/classes', element: <RequirePermission permissions={SchoolPermissionBlocks.CLASSES} redirectTo="/school"><ClassesPage /></RequirePermission> },
+              { path: '/school/attendance', element: <RequirePermission permissions={SchoolPermissionBlocks.GATE_ATTENDANCE} redirectTo="/school"><SchoolAttendancePage /></RequirePermission> },
+              { path: '/school/staff-attendance', element: <RequirePermission permissions={SchoolPermissionBlocks.STAFF_ATTENDANCE} redirectTo="/school"><SchoolStaffAttendancePage /></RequirePermission> },
+              { path: '/school/grading', element: <RequirePermission permissions={SchoolPermissionBlocks.GRADING} redirectTo="/school"><GradingPage /></RequirePermission> },
+              { path: '/school/timetable', element: <RequirePermission permissions={SchoolPermissionBlocks.TIMETABLE} redirectTo="/school"><TimetablePage /></RequirePermission> },
+              { path: '/school/fees', element: <RequirePermission permissions={SchoolPermissionBlocks.FEES} redirectTo="/school"><FeesPage /></RequirePermission> },
+              { path: '/school/staff', element: <RequirePermission permissions={SchoolPermissionBlocks.STAFF} redirectTo="/school"><SchoolStaffPage /></RequirePermission> },
+              { path: '/school/parents', element: <RequirePermission permissions={SchoolPermissionBlocks.PARENTS} redirectTo="/school"><SchoolParentsPage /></RequirePermission> },
+              { path: '/school/chat', element: <RequirePermission permissions={SchoolPermissionBlocks.CHAT} redirectTo="/school"><ChatPage /></RequirePermission> },
+              { path: '/school/announcements', element: <RequirePermission permissions={SchoolPermissionBlocks.ANNOUNCEMENTS} redirectTo="/school"><AnnouncementsPage /></RequirePermission> },
               { path: '/school/memos', element: <Navigate to="/school/announcements" replace /> },
-              { path: '/school/settings', element: <SchoolSettingsPage /> },
+              { path: '/school/settings', element: <RequirePermission permissions={SchoolPermissionBlocks.SETTINGS} redirectTo="/school"><SchoolSettingsPage /></RequirePermission> },
             ],
           },
         ],
