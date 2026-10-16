@@ -31,9 +31,11 @@ import DateRangeIcon from '@mui/icons-material/DateRange';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { schoolApi } from '../../api/school';
 import { Can } from '../../components/PermissionGate';
+import { useToast } from '../../components/ToastProvider';
 
 export function ClassesPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState(0);
 
   // Dialog states
@@ -67,6 +69,7 @@ export function ClassesPage() {
       qc.invalidateQueries({ queryKey: ['school', 'classes'] });
       setCreateClassOpen(false);
       setClassForm({ name: '', level: 'JSS 1', section: 'Gold', capacity: 35 });
+      toast.success('Class created.');
     },
   });
 
@@ -76,6 +79,7 @@ export function ClassesPage() {
       qc.invalidateQueries({ queryKey: ['school', 'subjects'] });
       setCreateSubjectOpen(false);
       setSubjectForm({ name: '', code: '', category: 'CORE' });
+      toast.success('Subject created.');
     },
   });
 
@@ -85,6 +89,7 @@ export function ClassesPage() {
       qc.invalidateQueries({ queryKey: ['school', 'sessions'] });
       setCreateSessionOpen(false);
       setSessionForm({ name: '', isCurrent: true });
+      toast.success('Academic session created.');
     },
   });
 

@@ -36,6 +36,7 @@ import type {
 import { accountRequestsApi } from '../../api/accountRequests'
 import { apiErrorMessage } from '../../api/client'
 import { useAuthStore } from '../../store/auth'
+import { CopyButton } from '../../components/CopyButton'
 
 type TabKey = 'email-change' | 'password-reset'
 
@@ -347,7 +348,12 @@ export function AccountRequestsPage() {
               Share this one-time temporary password securely with the customer. It will not be shown again.
             </Typography>
             <Alert severity="warning">
-              <strong>{resetResult.temporaryPassword}</strong>
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <strong>{resetResult.temporaryPassword}</strong>
+                {resetResult.temporaryPassword && (
+                  <CopyButton value={resetResult.temporaryPassword} label="Copy password" />
+                )}
+              </Stack>
             </Alert>
           </DialogContent>
           <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2 }, flexWrap: 'wrap' }}>

@@ -28,6 +28,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { schoolApi, SCHOOL_STAFF_CATEGORIES, type SchoolStaffCategory, type SchoolStaffMember, type StaffAccountSummary } from '../../api/school';
 import { rolesApi } from '../../api/roles';
 import { Can } from '../../components/PermissionGate';
+import { CopyButton } from '../../components/CopyButton';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { useToast } from '../../components/ToastProvider';
 
 interface StaffForm {
   id?: string;
@@ -63,6 +66,8 @@ export function SchoolStaffPage() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [staffAccount, setStaffAccount] = useState<(StaffAccountSummary & { name: string }) | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<SchoolStaffMember | null>(null);
+  const toast = useToast();
 
   const { data: staff } = useQuery({
     queryKey: ['school', 'staff', search],
@@ -96,6 +101,7 @@ export function SchoolStaffPage() {
       setDialogOpen(false);
       setError(null);
       qc.invalidateQueries({ queryKey: ['school', 'staff'] });
+      toast.success(form.id ? 'Staff member updated.' : 'Staff member added.');
       const account = (saved as { staffAccount?: StaffAccountSummary }).staffAccount;
       if (account) {
         setStaffAccount({ ...account, name: `${form.firstName} ${form.lastName}`.trim() });
@@ -107,7 +113,13 @@ export function SchoolStaffPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => schoolApi.deleteSchoolStaff(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['school', 'staff'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['school', 'staff'] });
+      setConfirmDelete(null);
+      toast.success('Staff member removed.');
+    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message ?? e?.message ?? 'Failed to remove staff'),
   });
 
   const openCreate = () => {
@@ -152,7 +164,7 @@ export function SchoolStaffPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Can permissions={['school.manage']}>
+          <Can permissions={['school.manage', 'staff.create']}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} sx={{ textTransform: 'none' }}>
               Add Staff
             </Button>
@@ -216,11 +228,13 @@ export function SchoolStaffPage() {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <Can permissions={['school.manage']}>
+                    <Can permissions={['school.manage', 'staff.update']}>
                       <IconButton size="small" onClick={() => openEdit(member)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
-                      <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(member.id)}>
+                    </Can>
+                    <Can permissions={['school.manage', 'staff.delete']}>
+                      <IconButton size="small" color="error" onClick={() => setConfirmDelete(member)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Can>
@@ -363,15 +377,23 @@ export function SchoolStaffPage() {
             </Typography>
             <Box>
               <Typography variant="caption" color="text.secondary">Login email</Typography>
-              <Typography variant="body1" fontWeight={700} sx={{ wordBreak: 'break-all' }}>
-                {staffAccount?.email}
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography variant="body1" fontWeight={700} sx={{ wordBreak: 'break-all' }}>
+                  {staffAccount?.email}
+                </Typography>
+                <CopyButton value={staffAccount?.email ?? ''} label="Copy login email" />
+              </Stack>
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary">Default password</Typography>
-              <Typography variant="body1" fontWeight={700}>
-                {staffAccount?.password ?? 'Unchanged (existing account)'}
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography variant="body1" fontWeight={700}>
+                  {staffAccount?.password ?? 'Unchanged (existing account)'}
+                </Typography>
+                {staffAccount?.password && (
+                  <CopyButton value={staffAccount.password} label="Copy password" />
+                )}
+              </Stack>
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary">Role</Typography>
@@ -388,6 +410,22 @@ export function SchoolStaffPage() {
           <Button variant="contained" onClick={() => setStaffAccount(null)}>Done</Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Remove staff member"
+        message={
+          <>
+            Remove <strong>{confirmDelete?.firstName} {confirmDelete?.lastName}</strong> from the
+            staff directory? Their portal login will be disabled.
+          </>
+        }
+        confirmLabel="Remove"
+        destructive
+        pending={deleteMutation.isPending}
+        onConfirm={() => confirmDelete && deleteMutation.mutate(confirmDelete.id)}
+        onClose={() => setConfirmDelete(null)}
+      />
     </Box>
   );
 }

@@ -315,7 +315,7 @@ export class StudentsService {
       }
     }
 
-    return this.prisma.student.update({
+    const updated = await this.prisma.student.update({
       where: { id },
       data: {
         ...(dto.admissionNumber ? { admissionNumber: dto.admissionNumber } : {}),
@@ -345,6 +345,26 @@ export class StudentsService {
         ...(dto.status ? { status: dto.status } : {}),
       },
     });
+
+    // Keep portal access in lockstep with the enrolment status: only ACTIVE
+    // students are able to sign in.
+    if (dto.status !== undefined) {
+      await this.setLoginActive(updated.userId, updated.status === 'ACTIVE');
+    }
+
+    return updated;
+  }
+
+  /** Enables/disables the portal login attached to a student record. */
+  private async setLoginActive(
+    userId: string | null | undefined,
+    isActive: boolean,
+  ) {
+    if (!userId) return;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isActive },
+    });
   }
 
   async delete(tenantId: string, id: string) {
@@ -356,15 +376,19 @@ export class StudentsService {
     });
     if (!student) throw new NotFoundException('Student not found');
 
+    // A removed or withdrawn student must not keep an active portal login.
     if (student._count.results > 0 || student._count.invoices > 0) {
       // Soft-archive if records exist
-      return this.prisma.student.update({
+      const archived = await this.prisma.student.update({
         where: { id },
         data: { status: 'WITHDRAWN' },
       });
+      await this.setLoginActive(student.userId, false);
+      return archived;
     }
 
     await this.prisma.student.delete({ where: { id } });
+    await this.setLoginActive(student.userId, false);
     return { success: true };
   }
 

@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { Box, CircularProgress } from '@mui/material'
 import { createBrowserRouter, Navigate, RouterProvider, useLocation, useNavigate } from 'react-router-dom'
 import { AppThemeProvider } from './contexts/ThemeContext'
+import { ToastProvider } from './components/ToastProvider'
 import { queryClient } from './lib/query'
 import { useAuthStore } from './store/auth'
 import { useTenantStore } from './store/tenant'
@@ -270,7 +271,9 @@ export default function App() {
   return (
     <AppThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <AppBootstrap />
+        <ToastProvider>
+          <AppBootstrap />
+        </ToastProvider>
       </QueryClientProvider>
     </AppThemeProvider>
   )

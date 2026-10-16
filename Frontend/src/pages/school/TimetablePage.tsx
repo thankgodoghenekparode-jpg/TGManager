@@ -26,6 +26,8 @@ import RoomIcon from '@mui/icons-material/Room';
 import PersonIcon from '@mui/icons-material/Person';
 import { schoolApi, DAYS_OF_WEEK, type DayOfWeek, type TimetablePeriod } from '../../api/school';
 import { Can } from '../../components/PermissionGate';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { useToast } from '../../components/ToastProvider';
 
 interface PeriodForm {
   id?: string;
@@ -67,6 +69,8 @@ export function TimetablePage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<PeriodForm>(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<TimetablePeriod | null>(null);
+  const toast = useToast();
 
   const { data: classes } = useQuery({
     queryKey: ['school', 'classes'],
@@ -120,6 +124,7 @@ export function TimetablePage() {
       setDialogOpen(false);
       setError(null);
       qc.invalidateQueries({ queryKey: ['school', 'timetable'] });
+      toast.success(form.id ? 'Period updated.' : 'Period added to the timetable.');
     },
     onError: (e: any) =>
       setError(e?.response?.data?.message ?? e?.message ?? 'Failed to save period'),
@@ -127,7 +132,13 @@ export function TimetablePage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => schoolApi.deleteTimetablePeriod(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['school', 'timetable'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['school', 'timetable'] });
+      setConfirmDelete(null);
+      toast.success('Period removed from the timetable.');
+    },
+    onError: (e: any) =>
+      toast.error(e?.response?.data?.message ?? e?.message ?? 'Failed to remove period'),
   });
 
   const openCreate = (day: DayOfWeek) => {
@@ -242,7 +253,7 @@ export function TimetablePage() {
                             <IconButton size="small" onClick={() => openEdit(period)}>
                               <EditIcon sx={{ fontSize: 15 }} />
                             </IconButton>
-                            <IconButton size="small" color="error" onClick={() => deleteMutation.mutate(period.id)}>
+                            <IconButton size="small" color="error" onClick={() => setConfirmDelete(period)}>
                               <DeleteIcon sx={{ fontSize: 15 }} />
                             </IconButton>
                           </Stack>
@@ -353,6 +364,17 @@ export function TimetablePage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Remove period"
+        message={<>Remove this period from the class timetable?</>}
+        confirmLabel="Remove"
+        destructive
+        pending={deleteMutation.isPending}
+        onConfirm={() => confirmDelete && deleteMutation.mutate(confirmDelete.id)}
+        onClose={() => setConfirmDelete(null)}
+      />
     </Box>
   );
 }

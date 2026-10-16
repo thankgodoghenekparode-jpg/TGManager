@@ -31,6 +31,7 @@ import { departmentsApi } from '../../api/departments'
 import { rolesApi } from '../../api/roles'
 import { apiErrorMessage } from '../../api/client'
 import { Can } from '../../components/PermissionGate'
+import { CopyButton } from '../../components/CopyButton'
 
 export function StaffPage() {
   const qc = useQueryClient()
@@ -83,7 +84,11 @@ export function StaffPage() {
       {reset.error && <Alert severity="error" sx={{ mb: 2 }}>{apiErrorMessage(reset.error)}</Alert>}
       {tempPassword && (
         <Alert severity="info" sx={{ mb: 2 }} onClose={() => setTempPassword('')}>
-          Staff created. Share this temporary password once: <strong>{tempPassword}</strong>
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            <span>Staff created. Share this temporary password once:</span>
+            <strong>{tempPassword}</strong>
+            <CopyButton value={tempPassword} label="Copy password" />
+          </Stack>
         </Alert>
       )}
 

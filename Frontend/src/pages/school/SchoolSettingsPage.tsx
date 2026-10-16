@@ -23,6 +23,8 @@ import { tenantsApi } from '../../api/tenants';
 import { tenantLogoUrl, apiErrorMessage } from '../../api/client';
 import { useTenantStore } from '../../store/tenant';
 import { getCurrentPosition } from '../../lib/geo';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { useToast } from '../../components/ToastProvider';
 
 export function SchoolSettingsPage() {
   const qc = useQueryClient();
@@ -396,6 +398,8 @@ export function SchoolSettingsPage() {
 function SchoolBrandingCard() {
   const tenant = useTenantStore((s) => s.current);
   const [logoError, setLogoError] = useState('');
+  const [confirmRemoveLogo, setConfirmRemoveLogo] = useState(false);
+  const toast = useToast();
   const logoUrl = tenantLogoUrl(tenant?.id, tenant?.logoKey);
 
   const upload = useMutation({
@@ -403,6 +407,7 @@ function SchoolBrandingCard() {
     onSuccess: () => {
       setLogoError('');
       void useTenantStore.getState().load();
+      toast.success('School crest uploaded.');
     },
     onError: (e) => setLogoError(apiErrorMessage(e)),
   });
@@ -412,8 +417,13 @@ function SchoolBrandingCard() {
     onSuccess: () => {
       setLogoError('');
       void useTenantStore.getState().load();
+      setConfirmRemoveLogo(false);
+      toast.success('School crest removed.');
     },
-    onError: (e) => setLogoError(apiErrorMessage(e)),
+    onError: (e) => {
+      setConfirmRemoveLogo(false);
+      setLogoError(apiErrorMessage(e));
+    },
   });
 
   const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -508,7 +518,7 @@ function SchoolBrandingCard() {
                   color="error"
                   startIcon={<DeleteIcon />}
                   disabled={upload.isPending || remove.isPending}
-                  onClick={() => remove.mutate()}
+                  onClick={() => setConfirmRemoveLogo(true)}
                 >
                   {remove.isPending ? 'Removing...' : 'Remove Crest'}
                 </Button>
@@ -520,6 +530,17 @@ function SchoolBrandingCard() {
           </Stack>
         </Stack>
       </CardContent>
+
+      <ConfirmDialog
+        open={confirmRemoveLogo}
+        title="Remove school crest"
+        message="Remove the school crest from the portal? You can upload a new one later."
+        confirmLabel="Remove"
+        destructive
+        pending={remove.isPending}
+        onConfirm={() => remove.mutate()}
+        onClose={() => setConfirmRemoveLogo(false)}
+      />
     </Card>
   );
 }

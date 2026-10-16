@@ -50,6 +50,7 @@ import {
 } from '../../../api/cbt';
 import { apiErrorMessage } from '../../../api/client';
 import { useCan } from '../../../components/PermissionGate';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { CATEGORY_COLORS, formatDateTime, modeLabel } from './cbtUi';
 
 const CATEGORIES: CbtCategory[] = ['JAMB', 'WAEC', 'NECO', 'SCHOOL', 'MOCK', 'GENERAL'];
@@ -132,6 +133,7 @@ export function CbtExamsPage() {
   const [feedback, setFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(
     null,
   );
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; title: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['cbt', 'exams', { status, search }],
@@ -211,6 +213,7 @@ export function CbtExamsPage() {
     mutationFn: (id: string) => cbtApi.deleteExam(id),
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: ['cbt', 'exams'] });
+      setConfirmDelete(null);
       setFeedback({
         severity: 'success',
         message:
@@ -219,7 +222,10 @@ export function CbtExamsPage() {
             : 'Examination had attempts, so it was archived instead.',
       });
     },
-    onError: (err) => setFeedback({ severity: 'error', message: apiErrorMessage(err) }),
+    onError: (err) => {
+      setConfirmDelete(null);
+      setFeedback({ severity: 'error', message: apiErrorMessage(err) });
+    },
   });
 
   const openCreate = () => {
@@ -446,15 +452,7 @@ export function CbtExamsPage() {
                           <Tooltip title="Delete / archive">
                             <IconButton
                               size="small"
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    'Delete this examination? If any student has attempted it, it will be archived instead.',
-                                  )
-                                ) {
-                                  deleteMutation.mutate(exam.id);
-                                }
-                              }}
+                              onClick={() => setConfirmDelete({ id: exam.id, title: exam.title })}
                             >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -505,6 +503,22 @@ export function CbtExamsPage() {
           setAssignTarget(null);
           setFeedback({ severity: 'success', message });
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Delete examination"
+        message={
+          <>
+            Delete <strong>{confirmDelete?.title}</strong>? If any student has attempted it, it will
+            be archived instead of deleted.
+          </>
+        }
+        confirmLabel="Delete"
+        destructive
+        pending={deleteMutation.isPending}
+        onConfirm={() => confirmDelete && deleteMutation.mutate(confirmDelete.id)}
+        onClose={() => setConfirmDelete(null)}
       />
     </Box>
   );

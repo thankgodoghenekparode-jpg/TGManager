@@ -9,7 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Permission } from '../../modules/rbac/permissions/permissions.constants';
 import { AbilitiesService } from '../../modules/rbac/abilities/abilities.service';
-import { REQUIRED_PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { REQUIRED_PERMISSIONS_KEY, ANY_PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import type { PermissionRequest } from '../types/permission-request.interface';
 
 /**
@@ -29,6 +29,10 @@ export class AbilitiesGuard implements CanActivate {
       REQUIRED_PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
+    const anyRequired = this.reflector.getAllAndOverride<Permission[]>(
+      ANY_PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     const request = context.switchToHttp().getRequest<PermissionRequest>();
     if (!request.user) {
@@ -44,7 +48,7 @@ export class AbilitiesGuard implements CanActivate {
     );
     request.abilities = context_;
 
-    if (!required || required.length === 0) {
+    if (!required?.length && !anyRequired?.length) {
       return true;
     }
     if (context_.isCompanyAdmin) {
@@ -52,8 +56,10 @@ export class AbilitiesGuard implements CanActivate {
     }
 
     const granted = new Set(context_.permissions);
-    const allowed = required.every((permission) => granted.has(permission));
-    if (!allowed) {
+    const hasAll = !required?.length || required.every((permission) => granted.has(permission));
+    const hasAny =
+      !anyRequired?.length || anyRequired.some((permission) => granted.has(permission));
+    if (!hasAll || !hasAny) {
       throw new ForbiddenException('Insufficient permissions');
     }
     return true;

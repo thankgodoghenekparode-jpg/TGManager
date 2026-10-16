@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AccessGuard } from '../../common/guards/access.guard';
-import { Permissions } from '../../common/decorators/permissions.decorator';
+import { AnyPermissions, Permissions } from '../../common/decorators/permissions.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { PERMISSIONS } from '../rbac/permissions/permissions.constants';
 import type { PermissionRequest } from '../../common/types/permission-request.interface';
@@ -43,7 +43,7 @@ export class SchoolStaffController {
   }
 
   @Post()
-  @Permissions(PERMISSIONS.SCHOOL_MANAGE)
+  @AnyPermissions(PERMISSIONS.SCHOOL_MANAGE, PERMISSIONS.STAFF_CREATE)
   @ApiOperation({ summary: 'Add a school staff member / teacher' })
   async create(
     @Req() req: PermissionRequest,
@@ -53,7 +53,7 @@ export class SchoolStaffController {
   }
 
   @Patch(':id')
-  @Permissions(PERMISSIONS.SCHOOL_MANAGE)
+  @AnyPermissions(PERMISSIONS.SCHOOL_MANAGE, PERMISSIONS.STAFF_UPDATE)
   @ApiOperation({ summary: 'Update a school staff member' })
   async update(
     @Req() req: PermissionRequest,
@@ -64,7 +64,7 @@ export class SchoolStaffController {
   }
 
   @Delete(':id')
-  @Permissions(PERMISSIONS.SCHOOL_MANAGE)
+  @AnyPermissions(PERMISSIONS.SCHOOL_MANAGE, PERMISSIONS.STAFF_DELETE)
   @ApiOperation({ summary: 'Remove a school staff member' })
   async remove(@Req() req: PermissionRequest, @Param('id') id: string) {
     return this.staffService.remove(req.tenant.id, id);

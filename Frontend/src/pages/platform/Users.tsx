@@ -32,6 +32,7 @@ import LockResetIcon from '@mui/icons-material/LockReset'
 import { platformApi, type PlatformUser } from '../../api/platform'
 import { apiErrorMessage } from '../../api/client'
 import { useAuthStore } from '../../store/auth'
+import { CopyButton } from '../../components/CopyButton'
 
 const SUPER_ADMIN = 'SUPER_ADMIN'
 
@@ -111,7 +112,11 @@ export function UsersPage() {
 
       {tempPassword && (
         <Alert severity="info" sx={{ mb: 2 }} onClose={() => setTempPassword('')}>
-          Temporary password (share once): <strong>{tempPassword}</strong>
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            <span>Temporary password (share once):</span>
+            <strong>{tempPassword}</strong>
+            <CopyButton value={tempPassword} label="Copy password" />
+          </Stack>
         </Alert>
       )}
 

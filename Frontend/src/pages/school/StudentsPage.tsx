@@ -36,9 +36,12 @@ import { useTenantStore } from '../../store/tenant';
 import { tenantLogoUrl } from '../../api/client';
 import { DocumentActions } from '../../components/documents/DocumentActions';
 import { Can } from '../../components/PermissionGate';
+import { CopyButton } from '../../components/CopyButton';
+import { useToast } from '../../components/ToastProvider';
 
 export function StudentsPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const tenant = useTenantStore((s) => s.current);
   const tenantLogo = tenantLogoUrl(tenant?.id, tenant?.logoKey);
 
@@ -120,6 +123,7 @@ export function StudentsPage() {
     onSuccess: (student) => {
       qc.invalidateQueries({ queryKey: ['school', 'students'] });
       setEnrollOpen(false);
+      toast.success(`${student.firstName} ${student.lastName} enrolled.`.trim());
       const account = student.studentAccount;
       setEnrolledAccount({
         name: `${student.firstName} ${student.lastName}`.trim(),
@@ -641,25 +645,36 @@ export function StudentsPage() {
               <Typography variant="caption" color="text.secondary">
                 Student ID
               </Typography>
-              <Typography variant="body1" fontWeight={700}>
-                {enrolledAccount?.studentId}
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography variant="body1" fontWeight={700}>
+                  {enrolledAccount?.studentId}
+                </Typography>
+                <CopyButton value={enrolledAccount?.studentId ?? ''} label="Copy student ID" />
+              </Stack>
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Login email
               </Typography>
-              <Typography variant="body1" fontWeight={700} sx={{ wordBreak: 'break-all' }}>
-                {enrolledAccount?.email}
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography variant="body1" fontWeight={700} sx={{ wordBreak: 'break-all' }}>
+                  {enrolledAccount?.email}
+                </Typography>
+                <CopyButton value={enrolledAccount?.email ?? ''} label="Copy login email" />
+              </Stack>
             </Box>
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Default password
               </Typography>
-              <Typography variant="body1" fontWeight={700}>
-                {enrolledAccount?.password ?? 'Unchanged (existing account)'}
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography variant="body1" fontWeight={700}>
+                  {enrolledAccount?.password ?? 'Unchanged (existing account)'}
+                </Typography>
+                {enrolledAccount?.password && (
+                  <CopyButton value={enrolledAccount.password} label="Copy password" />
+                )}
+              </Stack>
             </Box>
             <Typography variant="caption" color="text.secondary">
               Share these with the student. They can change the password after signing in.

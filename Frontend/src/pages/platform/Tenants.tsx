@@ -35,6 +35,7 @@ import SchoolIcon from '@mui/icons-material/School'
 import BusinessIcon from '@mui/icons-material/Business'
 import { platformApi, type PlatformPlan, type PlatformTenant } from '../../api/platform'
 import { apiErrorMessage } from '../../api/client'
+import { CopyButton } from '../../components/CopyButton'
 
 export function TenantsPage() {
   const qc = useQueryClient()
@@ -149,7 +150,11 @@ export function TenantsPage() {
 
       {tempPassword && (
         <Alert severity="info" sx={{ mb: 2 }} onClose={() => setTempPassword('')}>
-          Tenant created. Temporary admin password (share once): <strong>{tempPassword}</strong>
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            <span>Tenant created. Temporary admin password (share once):</span>
+            <strong>{tempPassword}</strong>
+            <CopyButton value={tempPassword} label="Copy password" />
+          </Stack>
         </Alert>
       )}
 

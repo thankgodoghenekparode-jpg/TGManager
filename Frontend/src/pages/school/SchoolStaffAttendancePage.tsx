@@ -37,6 +37,7 @@ import {
 import { apiErrorMessage } from '../../api/client';
 import { useCan } from '../../components/PermissionGate';
 import { getCurrentPosition } from '../../lib/geo';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -70,6 +71,7 @@ export function SchoolStaffAttendancePage() {
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<StaffAttendanceRecord | null>(null);
 
   const [recordOpen, setRecordOpen] = useState(false);
   const [recordForm, setRecordForm] = useState({
@@ -177,8 +179,13 @@ export function SchoolStaffAttendancePage() {
     mutationFn: (id: string) => schoolApi.deleteStaffAttendance(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['school', 'staff-attendance'] });
+      setConfirmDelete(null);
+      setInfo('Attendance record deleted.');
     },
-    onError: (err) => setError(apiErrorMessage(err)),
+    onError: (err) => {
+      setConfirmDelete(null);
+      setError(apiErrorMessage(err));
+    },
   });
 
   const openRecord = () => {
@@ -384,11 +391,7 @@ export function SchoolStaffAttendancePage() {
                       <Button
                         size="small"
                         color="error"
-                        onClick={() => {
-                          if (window.confirm('Delete this attendance record?')) {
-                            deleteMutation.mutate(rec.id);
-                          }
-                        }}
+                        onClick={() => setConfirmDelete(rec)}
                         sx={{ textTransform: 'none' }}
                       >
                         Delete
@@ -501,6 +504,17 @@ export function SchoolStaffAttendancePage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Delete attendance record"
+        message="Delete this staff attendance record? This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        pending={deleteMutation.isPending}
+        onConfirm={() => confirmDelete && deleteMutation.mutate(confirmDelete.id)}
+        onClose={() => setConfirmDelete(null)}
+      />
     </Box>
   );
 }

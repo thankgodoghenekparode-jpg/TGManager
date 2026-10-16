@@ -37,7 +37,7 @@ export const SchoolPermissionBlocks = {
   GRADING: ['academic.view', 'academic.manage'],
   TIMETABLE: ['academic.view', 'academic.manage'],
   FEES: ['school_fee.view', 'school_fee.manage'],
-  STAFF: ['school.manage', 'staff.view', 'staff.create', 'staff.update'],
+  STAFF: ['school.manage', 'staff.view', 'staff.create', 'staff.update', 'staff.delete'],
   ROLES: ['role.view', 'role.create', 'role.update', 'role.delete', 'role.assign'],
   PARENTS: ['school.manage', 'school.parent_view'],
   CHAT: ['chat.view', 'chat.create'],

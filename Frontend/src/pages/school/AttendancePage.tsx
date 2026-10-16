@@ -32,9 +32,11 @@ import { schoolApi } from '../../api/school';
 import { QrScanner } from '../../components/QrScanner';
 import { getCurrentPosition, type GeoPosition } from '../../lib/geo';
 import { Can } from '../../components/PermissionGate';
+import { useToast } from '../../components/ToastProvider';
 
 export function AttendancePage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [selectedClassId, setSelectedClassId] = useState<string>('ALL');
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -124,6 +126,7 @@ export function AttendancePage() {
       qc.invalidateQueries({ queryKey: ['school', 'attendance'] });
       setMarkOpen(false);
       setMarkStatuses({});
+      toast.success('Attendance saved.');
     },
   });
 

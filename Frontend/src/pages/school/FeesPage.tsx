@@ -46,6 +46,8 @@ import { tenantLogoUrl, apiErrorMessage } from '../../api/client';
 import { useCan } from '../../components/PermissionGate';
 import { DocumentActions } from '../../components/documents/DocumentActions';
 import { DocumentFooter, DocumentHeader, DocumentPaper } from '../../components/documents/DocumentPaper';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { useToast } from '../../components/ToastProvider';
 
 const FEE_CATEGORIES = [
   'TUITION',
@@ -77,6 +79,7 @@ export function FeesPage() {
   const tenant = useTenantStore((s) => s.current);
   const tenantLogo = tenantLogoUrl(tenant?.id, tenant?.logoKey);
   const canManageFees = useCan('school_fee.manage');
+  const toast = useToast();
 
   const [activeTab, setActiveTab] = useState(0);
   const [selectedInvoice, setSelectedInvoice] = useState<StudentInvoice | null>(null);
@@ -90,6 +93,7 @@ export function FeesPage() {
   const [feeDialogOpen, setFeeDialogOpen] = useState(false);
   const [editingFee, setEditingFee] = useState<FeeStructure | null>(null);
   const [feeForm, setFeeForm] = useState<FeeFormState>(emptyFeeForm);
+  const [confirmDeleteFee, setConfirmDeleteFee] = useState<FeeStructure | null>(null);
 
   // Payments ledger tab pagination
   const [ledgerPage, setLedgerPage] = useState(0);
@@ -152,6 +156,7 @@ export function FeesPage() {
       setEditingFee(null);
       setFeeForm(emptyFeeForm);
       setError(null);
+      toast.success(editingFee ? 'Fee structure updated.' : 'Fee structure created.');
     },
     onError: (err) => setError(apiErrorMessage(err)),
   });
@@ -160,8 +165,13 @@ export function FeesPage() {
     mutationFn: (id: string) => schoolApi.deleteFeeStructure(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['school', 'fees', 'structures'] });
+      setConfirmDeleteFee(null);
+      toast.success('Fee structure deleted.');
     },
-    onError: (err) => setError(apiErrorMessage(err)),
+    onError: (err) => {
+      setConfirmDeleteFee(null);
+      setError(apiErrorMessage(err));
+    },
   });
 
   const paymentMutation = useMutation({
@@ -185,6 +195,7 @@ export function FeesPage() {
       qc.invalidateQueries({ queryKey: ['school', 'payments'] });
       setPaymentOpen(false);
       setReceiptOpen(true);
+      toast.success('Payment recorded.');
     },
     onError: (err) => setError(apiErrorMessage(err)),
   });
@@ -469,11 +480,7 @@ export function FeesPage() {
                             <IconButton
                               size="small"
                               color="error"
-                              onClick={() => {
-                                if (window.confirm(`Delete "${fee.name}"? Existing invoices keep their charges.`)) {
-                                  deleteFeeMutation.mutate(fee.id);
-                                }
-                              }}
+                              onClick={() => setConfirmDeleteFee(fee)}
                             >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -915,6 +922,17 @@ export function FeesPage() {
           />
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        open={confirmDeleteFee !== null}
+        title="Delete fee structure"
+        message={<>Delete “{confirmDeleteFee?.name}”? Existing invoices keep their charges.</>}
+        confirmLabel="Delete"
+        destructive
+        pending={deleteFeeMutation.isPending}
+        onConfirm={() => confirmDeleteFee && deleteFeeMutation.mutate(confirmDeleteFee.id)}
+        onClose={() => setConfirmDeleteFee(null)}
+      />
     </Box>
   );
 }

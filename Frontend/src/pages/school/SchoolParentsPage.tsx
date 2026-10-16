@@ -24,9 +24,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import BadgeIcon from '@mui/icons-material/Badge';
 import { schoolApi, type Guardian } from '../../api/school';
 import { parentApi, type InviteGuardianResult } from '../../api/parent';
+import { CopyButton } from '../../components/CopyButton';
+import { useToast } from '../../components/ToastProvider';
 
 export function SchoolParentsPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [inviteResult, setInviteResult] = useState<InviteGuardianResult | null>(null);
@@ -42,6 +45,9 @@ export function SchoolParentsPage() {
       setError(null);
       setInviteResult(data);
       qc.invalidateQueries({ queryKey: ['school', 'guardians'] });
+      toast.success(
+        data.accountCreated ? 'Parent portal access granted.' : 'Existing parent account linked.',
+      );
     },
     onError: (e: any) =>
       setError(e?.response?.data?.message ?? e?.message ?? 'Failed to grant portal access'),
@@ -135,17 +141,25 @@ export function SchoolParentsPage() {
                 <Typography variant="caption" color="text.secondary">
                   Login email
                 </Typography>
-                <Typography variant="body2" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
-                  {inviteResult.email}
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <Typography variant="body2" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
+                    {inviteResult.email}
+                  </Typography>
+                  <CopyButton value={inviteResult.email} label="Copy login email" />
+                </Stack>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Temporary password
                 </Typography>
-                <Typography variant="body2" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
-                  {inviteResult.temporaryPassword}
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <Typography variant="body2" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
+                    {inviteResult.temporaryPassword}
+                  </Typography>
+                  {inviteResult.temporaryPassword && (
+                    <CopyButton value={inviteResult.temporaryPassword} label="Copy password" />
+                  )}
+                </Stack>
               </Box>
               <Typography variant="caption" color="warning.main">
                 Share these credentials with the guardian. They should change the password after first login.

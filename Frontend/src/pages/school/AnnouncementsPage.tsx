@@ -26,6 +26,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import { schoolApi, type AnnouncementAudience, type SchoolAnnouncement } from '../../api/school';
 import { Can } from '../../components/PermissionGate';
+import { useToast } from '../../components/ToastProvider';
 
 const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
   ALL: 'Everyone',
@@ -56,6 +57,7 @@ function timeAgo(iso: string): string {
 
 export function AnnouncementsPage() {
   const qc = useQueryClient();
+  const toast = useToast();
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SchoolAnnouncement | null>(null);
@@ -87,6 +89,7 @@ export function AnnouncementsPage() {
       setForm(EMPTY_FORM);
       setError(null);
       invalidate();
+      toast.success(editing ? 'Announcement updated.' : 'Announcement published.');
     },
     onError: (e: any) =>
       setError(e?.response?.data?.message ?? e?.message ?? 'Failed to save announcement'),
@@ -98,6 +101,7 @@ export function AnnouncementsPage() {
       setToDelete(null);
       setError(null);
       invalidate();
+      toast.success('Announcement deleted.');
     },
     onError: (e: any) =>
       setError(e?.response?.data?.message ?? e?.message ?? 'Failed to delete announcement'),
