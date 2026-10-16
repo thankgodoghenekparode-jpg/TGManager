@@ -28,6 +28,7 @@
     "seed:sessions:cleanup": "tsx src/seed/sessions.cli.ts --cleanup",
     "seed:results": "tsx src/seed/results.cli.ts",
     "seed:timetable": "tsx src/seed/timetable.cli.ts",
+    "seed:student-logins": "tsx src/seed/student-logins.cli.ts",
     "roles:sync": "tsx src/seed/sync-system-roles.cli.ts",
     "reset:passwords": "tsx src/seed/reset-passwords.cli.ts",
     "db:up": "docker compose up -d"

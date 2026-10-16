@@ -19,7 +19,9 @@ async function main(): Promise<void> {
         `schoolResults=${result.schoolResults.resultsCreated} created / ` +
         `${result.schoolResults.resultsExisting} existing, ` +
         `timetable=${result.schoolTimetable.periodsCreated} created / ` +
-        `${result.schoolTimetable.periodsExisting} existing`,
+        `${result.schoolTimetable.periodsExisting} existing, ` +
+        `studentLogins=${result.studentLogins.created} created / ` +
+        `${result.studentLogins.alreadyLinked} existing`,
     );
   } finally {
     await prisma.$disconnect();

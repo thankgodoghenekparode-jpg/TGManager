@@ -25,7 +25,8 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { schoolApi, SCHOOL_STAFF_CATEGORIES, type SchoolStaffCategory, type SchoolStaffMember } from '../../api/school';
+import { schoolApi, SCHOOL_STAFF_CATEGORIES, type SchoolStaffCategory, type SchoolStaffMember, type StaffAccountSummary } from '../../api/school';
+import { rolesApi } from '../../api/roles';
 import { Can } from '../../components/PermissionGate';
 
 interface StaffForm {
@@ -39,6 +40,7 @@ interface StaffForm {
   designation: string;
   category: string;
   status: string;
+  roleId: string;
 }
 
 const EMPTY_FORM: StaffForm = {
@@ -51,6 +53,7 @@ const EMPTY_FORM: StaffForm = {
   designation: '',
   category: 'TEACHER',
   status: 'ACTIVE',
+  roleId: '',
 };
 
 export function SchoolStaffPage() {
@@ -59,10 +62,16 @@ export function SchoolStaffPage() {
   const [form, setForm] = useState<StaffForm>(EMPTY_FORM);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [staffAccount, setStaffAccount] = useState<(StaffAccountSummary & { name: string }) | null>(null);
 
   const { data: staff } = useQuery({
     queryKey: ['school', 'staff', search],
     queryFn: () => schoolApi.listSchoolStaff({ search: search || undefined }),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ['roles'],
+    queryFn: () => rolesApi.list(),
   });
 
   const saveMutation = useMutation({
@@ -77,15 +86,20 @@ export function SchoolStaffPage() {
         designation: form.designation || null,
         category: form.category as SchoolStaffCategory,
         status: form.status,
+        roleId: form.roleId || null,
       };
       return form.id
         ? schoolApi.updateSchoolStaff(form.id, payload)
         : schoolApi.createSchoolStaff(payload);
     },
-    onSuccess: () => {
+    onSuccess: (saved) => {
       setDialogOpen(false);
       setError(null);
       qc.invalidateQueries({ queryKey: ['school', 'staff'] });
+      const account = (saved as { staffAccount?: StaffAccountSummary }).staffAccount;
+      if (account) {
+        setStaffAccount({ ...account, name: `${form.firstName} ${form.lastName}`.trim() });
+      }
     },
     onError: (e: any) =>
       setError(e?.response?.data?.message ?? e?.message ?? 'Failed to save staff'),
@@ -114,6 +128,7 @@ export function SchoolStaffPage() {
       designation: member.designation ?? '',
       category: member.category,
       status: member.status,
+      roleId: member.user?.roleAssignments?.[0]?.companyRole?.id ?? '',
     });
     setError(null);
     setDialogOpen(true);
@@ -153,6 +168,7 @@ export function SchoolStaffPage() {
                 <TableCell>Name</TableCell>
                 <TableCell>Employee No.</TableCell>
                 <TableCell>Category</TableCell>
+                <TableCell>Role</TableCell>
                 <TableCell>Designation</TableCell>
                 <TableCell>Contact</TableCell>
                 <TableCell align="center">Status</TableCell>
@@ -171,10 +187,22 @@ export function SchoolStaffPage() {
                   <TableCell>
                     <Chip label={member.category.replace('_', ' ')} size="small" />
                   </TableCell>
+                  <TableCell>
+                    {member.user?.roleAssignments?.[0]?.companyRole?.name ? (
+                      <Chip
+                        label={member.user.roleAssignments[0].companyRole.name.replace('_', ' ')}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    ) : (
+                      '—'
+                    )}
+                  </TableCell>
                   <TableCell>{member.designation ?? '—'}</TableCell>
                   <TableCell>
-                    <Typography variant="caption" display="block">
-                      {member.email ?? '—'}
+                    <Typography variant="caption" display="block" sx={{ wordBreak: 'break-all' }}>
+                      {member.email ?? member.user?.email ?? '—'}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {member.phone ?? ''}
@@ -201,7 +229,7 @@ export function SchoolStaffPage() {
               ))}
               {(staff ?? []).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                     No staff records yet. Add your first teacher or staff member.
                   </TableCell>
                 </TableRow>
@@ -290,6 +318,27 @@ export function SchoolStaffPage() {
                 fullWidth
               />
             </Stack>
+            <TextField
+              select
+              label="Login role"
+              value={form.roleId}
+              onChange={(e) => setForm({ ...form, roleId: e.target.value })}
+              helperText={
+                form.id
+                  ? 'Changing this updates the role on the staff member\u2019s login.'
+                  : 'Leave blank to pick automatically from the category.'
+              }
+              fullWidth
+            >
+              <MenuItem value="">
+                <em>Automatic (from category)</em>
+              </MenuItem>
+              {(roles ?? []).map((r) => (
+                <MenuItem key={r.id} value={r.id}>
+                  {r.name.replace('_', ' ')}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
@@ -301,6 +350,42 @@ export function SchoolStaffPage() {
           >
             {saveMutation.isPending ? 'Saving…' : 'Save'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Staff login credentials (created automatically) */}
+      <Dialog open={!!staffAccount} onClose={() => setStaffAccount(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Staff Login Created</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2} sx={{ mt: 0.5 }}>
+            <Typography variant="body2">
+              A portal login was created for <strong>{staffAccount?.name}</strong>.
+            </Typography>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Login email</Typography>
+              <Typography variant="body1" fontWeight={700} sx={{ wordBreak: 'break-all' }}>
+                {staffAccount?.email}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Default password</Typography>
+              <Typography variant="body1" fontWeight={700}>
+                {staffAccount?.password ?? 'Unchanged (existing account)'}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary">Role</Typography>
+              <Typography variant="body1" fontWeight={700}>
+                {(staffAccount?.role ?? '—').replace('_', ' ')}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Share these with the staff member. They can change the password after signing in.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button variant="contained" onClick={() => setStaffAccount(null)}>Done</Button>
         </DialogActions>
       </Dialog>
     </Box>

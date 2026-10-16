@@ -206,6 +206,7 @@ export type SchoolStaffCategory = (typeof SCHOOL_STAFF_CATEGORIES)[number];
 
 export interface SchoolStaffMember {
   id: string;
+  userId?: string | null;
   employeeNumber: string;
   firstName: string;
   lastName: string;
@@ -218,6 +219,18 @@ export interface SchoolStaffMember {
   employmentDate?: string | null;
   photo?: string | null;
   status: string;
+  user?: {
+    id: string;
+    email: string;
+    roleAssignments: Array<{ companyRole: { id: string; name: string } }>;
+  } | null;
+}
+
+export interface StaffAccountSummary {
+  email: string;
+  password: string | null;
+  created: boolean;
+  role: string | null;
 }
 
 export interface AcademicResult {
@@ -532,9 +545,11 @@ export const schoolApi = {
   // School Staff & Teachers
   listSchoolStaff: (params?: { search?: string; category?: string; status?: string }) =>
     api.get<SchoolStaffMember[]>('/school/staff', { params }).then((r) => r.data),
-  createSchoolStaff: (data: Partial<SchoolStaffMember>) =>
-    api.post<SchoolStaffMember>('/school/staff', data).then((r) => r.data),
-  updateSchoolStaff: (id: string, data: Partial<SchoolStaffMember>) =>
+  createSchoolStaff: (data: Partial<SchoolStaffMember> & { roleId?: string | null }) =>
+    api
+      .post<SchoolStaffMember & { staffAccount?: StaffAccountSummary }>('/school/staff', data)
+      .then((r) => r.data),
+  updateSchoolStaff: (id: string, data: Partial<SchoolStaffMember> & { roleId?: string | null }) =>
     api.patch<SchoolStaffMember>(`/school/staff/${id}`, data).then((r) => r.data),
   deleteSchoolStaff: (id: string) =>
     api.delete(`/school/staff/${id}`).then((r) => r.data),

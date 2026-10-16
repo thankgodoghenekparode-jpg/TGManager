@@ -7,6 +7,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { DEFAULT_PASSWORD } from '../../common/default-password.constants';
+import { derivedLoginEmail } from '../../common/login-email.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   SYSTEM_ROLE_DEFS,
@@ -56,10 +57,6 @@ export class StudentsService {
     return role;
   }
 
-  private sanitizeForEmail(value: string): string {
-    return value.toLowerCase().replace(/[^a-z0-9]/g, '');
-  }
-
   /**
    * Resolves the login email for a newly enrolled student. The email captured
    * on the admission form wins; otherwise one is derived from the admission
@@ -77,8 +74,7 @@ export class StudentsService {
       where: { id: tenantId },
       select: { slug: true },
     });
-    const domain = `${tenant?.slug ?? 'school'}.students.tgmanager.app`;
-    return `${this.sanitizeForEmail(admissionNumber)}@${domain}`;
+    return derivedLoginEmail(admissionNumber, tenant?.slug, 'students');
   }
 
   async list(tenantId: string, query: QueryStudentsDto) {

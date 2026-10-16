@@ -49,7 +49,7 @@ export class SchoolStaffController {
     @Req() req: PermissionRequest,
     @Body(new ZodValidationPipe(createSchoolStaffSchema)) dto: CreateSchoolStaffDto,
   ) {
-    return this.staffService.create(req.tenant.id, dto);
+    return this.staffService.create(req.tenant.id, req.user.sub, dto);
   }
 
   @Patch(':id')
@@ -60,7 +60,7 @@ export class SchoolStaffController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(updateSchoolStaffSchema)) dto: UpdateSchoolStaffDto,
   ) {
-    return this.staffService.update(req.tenant.id, id, dto);
+    return this.staffService.update(req.tenant.id, req.user.sub, id, dto);
   }
 
   @Delete(':id')

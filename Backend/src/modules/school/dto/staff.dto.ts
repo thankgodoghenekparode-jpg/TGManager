@@ -25,6 +25,8 @@ export const createSchoolStaffSchema = z.object({
   employmentDate: z.string().datetime().optional().nullable(),
   photo: z.string().trim().max(500).optional().nullable(),
   status: z.string().trim().max(50).default('ACTIVE'),
+  /** Optional portal role to grant the staff member's login. */
+  roleId: z.string().cuid().optional().nullable(),
 });
 
 export type CreateSchoolStaffDto = z.infer<typeof createSchoolStaffSchema>;
