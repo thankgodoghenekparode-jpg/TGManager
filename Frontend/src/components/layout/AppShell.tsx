@@ -1,5 +1,5 @@
 import type { MouseEvent, ReactNode } from 'react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   AppBar,
@@ -41,6 +41,12 @@ export interface NavItem {
   label: string
   path: string
   icon: SvgIconComponent
+  /**
+   * Optional group heading. Consecutive items sharing a section are rendered
+   * under one caption, so a long menu reads as a few short groups instead of a
+   * single wall of links. Layouts that omit it keep the original flat list.
+   */
+  section?: string
 }
 
 const DRAWER_WIDTH = 264
@@ -125,6 +131,19 @@ export function AppShell({
     return <Logo variant="mark" size={size} />
   }
 
+  // Group consecutive nav items by their optional `section`, preserving order.
+  const navGroups = useMemo(() => {
+    const groups: Array<{ title?: string; items: NavItem[] }> = []
+    for (const item of nav) {
+      const last = groups[groups.length - 1]
+      if (last && last.title === item.section) last.items.push(item)
+      else groups.push({ title: item.section, items: [item] })
+    }
+    return groups
+  }, [nav])
+
+  const hasSections = nav.some((item) => !!item.section)
+
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.25, cursor: 'pointer' }} onClick={onNavigateHome}>
@@ -140,27 +159,50 @@ export function AppShell({
       </Box>
       <Divider />
       <List sx={{ px: 1, py: 1, flex: 1, overflow: 'auto' }}>
-        <Typography variant="caption" sx={{ px: 1, display: 'block', mb: 0.75, fontWeight: 700, letterSpacing: 1.2, color: 'text.secondary', fontSize: '0.6875rem' }}>
-          MENU
-        </Typography>
-        {nav.map((item) => {
-          const active = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
-          const Icon = item.icon
-          return (
-            <ListItemButton
-              key={item.path}
-              component={RouterLink}
-              to={item.path}
-              selected={active}
-              onClick={() => setOpen(false)}
-            >
-              <ListItemIcon sx={{ minWidth: 32 }}>
-                <Icon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 700 : 500 }} />
-            </ListItemButton>
-          )
-        })}
+        {!hasSections && (
+          <Typography variant="caption" sx={{ px: 1, display: 'block', mb: 0.75, fontWeight: 700, letterSpacing: 1.2, color: 'text.secondary', fontSize: '0.6875rem' }}>
+            MENU
+          </Typography>
+        )}
+        {navGroups.map((group, groupIndex) => (
+          <Box key={group.title ?? `group-${groupIndex}`}>
+            {group.title && (
+              <Typography
+                variant="caption"
+                sx={{
+                  px: 1,
+                  display: 'block',
+                  mt: groupIndex === 0 ? 0 : 1.75,
+                  mb: 0.75,
+                  fontWeight: 700,
+                  letterSpacing: 1.2,
+                  color: 'text.secondary',
+                  fontSize: '0.6875rem',
+                }}
+              >
+                {group.title.toUpperCase()}
+              </Typography>
+            )}
+            {group.items.map((item) => {
+              const active = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
+              const Icon = item.icon
+              return (
+                <ListItemButton
+                  key={item.path}
+                  component={RouterLink}
+                  to={item.path}
+                  selected={active}
+                  onClick={() => setOpen(false)}
+                >
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <Icon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 700 : 500 }} />
+                </ListItemButton>
+              )
+            })}
+          </Box>
+        ))}
       </List>
       {user && (
         <Box sx={{ m: 1.25, p: 1, borderRadius: 2, bgcolor: 'rgba(236, 6, 24, 0.06)', border: '1px solid rgba(236, 6, 24, 0.16)', display: 'flex', alignItems: 'center', gap: 1 }}>

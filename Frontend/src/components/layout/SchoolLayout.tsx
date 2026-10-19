@@ -35,21 +35,21 @@ export function SchoolLayout() {
     hasPermission({ role, isCompanyAdmin, tenantPermissions, required: perms });
 
   const all: Array<{ item: NavItem; perms: readonly string[] }> = [
-    { item: { label: 'Overview', path: '/school', icon: DashboardIcon }, perms: SchoolPermissionBlocks.DASHBOARD },
-    { item: { label: 'Students & ID Cards', path: '/school/students', icon: SchoolIcon }, perms: SchoolPermissionBlocks.STUDENTS },
-    { item: { label: 'Classes & Academics', path: '/school/classes', icon: ClassIcon }, perms: SchoolPermissionBlocks.CLASSES },
-    { item: { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon }, perms: SchoolPermissionBlocks.GATE_ATTENDANCE },
-    { item: { label: 'Staff Clock In/Out', path: '/school/staff-attendance', icon: AccessTimeIcon }, perms: SchoolPermissionBlocks.STAFF_ATTENDANCE },
-    { item: { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon }, perms: SchoolPermissionBlocks.GRADING },
-    { item: { label: 'CBT & Mock Exams', path: '/school/cbt', icon: QuizIcon }, perms: SchoolPermissionBlocks.CBT },
-    { item: { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon }, perms: SchoolPermissionBlocks.TIMETABLE },
-    { item: { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon }, perms: SchoolPermissionBlocks.FEES },
-    { item: { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon }, perms: SchoolPermissionBlocks.STAFF },
-    { item: { label: 'Roles & Permissions', path: '/school/roles', icon: AdminPanelSettingsIcon }, perms: SchoolPermissionBlocks.ROLES },
-    { item: { label: 'Parents Portal', path: '/school/parents', icon: FamilyRestroomIcon }, perms: SchoolPermissionBlocks.PARENTS },
-    { item: { label: 'Staff Chat', path: '/school/chat', icon: ChatIcon }, perms: SchoolPermissionBlocks.CHAT },
-    { item: { label: 'Announcements', path: '/school/announcements', icon: CampaignIcon }, perms: SchoolPermissionBlocks.ANNOUNCEMENTS },
-    { item: { label: 'School Settings', path: '/school/settings', icon: SettingsIcon }, perms: SchoolPermissionBlocks.SETTINGS },
+    { item: { label: 'Overview', path: '/school', icon: DashboardIcon, section: 'Main' }, perms: SchoolPermissionBlocks.DASHBOARD },
+    { item: { label: 'Students & ID Cards', path: '/school/students', icon: SchoolIcon, section: 'Academics' }, perms: SchoolPermissionBlocks.STUDENTS },
+    { item: { label: 'Classes & Academics', path: '/school/classes', icon: ClassIcon, section: 'Academics' }, perms: SchoolPermissionBlocks.CLASSES },
+    { item: { label: 'Grading & Report Cards', path: '/school/grading', icon: AssessmentIcon, section: 'Academics' }, perms: SchoolPermissionBlocks.GRADING },
+    { item: { label: 'Timetable', path: '/school/timetable', icon: ScheduleIcon, section: 'Academics' }, perms: SchoolPermissionBlocks.TIMETABLE },
+    { item: { label: 'CBT & Mock Exams', path: '/school/cbt', icon: QuizIcon, section: 'Academics' }, perms: SchoolPermissionBlocks.CBT },
+    { item: { label: 'Gate Attendance', path: '/school/attendance', icon: QrCodeScannerIcon, section: 'Attendance' }, perms: SchoolPermissionBlocks.GATE_ATTENDANCE },
+    { item: { label: 'Staff Clock In/Out', path: '/school/staff-attendance', icon: AccessTimeIcon, section: 'Attendance' }, perms: SchoolPermissionBlocks.STAFF_ATTENDANCE },
+    { item: { label: 'Fees & Invoices', path: '/school/fees', icon: ReceiptLongIcon, section: 'Finance' }, perms: SchoolPermissionBlocks.FEES },
+    { item: { label: 'Staff & Teachers', path: '/school/staff', icon: PeopleIcon, section: 'People & Access' }, perms: SchoolPermissionBlocks.STAFF },
+    { item: { label: 'Parents Portal', path: '/school/parents', icon: FamilyRestroomIcon, section: 'People & Access' }, perms: SchoolPermissionBlocks.PARENTS },
+    { item: { label: 'Roles & Permissions', path: '/school/roles', icon: AdminPanelSettingsIcon, section: 'People & Access' }, perms: SchoolPermissionBlocks.ROLES },
+    { item: { label: 'Staff Chat', path: '/school/chat', icon: ChatIcon, section: 'Communication' }, perms: SchoolPermissionBlocks.CHAT },
+    { item: { label: 'Announcements', path: '/school/announcements', icon: CampaignIcon, section: 'Communication' }, perms: SchoolPermissionBlocks.ANNOUNCEMENTS },
+    { item: { label: 'School Settings', path: '/school/settings', icon: SettingsIcon, section: 'System' }, perms: SchoolPermissionBlocks.SETTINGS },
   ];
 
   // Only render menu entries the current role is permitted to open.
