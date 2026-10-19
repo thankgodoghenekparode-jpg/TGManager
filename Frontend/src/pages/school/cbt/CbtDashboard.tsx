@@ -118,6 +118,69 @@ export function CbtDashboardPage() {
     [],
   );
 
+  const categorySection = (
+    <>
+      <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 3, mb: 1 }}>
+        {student ? 'Practise by category' : 'Question bank by category'}
+      </Typography>
+      <Grid container spacing={2}>
+        {categoryCards.map(({ category, label, tagline, icon, color, accent }) => (
+          <Grid item xs={12} sm={6} md={3} key={category}>
+            <Card
+              variant="outlined"
+              sx={{
+                height: '100%',
+                borderTop: `4px solid ${accent}`,
+                transition: 'box-shadow .2s, transform .2s',
+                '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
+              }}
+            >
+              <CardActionArea
+                sx={{ height: '100%', p: 0.5 }}
+                onClick={() =>
+                  student
+                    ? navigate(`/school/cbt/practice?category=${category}`)
+                    : navigate(`/school/cbt/questions?category=${category}`)
+                }
+              >
+                <CardContent>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: `${accent}1a`,
+                      color: accent,
+                      mb: 1.5,
+                    }}
+                  >
+                    {icon}
+                  </Box>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    {label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                    {tagline}
+                  </Typography>
+                  <Chip
+                    size="small"
+                    color={color as any}
+                    variant="outlined"
+                    label={student ? 'Practise now' : 'View questions'}
+                    sx={{ mt: 1.5 }}
+                  />
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </>
+  );
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -177,77 +240,15 @@ export function CbtDashboardPage() {
         {CBT_PLATFORM_NOTICE}
       </Alert>
 
+      {student && categorySection}
+
       {student ? (
         <StudentDashboard data={student} />
       ) : staff ? (
         <StaffDashboard data={staff} />
       ) : null}
 
-      <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 3, mb: 1 }}>
-        Practice by category
-      </Typography>
-      <Grid container spacing={2}>
-        {categoryCards.map(({ category, label, tagline, icon, color, accent }) => (
-          <Grid item xs={12} sm={6} md={3} key={category}>
-            <Card
-              variant="outlined"
-              sx={{
-                height: '100%',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'box-shadow .2s, transform .2s',
-                '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  inset: 0,
-                  borderTop: `4px solid ${accent}`,
-                },
-              }}
-            >
-              <CardActionArea
-                sx={{ height: '100%', p: 0.5 }}
-                onClick={() =>
-                  student
-                    ? navigate(`/school/cbt/practice?category=${category}`)
-                    : navigate(`/school/cbt/questions?category=${category}`)
-                }
-              >
-                <CardContent>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: `${accent}1a`,
-                      color: accent,
-                      mb: 1.5,
-                    }}
-                  >
-                    {icon}
-                  </Box>
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    {label}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                    {tagline}
-                  </Typography>
-                  <Chip
-                    size="small"
-                    color={color as any}
-                    variant="outlined"
-                    label={student ? 'Practise now' : 'View questions'}
-                    sx={{ mt: 1.5 }}
-                  />
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      {staff && categorySection}
     </Box>
   );
 }

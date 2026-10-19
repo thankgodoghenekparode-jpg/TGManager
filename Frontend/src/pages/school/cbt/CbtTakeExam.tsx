@@ -190,6 +190,49 @@ export function CbtTakeExam({
     return () => window.removeEventListener('beforeunload', handler);
   }, []);
 
+  // Desktop/tablet keyboard shortcuts: A–H (or 1–8) answer, arrows navigate,
+  // M toggles "mark for review". Ignored while typing or a dialog is open.
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (submitOpen || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const active = questions[current];
+      if (!active) return;
+
+      const key = event.key.toUpperCase();
+      const byLabel = active.options.findIndex((option) => option.label.toUpperCase() === key);
+      const byNumber = /^[1-8]$/.test(event.key) ? Number(event.key) - 1 : -1;
+      const optionIndex = byLabel >= 0 ? byLabel : byNumber;
+      if (optionIndex >= 0 && active.options[optionIndex]) {
+        event.preventDefault();
+        updateAnswer(active.questionId, { selectedOptionId: active.options[optionIndex].id });
+        return;
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setCurrent((value) => Math.max(0, value - 1));
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setCurrent((value) => Math.min(questions.length - 1, value + 1));
+      } else if (key === 'M') {
+        event.preventDefault();
+        updateAnswer(active.questionId, {
+          markedForReview: !(answers[active.questionId]?.markedForReview ?? false),
+        });
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [answers, current, questions, submitOpen, updateAnswer]);
+
   const answeredCount = questions.filter((q) => answers[q.questionId]?.selectedOptionId).length;
   const markedCount = questions.filter((q) => answers[q.questionId]?.markedForReview).length;
   const unansweredCount = questions.length - answeredCount;
@@ -260,6 +303,14 @@ export function CbtTakeExam({
           }
         >
           {error}
+        </Alert>
+      )}
+
+      {remaining > 0 && remaining <= 300 && (
+        <Alert severity={remaining <= 60 ? 'error' : 'warning'} sx={{ mb: 2 }}>
+          {remaining <= 60
+            ? 'Less than a minute left. The examination submits automatically when the timer reaches zero.'
+            : 'Five minutes remaining. Review any questions you have marked before time runs out.'}
         </Alert>
       )}
 
@@ -442,6 +493,14 @@ export function CbtTakeExam({
                 <SummaryRow label="Not answered" value={unansweredCount} color="text.secondary" />
                 <SummaryRow label="Marked for review" value={markedCount} color="warning.main" />
               </Stack>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 2, lineHeight: 1.5 }}
+              >
+                Tip: press <strong>A–H</strong> to answer, <strong>←</strong>/<strong>→</strong> to
+                move between questions and <strong>M</strong> to mark for review.
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -455,6 +514,12 @@ export function CbtTakeExam({
             {unansweredCount > 0 ? ` (${unansweredCount} unanswered)` : ''} and marked{' '}
             {markedCount} for review. Once submitted, you cannot change your answers.
           </DialogContentText>
+          {unansweredCount > 0 && (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              {unansweredCount} question{unansweredCount === 1 ? '' : 's'} still unanswered. You can
+              keep working, or submit as is.
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSubmitOpen(false)}>Keep working</Button>

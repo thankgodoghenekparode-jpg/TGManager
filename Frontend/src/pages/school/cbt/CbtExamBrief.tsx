@@ -19,7 +19,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { cbtApi, CBT_CATEGORY_LABELS, CBT_PLATFORM_NOTICE } from '../../../api/cbt';
 import { apiErrorMessage } from '../../../api/client';
-import { CATEGORY_COLORS, formatSeconds, modeLabel } from './cbtUi';
+import { CATEGORY_ACCENTS, CATEGORY_COLORS, formatSeconds, modeLabel } from './cbtUi';
 
 export function CbtExamBriefPage() {
   const { id = '' } = useParams();
@@ -64,7 +64,10 @@ export function CbtExamBriefPage() {
         ← Back
       </Button>
 
-      <Card variant="outlined">
+      <Card
+        variant="outlined"
+        sx={{ borderTop: `4px solid ${CATEGORY_ACCENTS[exam.category]}` }}
+      >
         <CardContent>
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
             <Typography variant="h5" fontWeight={700}>
