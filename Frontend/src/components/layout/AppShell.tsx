@@ -1,10 +1,11 @@
-import type { MouseEvent, ReactNode } from 'react'
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   AppBar,
   Avatar,
   Box,
+  Collapse,
   Divider,
   Drawer,
   IconButton,
@@ -24,6 +25,7 @@ import KeyIcon from '@mui/icons-material/Key'
 import MailOutlineIcon from '@mui/icons-material/MailOutline'
 import HistoryIcon from '@mui/icons-material/History'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined'
 import type { SvgIconComponent } from '@mui/icons-material'
@@ -144,6 +146,27 @@ export function AppShell({
 
   const hasSections = nav.some((item) => !!item.section)
 
+  // The section that owns the current route, so we can auto-open it.
+  const activeSection = useMemo(
+    () =>
+      navGroups.find((group) =>
+        group.items.some(
+          (item) => pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path)),
+        ),
+      )?.title,
+    [navGroups, pathname],
+  )
+
+  // Collapsible sections: the section owning the active page is open by
+  // default; the rest stay closed until the user expands them. Explicit
+  // toggles are stored as overrides so no effect/derived-state is needed.
+  const [sectionOverrides, setSectionOverrides] = useState<Record<string, boolean>>({})
+
+  const isSectionOpen = (title: string) => sectionOverrides[title] ?? title === activeSection
+
+  const toggleSection = (title: string) =>
+    setSectionOverrides((prev) => ({ ...prev, [title]: !(prev[title] ?? title === activeSection) }))
+
   const drawer = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 2, py: 2, display: 'flex', alignItems: 'center', gap: 1.25, cursor: 'pointer' }} onClick={onNavigateHome}>
@@ -159,31 +182,12 @@ export function AppShell({
       </Box>
       <Divider />
       <List sx={{ px: 1, py: 1, flex: 1, overflow: 'auto' }}>
-        {!hasSections && (
-          <Typography variant="caption" sx={{ px: 1, display: 'block', mb: 0.75, fontWeight: 700, letterSpacing: 1.2, color: 'text.secondary', fontSize: '0.6875rem' }}>
-            MENU
-          </Typography>
-        )}
-        {navGroups.map((group, groupIndex) => (
-          <Box key={group.title ?? `group-${groupIndex}`}>
-            {group.title && (
-              <Typography
-                variant="caption"
-                sx={{
-                  px: 1,
-                  display: 'block',
-                  mt: groupIndex === 0 ? 0 : 1.75,
-                  mb: 0.75,
-                  fontWeight: 700,
-                  letterSpacing: 1.2,
-                  color: 'text.secondary',
-                  fontSize: '0.6875rem',
-                }}
-              >
-                {group.title.toUpperCase()}
-              </Typography>
-            )}
-            {group.items.map((item) => {
+        {!hasSections ? (
+          <>
+            <Typography variant="caption" sx={{ px: 1, display: 'block', mb: 0.75, fontWeight: 700, letterSpacing: 1.2, color: 'text.secondary', fontSize: '0.6875rem' }}>
+              MENU
+            </Typography>
+            {nav.map((item) => {
               const active = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
               const Icon = item.icon
               return (
@@ -201,8 +205,84 @@ export function AppShell({
                 </ListItemButton>
               )
             })}
-          </Box>
-        ))}
+          </>
+        ) : (
+          navGroups.map((group, groupIndex) => {
+            const title = group.title
+            const isOpen = title ? isSectionOpen(title) : true
+            const items = group.items.map((item) => {
+              const active = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path))
+              const Icon = item.icon
+              return (
+                <ListItemButton
+                  key={item.path}
+                  component={RouterLink}
+                  to={item.path}
+                  selected={active}
+                  onClick={() => setOpen(false)}
+                  sx={{ borderRadius: 1 }}
+                >
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <Icon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 700 : 500 }} />
+                </ListItemButton>
+              )
+            })
+
+            // Section without a heading (shouldn't happen when sections are set)
+            if (!title) return <Box key={`group-${groupIndex}`}>{items}</Box>
+
+            return (
+              <Box key={title} sx={{ mt: groupIndex === 0 ? 0 : 0.5 }}>
+                <Box
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isOpen}
+                  aria-controls={`nav-section-${groupIndex}`}
+                  onClick={() => toggleSection(title)}
+                  onKeyDown={(e: KeyboardEvent<HTMLElement>) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      toggleSection(title)
+                    }
+                  }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 0.5,
+                    px: 1,
+                    py: 0.75,
+                    borderRadius: 1,
+                    cursor: 'pointer',
+                    color: 'text.secondary',
+                    userSelect: 'none',
+                    transition: 'background-color 120ms ease, color 120ms ease',
+                    '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
+                    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2 },
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: 1.2, fontSize: '0.6875rem' }}>
+                    {title.toUpperCase()}
+                  </Typography>
+                  <ExpandMoreIcon
+                    sx={{
+                      fontSize: 18,
+                      transition: 'transform 200ms ease',
+                      transform: isOpen ? 'rotate(180deg)' : 'none',
+                    }}
+                  />
+                </Box>
+                <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                  <Box id={`nav-section-${groupIndex}`} sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, pt: 0.25 }}>
+                    {items}
+                  </Box>
+                </Collapse>
+              </Box>
+            )
+          })
+        )}
       </List>
       {user && (
         <Box sx={{ m: 1.25, p: 1, borderRadius: 2, bgcolor: 'rgba(236, 6, 24, 0.06)', border: '1px solid rgba(236, 6, 24, 0.16)', display: 'flex', alignItems: 'center', gap: 1 }}>
